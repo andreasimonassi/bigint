@@ -20,42 +20,28 @@ static reg_t * initA();
 static reg_t * initB();
 static reg_t * expected();
 static int expected_digits = 1;
-static int sub_c_version(reg_t *A, reg_t * B, reg_t * R);
-//static void sub_asm_x64_version(reg_t *A, reg_t * B, reg_t * R);
 
-static int sub_c_version(reg_t*A, reg_t*B, reg_t*R)
+static void each_op(_result_t(*unit_test)(CLOCK_T* outAlgorithmElapsedTime, struct _operation_implementations*), int boolRepeat,
+	 _char_t const * const test_description
+)
 {
-	
-	clock_t begin, end;
-	int ndigits;
-	double time_spent;
-	int i;
-	printf("Testing C Compiled Speed for subtraction: ");
-	begin = clock();
-	for (i = 0; i<TEST_ITERATIONS; ++i)
-		ndigits = LongSub(A, A_REG_WORDS, B, B_REG_WORDS, R);
-	end = clock();
-	time_spent = (double)(end - begin) / CLOCKS_PER_SEC;
-	double d = TEST_ITERATIONS *A_REG_WORDS*B_REG_WORDS / time_spent;
-	printf(" %e reg_words processed per second\n", d);
-	return ndigits;
+	for (int i = 0; i < number_of_arithmetics; ++i)
+	{
+		if (arithmetics[i].subtraction == NULL)
+			continue;
+
+		if (boolRepeat)
+		{
+			run_test_repeat(unit_test, &(arithmetics[i]), &(arithmetics[i].subtraction_test_results), test_description);
+		}
+		else
+		{
+			run_test_single(unit_test, &(arithmetics[i]), &(arithmetics[i].subtraction_test_results), test_description);
+		}
+	}
 }
 
-//static void sub_asm_x64_version(reg_t*A, reg_t*B, reg_t*R)
-//{
-//	clock_t begin, end;
-//	int ndigits;
-//	double time_spent;
-//	int i;
-//
-//	begin = clock();
-//	for (i = 0; i<TEST_ITERATIONS; ++i)
-//		ndigits = LongSumAsm(A, A_REG_WORDS, B, B_REG_WORDS, R);
-//	end = clock();
-//	time_spent = (double)(end - begin) / CLOCKS_PER_SEC;
-//
-//	printf("Assembler version : %f sums per second\n", i / time_spent);
-//}
+
 
 
 static reg_t * initA()
@@ -114,37 +100,46 @@ static reg_t * initB()
 }
 
 
-void testSub()
+static _result_t testWellKnownSubtraction(CLOCK_T* delta_t, struct _operation_implementations* impl)
 {	
+	_result_t result = _OK;
 	/*the array is in reverse order, less significative on the left...*/
 	reg_t * A;
 	reg_t * B;
 	reg_t * R;
 	reg_t * _exp;
-	double time_spent;
 
 	/* Initialization */
 
 	R = malloc(R_BYTES);
-	if (!R)
-		perror("CAN'T ALLOCATE MEMORY");
+	MY_ASSERT(R, NOMEM);
 	A = initA();
 	B = initB();
 	_exp = expected();
-
-	/* Print out environment */
-	printf("Test SUBTRACTION \n");
-
-	/* Testing C version */
-	int n = sub_c_version(A, B, R);
-	MY_ASSERT(n == expected_digits);
 	
+	/* Testing C version */
+	*delta_t = precise_clock();
+	reg_t n = impl->subtraction(A, A_REG_WORDS, B, B_REG_WORDS, R);
+	*delta_t = precise_clock() - *delta_t;
 
-	MY_ASSERT(CompareWithPossibleLeadingZeroes(R, A_REG_WORDS, _exp, A_REG_WORDS) == 0);
-
-	/* Testing Assembler x64 version */
-	//asm_x64_version(A, B, R);
-	//shouldBeAllZeroesExceptMSD(R);
+	if (n != expected_digits)
+	{
+		LOG_ERROR(STR("Unexpected number of digits, see dump"));
+		result = _FAIL;
+	}
+	else if (CompareWithPossibleLeadingZeroes(R, A_REG_WORDS, _exp, A_REG_WORDS) != 0)
+	{
+		LOG_ERROR(STR("A - B result was unexpected, see dump"));
+		result = _FAIL;
+	}
+	if (FAILED(result))
+	{
+		_fprintf(stderr, STR("DUMP : A - B  = R"));
+		dumpNumber(A, STR("A"), A_REG_WORDS);
+		dumpNumber(B, STR("B"), B_REG_WORDS);
+		dumpNumber(_exp, STR("ExpectedResult"), expected_digits);
+		dumpNumber(R, STR("ActualResult"), n);
+	}
 
 	/* Cleanup */
 
@@ -153,6 +148,12 @@ void testSub()
 	free(R);
 	free(_exp);
 
-	printf("Test subtraction passed\n");
+	return result;
 	
+}
+
+
+void testSub()
+{
+	each_op(testWellKnownSubtraction, 1,STR("Testing subtraction with wellknown values"));
 }

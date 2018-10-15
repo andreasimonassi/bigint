@@ -6,7 +6,9 @@
 #endif
 /* define _R such that appends L to int literal if necessary to keep portability, 
 but should not be necessary since compiler automatically promote int to longs  */
-#define _R(a) (a ## L)
+#define _R(a) ((reg_t)(a ## L))
+
+
 
 
 typedef unsigned long long reg_t;

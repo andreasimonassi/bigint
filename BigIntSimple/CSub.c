@@ -15,7 +15,7 @@ reg_t LongSub(reg_t* A, reg_t ASize, reg_t * B, reg_t BSize, reg_t* R)
 	register reg_t i;
 
 	int borrow = (int)(i = 0);
-	reg_t msd = -1; //keep track of last most significant digit
+	reg_t msd = _R(-1); //keep track of last most significant digit
 
 	while (BSize > i)
 	{

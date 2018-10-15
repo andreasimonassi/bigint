@@ -99,7 +99,7 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
-      <WarningLevel>Level3</WarningLevel>
+      <WarningLevel>Level4</WarningLevel>
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <SDLCheck>true</SDLCheck>
@@ -172,6 +172,7 @@
   <ItemGroup>
     <ClInclude Include="BigIntSimple.h" />
     <ClInclude Include="test.h" />
+    <ClInclude Include="test_config.h" />
   </ItemGroup>
   <ItemGroup>
     <MASM Include="BSR.asm" />
