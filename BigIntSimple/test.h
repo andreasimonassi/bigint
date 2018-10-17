@@ -4,6 +4,14 @@
 #include <stdlib.h>
 #include <assert.h>
 #include <locale.h>
+#include <stdint.h>
+
+/* START ----------------------------------
+SOME DEFS TO TWEAK FOR EACH PLATFORM */
+
+#define MAXSTRING 512
+//#define USE_WCHAR i decided that the string are going to be always multibyte,
+#define LITTLE_ENDIAN 
 
 #if defined(_WIN32) || defined(WIN32)
 #include <Windows.h>
@@ -15,14 +23,6 @@
 
 #define CLOCK_T clock_t
 #endif
-/* START ----------------------------------
-SOME DEFS TO TWEAK FOR EACH PLATFORM */
-
-#define MAXSTRING 512
-#define USE_WCHAR 
-#define LITTLE_ENDIAN 
-
-
 
 /* DEFINITIONS */
 
@@ -31,9 +31,9 @@ SOME DEFS TO TWEAK FOR EACH PLATFORM */
 #endif
 
 
-#ifdef USE_WCHAR
+//#ifdef USE_WCHAR
 	
-	
+
 	typedef wchar_t _char_t;
 	#define STR(x) L ## x	
 	#define EXPAND_(a) STR(a)
@@ -42,18 +42,17 @@ SOME DEFS TO TWEAK FOR EACH PLATFORM */
 	#define MY_ASSERT(c, x, ...) if (!(c)) { fwprintf(stderr, L"assertion failed: (%s %d) - " x L"\n",  WFILE, __LINE__, ##__VA_ARGS__); abort(); }
 	#define LOG_ERROR(x, ...) fwprintf(stderr, L"[ERROR] " x L"\n", ##__VA_ARGS__)
 	#define NOMEM L"NO MEMORY"	
-
 	#define _fprintf fwprintf	
-#else
-	typedef char _char_t;
-	#define STR(x) x	
-	#define LOG_INFO(x, ...) fprintf(stderr, "[INFO] " x "\n", ##__VA_ARGS__)
-	#define MY_ASSERT(c, x, ...) if (!(x)) { fprintf(stderr, "assertion failed: (%s %s %d) - " x "\n", __FUNCTION__, __FILE__, __LINE__, ##__VA_ARGS__); abort(); }
-	#define LOG_ERROR(x, ...) fprintf(stderr, "[ERROR] " x "\n", ##__VA_ARGS__)
-	#define WRITE_STRING(buffer, n, x) snprintf(buffer, n, x);
-	#define _fprintf	fprintf	
-	#define NOMEM "NO MEMORY"	
-#endif
+//#else
+//	typedef char _char_t;
+//	#define STR(x) x	
+//	#define LOG_INFO(x, ...) fprintf(stderr, "[INFO] " x "\n", ##__VA_ARGS__)
+//	#define MY_ASSERT(c, x, ...) if (!(x)) { fprintf(stderr, "assertion failed: (%s %s %d) - " x "\n", __FUNCTION__, __FILE__, __LINE__, ##__VA_ARGS__); abort(); }
+//	#define LOG_ERROR(x, ...) fprintf(stderr, "[ERROR] " x "\n", ##__VA_ARGS__)
+//	#define WRITE_STRING(buffer, n, x) snprintf(buffer, n, x);
+//	#define _fprintf	fprintf		
+//	#define NOMEM "NO MEMORY"	
+//#endif
 
 	/*
 	----- END PLATFORM SPECIFIC
@@ -67,17 +66,21 @@ SOME DEFS TO TWEAK FOR EACH PLATFORM */
 typedef int _result_t;
 
 
-/*RANDOM NUMBERS*/
-#define _ITERATIONS_FOR_RANDOM_TEXT 100000
-/* must be freed by caller*/
-reg_t * randNum();
+
+
+#define MAX_OUTER_TIME_FOR_TESTING_SEC 8
+#define _ITERATIONS_FOR_RANDOM_TEXT 20000
+
+
+void randNum(uint_fast64_t * const refState, reg_t * const A, reg_t ASize);
 
 
 typedef struct _test_statistics
 {	
 	double avg_operations_per_second;
 	double number_of_iterations;
-	double absolute_time_sec;
+	double inner_time_sec;
+	double outer_time_sec;
 	_result_t test_result;
 	_char_t  test_description[MAXSTRING];
 }test_statistics;

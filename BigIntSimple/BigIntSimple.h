@@ -4,11 +4,12 @@
 #else
 #define EXTERN extern
 #endif
+#include <stdio.h>
+#include <stdint.h>
+
 /* define _R such that appends L to int literal if necessary to keep portability, 
 but should not be necessary since compiler automatically promote int to longs  */
 #define _R(a) ((reg_t)(a ## L))
-
-
 
 
 typedef unsigned long long reg_t;
@@ -28,7 +29,7 @@ Caller Must check
 	return value position of most significant digit on result (one of MAX(ASIZE,BSIZE)+1 or MAX(ASIZE,BSIZE))
 
 */
-reg_t LongSum(reg_t* A, reg_t ASize, reg_t * B, reg_t BSize, reg_t* R);
+reg_t LongSumWithCarryDetection(reg_t* A, reg_t ASize, reg_t * B, reg_t BSize, reg_t* R);
 
 
 /*
@@ -45,7 +46,8 @@ reg_t LongSub(reg_t* A, reg_t ASize, reg_t * B, reg_t BSize, reg_t* R);
 /*
 	Compare number A and B returns -1 if A < B 0 if A == B and 1 if A > B
 */
-int CompareWithPossibleLeadingZeroes(reg_t*A, reg_t ASize, reg_t*B, reg_t BSize);
+int CompareWithPossibleLeadingZeroes(reg_t * A, reg_t ASize, reg_t * B, reg_t BSize);
 
+int parseFromHex(wchar_t const * const nullTerminatedString, reg_t * const outBuffer, reg_t bufferSizeInWords, reg_t * outNumberSizeInWords);
 
-
+int parseFromByteArrayLittleEndian(unsigned char * input, reg_t sizeOfInput, reg_t * const outBuffer, reg_t bufferSizeInWords, reg_t * outNumberSizeInWords);

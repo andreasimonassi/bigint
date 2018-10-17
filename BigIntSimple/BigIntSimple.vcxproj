@@ -107,6 +107,7 @@
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
+      <StackReserveSize>16000000</StackReserveSize>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -147,6 +148,7 @@
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
+      <StackReserveSize>16000000</StackReserveSize>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
@@ -154,6 +156,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="CCompare.c" />
+    <ClCompile Include="CParse.c" />
     <ClCompile Include="CSum.c" />
     <ClCompile Include="Main.c" />
     <ClCompile Include="stdafx.cpp">

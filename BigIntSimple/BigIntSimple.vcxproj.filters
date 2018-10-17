@@ -51,6 +51,9 @@
     <ClCompile Include="test_bsr.c">
       <Filter>Source Files\test</Filter>
     </ClCompile>
+    <ClCompile Include="CParse.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="BigIntSimple.h">

@@ -70,21 +70,34 @@ void initTest()
 	}
 }
 
-reg_t * randNum(reg_t size)
-{
-	size *= sizeof(reg_t);
-	reg_t i;
-	unsigned char * B;
-	B = malloc(size);
-		
-	MY_ASSERT(B, NOMEM);
-		
-	for (i = 0; i < size; i++)
-	{
-		B[i] = (unsigned char) rand();
-	}
+void randNum(uint_fast64_t * const refState, reg_t * const A, reg_t size)
+{	
+	/*
+	PCR random generator credit O'Neill, Melissa http://www.pcg-random.org/ 
+	*/
+	static uint_fast64_t const multiplier = 6364136223846793005u;
+	static uint_fast64_t const increment = 1442695040888963407u;	// Or an arbitrary odd constant
 
-	return (reg_t*)B;
+	uint_fast32_t i;
+	reg_t sz = size * sizeof(reg_t) / sizeof(uint_fast32_t);
+	uint_fast32_t * B = (uint_fast32_t *) A;
+	uint_fast64_t x;
+	uint_fast32_t y;
+	uint_fast32_t z;
+
+	for (i = 0; i < sz; i++)
+	{
+		x = *refState;
+		uint_fast8_t count = (uint_fast8_t)(x >> 59);
+
+		*refState = x * multiplier + increment;
+		x ^= x >> 18;	
+		x = x >> 27;
+		y = ((uint_fast32_t)x) >> count;
+		z = ((uint_fast32_t)x) << (32 - count);		
+
+		B[i] = y | z;
+	}
 }
 
 static void copystr(_char_t const * const src, _char_t* dest)
@@ -142,8 +155,10 @@ void run_test_repeat(_result_t(*unit_test)(CLOCK_T * out_algorithmExecutionTimin
 
 	LOG_INFO(STR("%s on %s version"), result->test_description, op->implementation_description);
 
+	CLOCK_T overall = precise_clock();
 	CLOCK_T cumulative = clock_zero();
 	CLOCK_T delta = cumulative;
+	CLOCK_T feedbacktimeout = precise_clock();
 
 
 	for (j = 0; j < _ITERATIONS_FOR_RANDOM_TEXT; ++j)
@@ -154,14 +169,30 @@ void run_test_repeat(_result_t(*unit_test)(CLOCK_T * out_algorithmExecutionTimin
 			LOG_ERROR(STR("%s failed on %s"), result->test_description, op->implementation_description);
 			break;
 		}
+
 		cumulative += delta;
+
+		if (seconds_from_clock(precise_clock() - feedbacktimeout) > 2.0)
+		{
+			LOG_INFO(STR("\tITS A LONG OPERATION: %d/%d"), j, _ITERATIONS_FOR_RANDOM_TEXT);
+			feedbacktimeout = precise_clock();
+		}
+		else if (seconds_from_clock(precise_clock() - overall) > MAX_OUTER_TIME_FOR_TESTING_SEC)
+		{
+			LOG_INFO(STR("\tOPERATION TIMEOUT"));
+			break;
+		}
+
 	}
 
-	result->absolute_time_sec = seconds_from_clock(cumulative);
+	overall = precise_clock() - overall;
+
+	result->outer_time_sec = seconds_from_clock(overall);
+	result->inner_time_sec = seconds_from_clock(cumulative);
 	result->number_of_iterations = j;
 
-	if (result->absolute_time_sec > 0)
-		result->avg_operations_per_second = j / result->absolute_time_sec;
+	if (result->inner_time_sec > 0)
+		result->avg_operations_per_second = j / result->inner_time_sec;
 	else
 		result->avg_operations_per_second = 0;
 
@@ -184,24 +215,23 @@ void run_test_single(_result_t(*unit_test)(CLOCK_T * out_algorithmExecutionTimin
 	LOG_INFO(STR("%s on %s version"), result->test_description, op->implementation_description);
 
 	CLOCK_T cumulative = clock_zero();
+	CLOCK_T overall = precise_clock();
 	
-	
+	result->test_result = unit_test(&cumulative, op);
+	if (FAILED(result->test_result))
+	{
+		LOG_ERROR(STR("%s failed on %s"), result->test_description, op->implementation_description);
+		result->number_of_iterations = 0;
+	}
+	else
+		result->number_of_iterations = 1;
 
+	overall = precise_clock() - overall;
+	result->outer_time_sec = seconds_from_clock(overall);
+	result->inner_time_sec = seconds_from_clock(cumulative);
 	
-		result->test_result = unit_test(&cumulative, op);
-		if (FAILED(result->test_result))
-		{
-			LOG_ERROR(STR("%s failed on %s"), result->test_description, op->implementation_description);
-			result->number_of_iterations = 0;
-		}
-		else
-			result->number_of_iterations = 1;
-	
-
-	result->absolute_time_sec = seconds_from_clock(cumulative);
-	
-	if (result->absolute_time_sec > 0)
-		result->avg_operations_per_second = result->number_of_iterations / result->absolute_time_sec;
+	if (result->inner_time_sec > 0)
+		result->avg_operations_per_second = result->number_of_iterations / result->inner_time_sec;
 	else
 		result->avg_operations_per_second = 0;
 
@@ -214,9 +244,9 @@ static void _summary(_char_t const* const impl,  _char_t const * const func, tes
 	for (i = 0; i < op->count; ++i)
 	{
 		struct _test_statistics * item = op->items[i];
-		_fprintf(stdout, STR("\"%s\"\t\"%s\"\t\"%s\"\t%e\t%e\t%e\t\"%s\"\n"),
+		_fprintf(stdout, STR("\"%s\"\t\"%s\"\t\"%s\"\t%e\t%e\t%e\t%e\t\"%s\"\n"),
 			
-			impl, func,  item->test_description , item->absolute_time_sec, item->number_of_iterations, item->avg_operations_per_second, 
+			impl, func,  item->test_description , item->inner_time_sec, item->outer_time_sec, item->number_of_iterations, item->avg_operations_per_second, 
 			
 			(OK(item->test_result) ? STR("ok") : STR("failed"))
 			);
@@ -226,7 +256,7 @@ static void _summary(_char_t const* const impl,  _char_t const * const func, tes
 void write_summary()
 {
 	int i;
-	_fprintf(stdout, STR("\"Implementation\"\t\"Operation\"\t\"Test Description\"\t\"Elapsed Seconds\"\t\"Number Of Iterations\"\t\"Average Op Per Second\"\t\"Result\"\n"));
+	_fprintf(stdout, STR("\"Implementation\"\t\"Operation\"\t\"Test Description\"\t\"Inner Elapsed Seconds\"\t\"Outer Elapsed Seconds\"\t\"Number Of Iterations\"\t\"Average Op Per Second\"\t\"Result\"\n"));
 
 	for (i = 0; i < number_of_arithmetics; ++i)
 	{

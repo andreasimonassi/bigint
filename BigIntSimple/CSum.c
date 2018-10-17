@@ -5,7 +5,7 @@
 /*  Will not check array bounds on R, thus must have space to accomodate MAX(ASIZE,BSIZE)+1 unsigned ints
 	returns length of Result
 */
-reg_t LongSum(reg_t* A, reg_t ASize, reg_t * B, reg_t BSize, reg_t* R)
+reg_t LongSumWithCarryDetection(reg_t* A, reg_t ASize, reg_t * B, reg_t BSize, reg_t* R)
 {
 	register reg_t carry;
 	register reg_t i;
@@ -21,25 +21,37 @@ reg_t LongSum(reg_t* A, reg_t ASize, reg_t * B, reg_t BSize, reg_t* R)
 		++i;
 	}
 
-	while (ASize > i)
+	while (ASize > i && carry == 1)
 	{		
 		R[i] = A[i] + carry;
-		carry = R[i] == 0 ? _R(1) : _R(0);
+		carry = R[i] == _R(0) ? _R(1) : _R(0);
+		++i;
+	}
+
+	while (ASize > i)
+	{
+		R[i] = A[i];
+		++i;
+	}
+
+	while (BSize > i && carry == 1)
+	{	
+		R[i] = B[i] + carry;
+		carry = R[i] == _R(0) ? _R(1) : _R(0);
 		++i;
 	}
 
 	while (BSize > i)
-	{	
-		R[i] = B[i] + carry;
-		carry = R[i] == 0 ? _R(1) : _R(0);
+	{
+		R[i] = B[i];		
 		++i;
 	}
 
 	if (carry)
 	{
 		R[i] = _R(1);
-		return i+1;
+		++i;
 	}
 
-	return i ;
+	return  (reg_t)i;
 }
