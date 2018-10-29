@@ -20,13 +20,21 @@
 
 #define TEST_NUMBER_WORDS 500
 
+
 static reg_t _A[A_REG_WORDS];
 static reg_t _B[B_REG_WORDS];
 static reg_t _R[R_REG_WORDS];
 
-static reg_t _BIG_A[HALF_MEGABYTE_NUMBER_WORDS];
-static reg_t _BIG_B[HALF_MEGABYTE_NUMBER_WORDS];
-static reg_t _BIG_R[HALF_MEGABYTE_NUMBER_WORDS + 1];
+static reg_t _HALF_MEG_A[HALF_MEGABYTE_NUMBER_WORDS];
+static reg_t _HALF_MEG_B[HALF_MEGABYTE_NUMBER_WORDS];
+static reg_t _HALF_MEG_RESULT[HALF_MEGABYTE_NUMBER_WORDS + 1];
+
+static reg_t _TWO_WORDS_A[2];
+static reg_t _TWO_WORDS_B[2];
+
+
+
+
 
 static uint_fast64_t _rand_seed;
 
@@ -127,9 +135,9 @@ static _result_t test_on_1000_unit(CLOCK_T * delta_t,struct _operation_implement
 //SET STACK SIZE TO SOMETHING BIG TO HANDLE THIS USE CASE
 static _result_t test_speed_1_MB_unit(CLOCK_T * delta_t, struct _operation_implementations* impl)
 {	
-	reg_t * A = _BIG_A;
-	reg_t * B = _BIG_B;
-	reg_t * R = _BIG_R;
+	reg_t * A = _HALF_MEG_A;
+	reg_t * B = _HALF_MEG_B;
+	reg_t * R = _HALF_MEG_RESULT;
 
 	randNum(&_rand_seed, A, HALF_MEGABYTE_NUMBER_WORDS);
 	randNum(&_rand_seed, B, HALF_MEGABYTE_NUMBER_WORDS);
@@ -140,6 +148,26 @@ static _result_t test_speed_1_MB_unit(CLOCK_T * delta_t, struct _operation_imple
 
 	return _OK;
 }
+
+//SET STACK SIZE TO SOMETHING BIG TO HANDLE THIS USE CASE
+static _result_t test_speed_512KB_Plus_2Words_unit(CLOCK_T * delta_t, struct _operation_implementations* impl)
+{
+	reg_t * A = _HALF_MEG_A;
+	reg_t * B = _TWO_WORDS_B;
+	reg_t * R = _HALF_MEG_RESULT;
+
+	randNum(&_rand_seed, A, HALF_MEGABYTE_NUMBER_WORDS);
+	randNum(&_rand_seed, B, 2);
+
+	*delta_t = precise_clock();
+	impl->addition(A, HALF_MEGABYTE_NUMBER_WORDS, B, 2, R);
+	*delta_t = precise_clock() - *delta_t;
+
+	return _OK;
+}
+
+
+
 
 static _result_t  test_commutative_prop_unit(CLOCK_T* delta_t, struct _operation_implementations* impl)
 {
@@ -193,6 +221,68 @@ static _result_t  test_commutative_prop_unit(CLOCK_T* delta_t, struct _operation
 
 }
 
+
+
+static _result_t  test_associative_prop_unit(CLOCK_T* delta_t, struct _operation_implementations* impl)
+{
+	_result_t result = _OK;
+	/*the array is in reverse order, less significative on the left...*/
+	reg_t A[TEST_NUMBER_WORDS];
+	reg_t B[TEST_NUMBER_WORDS];
+	reg_t C[TEST_NUMBER_WORDS];
+	reg_t R1[TEST_NUMBER_WORDS + 2];
+	reg_t R2[TEST_NUMBER_WORDS + 2];
+	reg_t R_temp[TEST_NUMBER_WORDS + 2];
+
+	/* Initialization */
+	reg_t ASize = rand() % TEST_NUMBER_WORDS;
+	reg_t BSize = rand() % TEST_NUMBER_WORDS;
+	reg_t CSize = rand() % TEST_NUMBER_WORDS;
+	//reg_t RSize = 1 + (ASize > BSize ? ASize : BSize);
+	reg_t R1Len;
+	reg_t R2Len;
+	reg_t R_tempLen;
+
+	randNum(&_rand_seed, A, ASize);
+	randNum(&_rand_seed, B, BSize);
+	randNum(&_rand_seed, C, CSize);
+
+	*delta_t = precise_clock();
+	R_tempLen = impl->addition(A, ASize, B, BSize, R_temp);
+	R1Len = impl->addition(R_temp, R_tempLen, C, CSize, R1);
+
+	R_tempLen = impl->addition(B, BSize, C, CSize, R_temp);
+	R2Len = impl->addition(R_temp, R_tempLen, A, ASize, R2);
+
+	*delta_t = precise_clock() - *delta_t;
+	if (R1Len != R2Len)
+	{
+		result = _FAIL;
+	}
+	else
+	{
+		int c = CompareWithPossibleLeadingZeroes(R1, R1Len, R2, R2Len);
+		if (c != 0)
+		{
+			result = _FAIL;
+		}
+	}
+
+	/* Cleanup */
+
+	if (FAILED(result))
+	{
+		dumpNumber(R1, STR("ActualResultOfA_plus_B_plus_A"), R1Len);
+		dumpNumber(R2, STR("ActualResultOfB_plus_C_plus_A"), R2Len);
+		dumpNumber(A, STR("A"), ASize);
+		dumpNumber(B, STR("B"), BSize);
+		dumpNumber(B, STR("C"), BSize);
+		LOG_INFO(STR("Associative prop test failed, see dump"));
+	}
+
+	return result;
+
+}
 
 
 _result_t test_zero_is_neutral_element_of_sum(CLOCK_T * delta_t, struct _operation_implementations* impl)
@@ -258,11 +348,12 @@ void testSum()
 	init_test();
 	
 	each_op(test_commutative_prop_unit, 1, STR("Test Commutative Property"));
-	each_op(test_on_1000_unit, 1, STR("Testing that numbers like ff,fe,ff + 1,1 = 1,0,0,0"));
-	each_op(test_speed_1_MB_unit, 1, STR("Testing 1MB of stack allocated numbers"));
-	
+	each_op(test_associative_prop_unit, 1, STR("Test Associative Property"));
 	each_op(test_zero_is_neutral_element_of_sum, 1, STR("Testing zero should be neutral element of sum"));
-	
+
+	each_op(test_on_1000_unit, 1, STR("Testing that numbers like ff,fe,ff + 1,1 = 1,0,0,0"));
+	each_op(test_speed_1_MB_unit, 1, STR("Testing 1MB (512KB+512KB) of data segment allocated numbers"));
+	each_op(test_speed_512KB_Plus_2Words_unit, 1, STR("Testing 512KB+2words of data segment allocated numbers"));	
 }
 
 

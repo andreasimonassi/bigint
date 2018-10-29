@@ -1,6 +1,6 @@
 #include "test.h"
 
-#define TEST_ITERATIONS 1000000
+#define TEST_ITERATIONS 100000
 //#define TEST_ITERATIONS 1
 
 /*testing purposes A_BITS > B_BITS and A_BITS, B_BITS divisible by 64*/
@@ -150,6 +150,11 @@ static _result_t testWellKnownSubtraction(CLOCK_T* delta_t, struct _operation_im
 
 	return result;
 	
+}
+
+static _result_t testSubtractionIsInverseOfSum(CLOCK_T* delta, struct _operation_implementations* impl)
+{
+
 }
 
 
