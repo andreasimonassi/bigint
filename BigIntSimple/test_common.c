@@ -70,6 +70,23 @@ void initTest()
 	}
 }
 
+uint_fast32_t rand32(uint_fast64_t * const refState)
+{
+	/*
+PCR random generator credit O'Neill, Melissa http://www.pcg-random.org/
+*/
+	static uint_fast64_t const multiplier = 6364136223846793005u;
+	static uint_fast64_t const increment = 1442695040888963407u;	// Or an arbitrary odd constant
+	uint_fast64_t x;
+	x = *refState;
+	uint_fast8_t count = (uint_fast8_t)(x >> 59);
+
+	*refState = x * multiplier + increment;
+	x ^= x >> 18;
+	x = x >> 27;
+	return ((uint_fast32_t)x) >> count;
+}
+
 void randNum(uint_fast64_t * const refState, reg_t * const A, reg_t size)
 {	
 	/*
@@ -153,7 +170,7 @@ void run_test_repeat(_result_t(*unit_test)(CLOCK_T * out_algorithmExecutionTimin
 
 	result->test_result = _OK;
 
-	LOG_INFO(STR("%s on %s version"), result->test_description, op->implementation_description);
+	LOG_INFO(STR("%s on %s version..."), result->test_description, op->implementation_description);
 
 	CLOCK_T overall = precise_clock();
 	CLOCK_T cumulative = clock_zero();
@@ -161,20 +178,19 @@ void run_test_repeat(_result_t(*unit_test)(CLOCK_T * out_algorithmExecutionTimin
 	CLOCK_T feedbacktimeout = precise_clock();
 
 
-	for (j = 0; j < _ITERATIONS_FOR_RANDOM_TEXT; ++j)
+	for (j = 0; j < _ITERATIONS_FOR_RANDOM_TEST; ++j)
 	{
 		result->test_result = unit_test(&delta, op);
 		if (FAILED(result->test_result))
-		{
-			LOG_ERROR(STR("%s failed on %s"), result->test_description, op->implementation_description);
+		{			
 			break;
-		}
+		}		
 
 		cumulative += delta;
 
 		if (seconds_from_clock(precise_clock() - feedbacktimeout) > 2.0)
 		{
-			LOG_INFO(STR("\tITS A LONG OPERATION: %d/%d"), j, _ITERATIONS_FOR_RANDOM_TEXT);
+			LOG_INFO(STR("\tITS A LONG OPERATION: %d/%d"), j, _ITERATIONS_FOR_RANDOM_TEST);
 			feedbacktimeout = precise_clock();
 		}
 		else if (seconds_from_clock(precise_clock() - overall) > MAX_OUTER_TIME_FOR_TESTING_SEC)
@@ -182,8 +198,16 @@ void run_test_repeat(_result_t(*unit_test)(CLOCK_T * out_algorithmExecutionTimin
 			LOG_INFO(STR("\tOPERATION TIMEOUT"));
 			break;
 		}
-
 	}
+	if (FAILED(result->test_result))
+	{
+		LOG_INFO(STR("...FAILED"));
+	}
+	else
+	{
+		LOG_INFO(STR("...PASSED"));
+	}
+	
 
 	overall = precise_clock() - overall;
 
@@ -197,6 +221,8 @@ void run_test_repeat(_result_t(*unit_test)(CLOCK_T * out_algorithmExecutionTimin
 		result->avg_operations_per_second = 0;
 
 	test_statistics_collection_ADD(destination_array, result);
+
+	
 
 }
 
@@ -220,11 +246,14 @@ void run_test_single(_result_t(*unit_test)(CLOCK_T * out_algorithmExecutionTimin
 	result->test_result = unit_test(&cumulative, op);
 	if (FAILED(result->test_result))
 	{
-		LOG_ERROR(STR("%s failed on %s"), result->test_description, op->implementation_description);
+		LOG_INFO(STR("...FAILED"));	
 		result->number_of_iterations = 0;
 	}
 	else
+	{
+		LOG_INFO(STR("...PASSED"));
 		result->number_of_iterations = 1;
+	}
 
 	overall = precise_clock() - overall;
 	result->outer_time_sec = seconds_from_clock(overall);
@@ -238,17 +267,32 @@ void run_test_single(_result_t(*unit_test)(CLOCK_T * out_algorithmExecutionTimin
 	test_statistics_collection_ADD(destination_array, result);
 }
 
-static void _summary(_char_t const* const impl,  _char_t const * const func, test_statistics_collection const *const op)
+static void _summary(
+	_char_t const * const impl, 
+	_char_t const * const func, 
+	test_statistics_collection const *const op, 
+	test_statistics_collection const *const referenceOp)
 {
 	int i;
 	for (i = 0; i < op->count; ++i)
 	{
 		struct _test_statistics * item = op->items[i];
-		_fprintf(stdout, STR("\"%s\"\t\"%s\"\t\"%s\"\t%e\t%e\t%e\t%e\t\"%s\"\n"),
+		struct _test_statistics * reference = referenceOp->items[i];
+		double relative_inner_time = 0.0;
+		double relative_outer_time = 0.0;
+
+		if (reference->inner_time_sec != 0)
+			relative_inner_time =  item->inner_time_sec / reference->inner_time_sec;
+		if (reference->outer_time_sec != 0)
+			relative_outer_time =  item->outer_time_sec / reference->outer_time_sec;
+
+		_fprintf(stdout, STR("\"%s\"\t\"%s\"\t\"%s\"\t%e\t%e\t%e\t%e\t\"%s\"\t%e\t%e\n"),
 			
-			impl, func,  item->test_description , item->inner_time_sec, item->outer_time_sec, item->number_of_iterations, item->avg_operations_per_second, 
-			
-			(OK(item->test_result) ? STR("ok") : STR("failed"))
+			impl, func,  item->test_description , item->inner_time_sec, item->outer_time_sec,
+			item->number_of_iterations, item->avg_operations_per_second, 			
+			(OK(item->test_result) ? STR("ok") : STR("failed")),
+			relative_inner_time, 
+			relative_outer_time
 			);
 	}
 }
@@ -256,15 +300,15 @@ static void _summary(_char_t const* const impl,  _char_t const * const func, tes
 void write_summary()
 {
 	int i;
-	_fprintf(stdout, STR("\"Implementation\"\t\"Operation\"\t\"Test Description\"\t\"Inner Elapsed Seconds\"\t\"Outer Elapsed Seconds\"\t\"Number Of Iterations\"\t\"Average Op Per Second\"\t\"Result\"\n"));
+	_fprintf(stdout, STR("\"Implementation\"\t\"Operation\"\t\"Test Description\"\t\"Inner Elapsed Seconds\"\t\"Outer Elapsed Seconds\"\t\"Number Of Iterations\"\t\"Average Op Per Second\"\t\"Result\"\t\"Relative inner time\"\t\"Relative outer time\"\n"));
 
 	for (i = 0; i < number_of_arithmetics; ++i)
 	{
 		_char_t * impl = arithmetics[i].implementation_description;
-		_summary(impl, STR("Addition"), &(arithmetics[i].addition_test_results));
-		_summary(impl,STR("Subtraction"), &(arithmetics[i].subtraction_test_results));
-		_summary(impl, STR("Multiplication"), &(arithmetics[i].multiplication_test_results));
-		_summary(impl, STR("Division"), &(arithmetics[i].division_test_results));
+		_summary(impl, STR("Addition"), &(arithmetics[i].addition_test_results), &(arithmetics[0].addition_test_results));
+		_summary(impl,STR("Subtraction"), &(arithmetics[i].subtraction_test_results), &(arithmetics[0].subtraction_test_results));
+		_summary(impl, STR("Multiplication"), &(arithmetics[i].multiplication_test_results), &(arithmetics[0].multiplication_test_results));
+		_summary(impl, STR("Division"), &(arithmetics[i].division_test_results), &(arithmetics[0].division_test_results));
 	}
 }
 

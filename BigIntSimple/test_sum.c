@@ -1,6 +1,5 @@
 #include "test.h"
 
-#define TEST_ITERATIONS 100000
 //#define TEST_ITERATIONS 1
 
 /*testing purposes A_BITS > B_BITS and A_BITS, B_BITS divisible by 64*/
@@ -86,13 +85,15 @@ static void each_op(_result_t(*unit_test)(CLOCK_T* outElapsedTime, struct _opera
 	)
 {
 
-	_rand_seed = 0x4d595df4d0f33173; //deterministic , i want all tests to be reproducible
-	srand((unsigned int)_rand_seed);
+	
 
 	for (int i = 0; i < number_of_arithmetics; ++i)
 	{
 		if (arithmetics[i].addition == NULL)
 			continue;
+
+		_rand_seed = 0x4d595df4d0f33173; //deterministic , i want all tests to be reproducible
+		srand((unsigned int)_rand_seed);
 
 		if (boolRepeat)
 		{
@@ -166,7 +167,46 @@ static _result_t test_speed_512KB_Plus_2Words_unit(CLOCK_T * delta_t, struct _op
 	return _OK;
 }
 
+static _result_t test_last_carry(CLOCK_T * delta_t, struct _operation_implementations * impl)
+{
+	_result_t result = _OK;
+	reg_t A[] = {_R(-1)};
 
+	reg_t B[] = {_R(1)};
+
+	reg_t RExpected[] = {_R(0),_R(1)};
+	reg_t Actual[] = { _R(0),_R(0) };
+
+	reg_t ActualLen;
+
+	*delta_t = precise_clock();
+	ActualLen = impl->addition(A, 1, B, 1, Actual);
+	*delta_t = precise_clock() - *delta_t;
+
+	if (ActualLen != 2 )
+	{
+		result = _FAIL;
+	}
+	else
+	{
+		int c = CompareWithPossibleLeadingZeroes(Actual, 2, RExpected, 2);
+		if (c != 0)
+		{
+			result = _FAIL;
+		}
+	}
+	if (FAILED(result))
+	{
+		
+		dumpNumber(A, STR("A"), 1);
+		dumpNumber(B, STR("B"), 1);
+		dumpNumber(RExpected, STR("ExpectedResult"), 2);
+		dumpNumber(Actual, STR("ActualResult"), ActualLen);
+		LOG_INFO(STR("Last carry test failed, see dump"));
+	}
+
+	return result;
+}
 
 
 static _result_t  test_commutative_prop_unit(CLOCK_T* delta_t, struct _operation_implementations* impl)
@@ -221,8 +261,6 @@ static _result_t  test_commutative_prop_unit(CLOCK_T* delta_t, struct _operation
 
 }
 
-
-
 static _result_t  test_associative_prop_unit(CLOCK_T* delta_t, struct _operation_implementations* impl)
 {
 	_result_t result = _OK;
@@ -272,11 +310,11 @@ static _result_t  test_associative_prop_unit(CLOCK_T* delta_t, struct _operation
 
 	if (FAILED(result))
 	{
-		dumpNumber(R1, STR("ActualResultOfA_plus_B_plus_A"), R1Len);
+		dumpNumber(R1, STR("ActualResultOfA_plus_B_plus_C"), R1Len);
 		dumpNumber(R2, STR("ActualResultOfB_plus_C_plus_A"), R2Len);
 		dumpNumber(A, STR("A"), ASize);
 		dumpNumber(B, STR("B"), BSize);
-		dumpNumber(B, STR("C"), BSize);
+		dumpNumber(C, STR("C"), CSize);
 		LOG_INFO(STR("Associative prop test failed, see dump"));
 	}
 
@@ -347,13 +385,20 @@ void testSum()
 	
 	init_test();
 	
-	each_op(test_commutative_prop_unit, 1, STR("Test Commutative Property"));
-	each_op(test_associative_prop_unit, 1, STR("Test Associative Property"));
-	each_op(test_zero_is_neutral_element_of_sum, 1, STR("Testing zero should be neutral element of sum"));
+	
+	each_op(test_zero_is_neutral_element_of_sum, 1, STR("SUM: Testing zero should be neutral element of sum"));
 
-	each_op(test_on_1000_unit, 1, STR("Testing that numbers like ff,fe,ff + 1,1 = 1,0,0,0"));
-	each_op(test_speed_1_MB_unit, 1, STR("Testing 1MB (512KB+512KB) of data segment allocated numbers"));
-	each_op(test_speed_512KB_Plus_2Words_unit, 1, STR("Testing 512KB+2words of data segment allocated numbers"));	
+	each_op(test_on_1000_unit, 1, STR("SUM: Testing that numbers like ff,fe,ff + 1,1 = 1,0,0,0"));
+	each_op(test_speed_1_MB_unit, 1, STR("SUM: Testing 1MB (512KB+512KB) of data segment allocated numbers"));
+	each_op(test_speed_512KB_Plus_2Words_unit, 1, STR("SUM: Testing 512KB+2words of data segment allocated numbers"));	
+	
+	each_op(test_commutative_prop_unit, 1, STR("SUM: Test Commutative Property"));
+	each_op(test_associative_prop_unit, 1, STR("SUM: Test Associative Property"));
+
+	each_op(test_last_carry, 0, STR("SUM: Testing last carry (1 + allonebits equals to 1 followed by all zero bits)"));
+	
+
+
 }
 
 

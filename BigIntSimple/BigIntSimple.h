@@ -12,13 +12,30 @@ but should not be necessary since compiler automatically promote int to longs  *
 #define _R(a) ((reg_t)(a ## L))
 
 
-typedef unsigned long long reg_t;
+typedef uint64_t reg_t;
+
+typedef union
+{
+	uint64_t dword;
+	struct
+	{
+		uint32_t L; //little endian
+		uint32_t H;
+	} Pair;
+} _multiply_t;
+
+
+
+
+
 
 /*
 Will not check array bounds on R, thus must have space to accomodate MAX(ASIZEInBytes,BSIZEInBytes)+1 bytes
 */
 
 EXTERN reg_t LongSumAsm(reg_t * A, reg_t ASize, reg_t * B, reg_t BSize, reg_t* R);
+EXTERN reg_t LongSubAsm(reg_t * A, reg_t ASize, reg_t * B, reg_t BSize, reg_t* R);
+EXTERN reg_t LongSubAsmVariant_1(reg_t * A, reg_t ASize, reg_t * B, reg_t BSize, reg_t* R);
 EXTERN reg_t BitScanReverse(reg_t A);
 
 

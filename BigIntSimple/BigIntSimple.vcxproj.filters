@@ -51,6 +51,9 @@
     <ClCompile Include="CParse.c">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="CMul.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="BigIntSimple.h">
@@ -68,6 +71,12 @@
       <Filter>Source Files</Filter>
     </MASM>
     <MASM Include="BSR.asm">
+      <Filter>Source Files</Filter>
+    </MASM>
+    <MASM Include="Sub.asm">
+      <Filter>Source Files</Filter>
+    </MASM>
+    <MASM Include="Sub2.asm">
       <Filter>Source Files</Filter>
     </MASM>
   </ItemGroup>

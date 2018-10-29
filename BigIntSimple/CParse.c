@@ -1,6 +1,8 @@
 #include "BigIntSimple.h"
 #include <stdio.h>
-
+/*
+TODO: tests, don't use this until not tested
+*/
 #define _OK 0
 #define _FAIL 1
 #define OK(x) (x==0)

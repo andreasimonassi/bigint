@@ -42,8 +42,8 @@ LongSumAsm proc
 	A_And_B_Loop:							; while (ASize > i && BSize > i)				
 		cmp r11, r9							; compare MinSize (r11) and array index (r9)
 		jle A_And_B_Loop_Ends				; if index >= minsize quit loop
-		mov rbx, qword ptr [rcx + r9]	; A[index] in rbx
-		mov rdx, qword ptr [r8 + r9]	; B[index] in r11
+		mov rbx, qword ptr [rcx + r9]	    ; A[index] in rbx
+		mov rdx, qword ptr [r8 + r9]	    ; B[index] in r11
 		sahf								; reload flags from rax
 		adc rbx, rdx						; add with carry A[index] + B[index]
 		
@@ -105,9 +105,13 @@ LongSumAsm proc
 	B_Only_Loop_Ends:
 	
 	sahf									; reload flags into flag registers
-	adc r11, r11							; add with carry 0 + 0 (last carry in r11)
+	jnc Prepare_to_return 
+	mov r11, 1							; add with carry 0 + 0 (last carry in r11)	
 	mov qword ptr[r10 + r9], r11;       ; store the last carry flag into R[index]
+	add r9, 8
+
 									; return value
+	Prepare_to_return:
 	mov rax, r9
 	shr rax, 3
 

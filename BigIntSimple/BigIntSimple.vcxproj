@@ -156,6 +156,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="CCompare.c" />
+    <ClCompile Include="CMul.c" />
     <ClCompile Include="CParse.c" />
     <ClCompile Include="CSum.c" />
     <ClCompile Include="Main.c" />
@@ -179,6 +180,8 @@
   </ItemGroup>
   <ItemGroup>
     <MASM Include="BSR.asm" />
+    <MASM Include="Sub.asm" />
+    <MASM Include="Sub2.asm" />
     <MASM Include="Sum.asm">
       <FileType>Document</FileType>
     </MASM>

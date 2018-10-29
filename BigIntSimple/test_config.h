@@ -5,16 +5,23 @@ struct _operation_implementations
 /* describe here your impl */
 arithmetics[] = {
 	{
-		STR("C Version (carry detection)"),
-		LongSum,
+		STR("C (Reference impl)"),
+		LongSumWithCarryDetection,
 		LongSub,
 		NULL,
 		NULL
 	},
 	{
-		STR("Assemly version"),
+		STR("Assembler (x64)"),
 		LongSumAsm,
+		LongSubAsm,
 		NULL,
+		NULL
+	},
+	{
+		STR("Assembler (x64, variant 1)"),
+		NULL,
+		LongSubAsmVariant_1,
 		NULL,
 		NULL
 	},

@@ -68,12 +68,12 @@ typedef int _result_t;
 
 
 
-#define MAX_OUTER_TIME_FOR_TESTING_SEC 8
-#define _ITERATIONS_FOR_RANDOM_TEXT 20000
+#define MAX_OUTER_TIME_FOR_TESTING_SEC 300
+#define _ITERATIONS_FOR_RANDOM_TEST 10000
 
 
 void randNum(uint_fast64_t * const refState, reg_t * const A, reg_t ASize);
-
+uint_fast32_t rand32(uint_fast64_t * const refState);
 
 typedef struct _test_statistics
 {	
@@ -94,6 +94,8 @@ typedef struct _test_statistics_collection
 
 typedef  reg_t(*_arithm_func) (reg_t* A, reg_t ASize, reg_t * B, reg_t BSize, reg_t* R) ;
 
+typedef reg_t(*operation) (reg_t* A, reg_t ASize, reg_t * B, reg_t BSize, reg_t* R) ;
+
 /* this structure holds all of our different implementation so it can 
    compare all the possible implementations for speed
 */
@@ -103,10 +105,10 @@ struct _operation_implementations
 	_char_t * implementation_description;
 
 	/* the arithmetic functions being tested, make it null if not (yet) supported by your impl*/
-	reg_t(*addition) (reg_t* A, reg_t ASize, reg_t * B, reg_t BSize, reg_t* R);
-	reg_t(*subtraction) (reg_t* A, reg_t ASize, reg_t * B, reg_t BSize, reg_t* R);
-	reg_t(*multiplication)(reg_t* A, reg_t ASize, reg_t * B, reg_t BSize, reg_t* R);
-	reg_t(*division)(reg_t* A, reg_t ASize, reg_t * B, reg_t BSize, reg_t* R);
+	operation addition;
+	operation subtraction;
+	operation multiplication;
+	operation division;
 
 	/* count how many tests results are available for each operation */	
 
@@ -115,6 +117,7 @@ struct _operation_implementations
 	test_statistics_collection  multiplication_test_results;
 	test_statistics_collection  division_test_results;
 };
+
 
 extern struct _operation_implementations arithmetics[];
 extern int number_of_arithmetics;
@@ -132,6 +135,8 @@ void run_test_single(_result_t(*unit_test)(CLOCK_T * out_algorithmExecutionTimin
 	struct _operation_implementations* op,
 	test_statistics_collection * destination_array,
 	_char_t const * const test_description);
+
+
 
 void initTest();
 void testCompare();
