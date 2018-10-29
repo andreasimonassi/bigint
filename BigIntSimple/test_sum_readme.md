@@ -79,7 +79,7 @@ Note that the **each_op** function will collect all the tests results and timing
 ```
 
 ## A note about random numbers
-We do not want numbers to be too much "random" so the **each_op** function will reseed the pseudo random generator at each call, so that each implementation is called always with the same set of random numbers, this way the tests will be comparable.
+We do not want numbers to be too much "random" so the **each_op** function will reseed the pseudo random generator at each call, so that each implementation is called always with the same set of random numbers, this way the tests will be reproducible.
 
 for example the commutative property check function generate pseudo random values that are predictable in this way:
 ```c
@@ -104,6 +104,8 @@ for example the commutative property check function generate pseudo random value
 	randNum(&_rand_seed, A, ASize);
 	randNum(&_rand_seed, B, BSize);
 ```
+
+the randNum produce pseudo random numbers with (hopefully) hig entropy, so if you need lot of zeroes in your random number create your own randomize function, but please make it in a way that results are reproducible (either use the _rand_seed as seed or create your own seed and reset it each time the each_op is called)
 
 ## Make a test run once or run many times
 Second parameter of each op is an int value, when it is 0 then the test is run once (for example a test using well known numbers or a very heavy test), otherwise the test is run in a loop (for example when you run tests on random numbers) 
