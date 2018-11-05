@@ -1,9 +1,9 @@
 #include "BigIntSimple.h"
 
 
-int CompareWithPossibleLeadingZeroes(reg_t *A, reg_t ASize, reg_t*B, reg_t BSize)
+int CompareWithPossibleLeadingZeroes(reg_t *A, numsize_t ASize, reg_t*B, numsize_t BSize)
 {
-	reg_t i = (ASize > BSize ? ASize : BSize) ;
+	numsize_t i = (ASize > BSize ? ASize : BSize) ;
 
 	while (i > BSize) // ignore leading zeroes
 	{

@@ -8,7 +8,7 @@ arithmetics[] = {
 		STR("C (Reference impl)"),
 		LongSumWithCarryDetection,
 		LongSub,
-		NULL,
+		LongMultiplication,
 		NULL
 	},
 	{

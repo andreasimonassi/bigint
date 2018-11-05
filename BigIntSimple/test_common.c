@@ -34,11 +34,11 @@ static wchar_t* printHex(reg_t x, wchar_t * buffer)
 	return buffercopy;
 }
 #endif
-void dumpNumber(reg_t * A, _char_t* name,  reg_t ASize)
+void dumpNumber(reg_t * A, _char_t* name, numsize_t ASize)
 {
 	_char_t buffer[sizeof(reg_t) * 2 + 1];
 	_fprintf(stderr, STR("\nreg_t %s [] = {\n"), name);
-	for (reg_t i = 0; i < ASize; ++i)
+	for (numsize_t i = 0; i < ASize; ++i)
 	{
 		if (i != 0)
 		{
@@ -87,7 +87,7 @@ PCR random generator credit O'Neill, Melissa http://www.pcg-random.org/
 	return ((uint_fast32_t)x) >> count;
 }
 
-void randNum(uint_fast64_t * const refState, reg_t * const A, reg_t size)
+void randNum(uint_fast64_t * const refState, reg_t * const A, numsize_t size)
 {	
 	/*
 	PCR random generator credit O'Neill, Melissa http://www.pcg-random.org/ 
@@ -95,8 +95,8 @@ void randNum(uint_fast64_t * const refState, reg_t * const A, reg_t size)
 	static uint_fast64_t const multiplier = 6364136223846793005u;
 	static uint_fast64_t const increment = 1442695040888963407u;	// Or an arbitrary odd constant
 
-	uint_fast32_t i;
-	reg_t sz = size * sizeof(reg_t) / sizeof(uint_fast32_t);
+	numsize_t i;
+	numsize_t sz = size * sizeof(reg_t) / sizeof(uint_fast32_t);
 	uint_fast32_t * B = (uint_fast32_t *) A;
 	uint_fast64_t x;
 	uint_fast32_t y;
@@ -119,7 +119,7 @@ void randNum(uint_fast64_t * const refState, reg_t * const A, reg_t size)
 
 static void copystr(_char_t const * const src, _char_t* dest)
 {
-	int i = 0;
+	numsize_t i = 0;
 	for (i = 0; i < MAXSTRING; ++i)
 	{
 		dest[i] = src[i];

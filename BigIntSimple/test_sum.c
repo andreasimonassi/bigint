@@ -41,8 +41,8 @@ static int shouldBeAllZeroesExceptMSD(reg_t *);
 
 static _result_t shouldBeAllZeroesExceptMSD(reg_t * R)
 {
-	int i;
-	int k = R_REG_WORDS;
+	numsize_t i;
+	numsize_t k = R_REG_WORDS;
 	for (i = 0; i < k - 1; i++)
 	{
 		if (R[i] != _R(0))
@@ -59,7 +59,7 @@ static _result_t shouldBeAllZeroesExceptMSD(reg_t * R)
 
 static void init_test()
 {
-	int i;
+	numsize_t i;
 	
 	_A[0] = _R(-1);
 
@@ -80,7 +80,8 @@ static void init_test()
 }
 
 
-static void each_op(_result_t(*unit_test)(CLOCK_T* outElapsedTime, struct _operation_implementations*), int boolRepeat,
+static void each_op(_result_t(*unit_test)(CLOCK_T* outElapsedTime, 
+	struct _operation_implementations*), int boolRepeat,
 	_char_t const * const test_description
 	)
 {
@@ -113,7 +114,7 @@ static _result_t test_on_1000_unit(CLOCK_T * delta_t,struct _operation_implement
 	
 	_result_t result = _OK;
 
-	reg_t ndigits;
+	numsize_t ndigits;
 	*delta_t = precise_clock();
 	ndigits = impl->addition(_A, A_REG_WORDS, _B, B_REG_WORDS, _R);
 	*delta_t = precise_clock() - *delta_t;
@@ -177,7 +178,7 @@ static _result_t test_last_carry(CLOCK_T * delta_t, struct _operation_implementa
 	reg_t RExpected[] = {_R(0),_R(1)};
 	reg_t Actual[] = { _R(0),_R(0) };
 
-	reg_t ActualLen;
+	numsize_t ActualLen;
 
 	*delta_t = precise_clock();
 	ActualLen = impl->addition(A, 1, B, 1, Actual);
@@ -219,11 +220,11 @@ static _result_t  test_commutative_prop_unit(CLOCK_T* delta_t, struct _operation
 	reg_t R2[TEST_NUMBER_WORDS+1];
 
 	/* Initialization */
-	reg_t ASize = rand() % TEST_NUMBER_WORDS;
-	reg_t BSize = rand() % TEST_NUMBER_WORDS;
+	numsize_t ASize = rand() % TEST_NUMBER_WORDS;
+	numsize_t BSize = rand() % TEST_NUMBER_WORDS;
 	//reg_t RSize = 1 + (ASize > BSize ? ASize : BSize);
-	reg_t R1Len;
-	reg_t R2Len;
+	numsize_t R1Len;
+	numsize_t R2Len;
 
 	randNum(&_rand_seed, A, ASize);
 	randNum(&_rand_seed, B, BSize);
@@ -273,13 +274,13 @@ static _result_t  test_associative_prop_unit(CLOCK_T* delta_t, struct _operation
 	reg_t R_temp[TEST_NUMBER_WORDS + 2];
 
 	/* Initialization */
-	reg_t ASize = rand() % TEST_NUMBER_WORDS;
-	reg_t BSize = rand() % TEST_NUMBER_WORDS;
-	reg_t CSize = rand() % TEST_NUMBER_WORDS;
+	numsize_t ASize = rand() % TEST_NUMBER_WORDS;
+	numsize_t BSize = rand() % TEST_NUMBER_WORDS;
+	numsize_t CSize = rand() % TEST_NUMBER_WORDS;
 	//reg_t RSize = 1 + (ASize > BSize ? ASize : BSize);
-	reg_t R1Len;
-	reg_t R2Len;
-	reg_t R_tempLen;
+	numsize_t R1Len;
+	numsize_t R2Len;
+	numsize_t R_tempLen;
 
 	randNum(&_rand_seed, A, ASize);
 	randNum(&_rand_seed, B, BSize);
@@ -335,12 +336,12 @@ _result_t test_zero_is_neutral_element_of_sum(CLOCK_T * delta_t, struct _operati
 	reg_t R2[TEST_NUMBER_WORDS +1];
 
 	/* Initialization */
-	reg_t ASize = 0;
-	reg_t BSize = rand() % TEST_NUMBER_WORDS;
+	numsize_t ASize = 0;
+	numsize_t BSize = rand() % TEST_NUMBER_WORDS;
 	//reg_t RSize = 1 + (ASize > BSize ? ASize : BSize);
 
-	reg_t R1Len;
-	reg_t R2Len;
+	numsize_t R1Len;
+	numsize_t R2Len;
 
 	int c;
 

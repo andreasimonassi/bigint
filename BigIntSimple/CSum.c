@@ -5,10 +5,10 @@
 /*  Will not check array bounds on R, thus must have space to accomodate MAX(ASIZE,BSIZE)+1 unsigned ints
 	returns length of Result
 */
-reg_t LongSumWithCarryDetection(reg_t* A, reg_t ASize, reg_t * B, reg_t BSize, reg_t* R)
+numsize_t LongSumWithCarryDetection(reg_t* A, numsize_t ASize, reg_t * B, numsize_t BSize, reg_t* R)
 {
 	register reg_t carry;
-	register reg_t i;
+	register numsize_t i;
 	reg_t min_a_b = ASize > BSize ? BSize : ASize;
 
 	carry = i = 0;

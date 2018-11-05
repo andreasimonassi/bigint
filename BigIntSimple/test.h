@@ -63,7 +63,7 @@ SOME DEFS TO TWEAK FOR EACH PLATFORM */
 #define _FAIL 1
 #define OK(x) (x==0)
 #define FAILED(x) (x!=0)
-typedef int _result_t;
+
 
 
 
@@ -72,7 +72,7 @@ typedef int _result_t;
 #define _ITERATIONS_FOR_RANDOM_TEST 10000
 
 
-void randNum(uint_fast64_t * const refState, reg_t * const A, reg_t ASize);
+void randNum(uint_fast64_t * const refState, reg_t * const A, numsize_t ASize);
 uint_fast32_t rand32(uint_fast64_t * const refState);
 
 typedef struct _test_statistics
@@ -92,9 +92,9 @@ typedef struct _test_statistics_collection
 	test_statistics ** items;
 }test_statistics_collection;
 
-typedef  reg_t(*_arithm_func) (reg_t* A, reg_t ASize, reg_t * B, reg_t BSize, reg_t* R) ;
+typedef  reg_t(*_arithm_func) (reg_t* A, numsize_t ASize, reg_t * B, numsize_t BSize, reg_t* R) ;
 
-typedef reg_t(*operation) (reg_t* A, reg_t ASize, reg_t * B, reg_t BSize, reg_t* R) ;
+typedef numsize_t(*operation) (reg_t* A, numsize_t ASize, reg_t * B, numsize_t BSize, reg_t* R) ;
 
 /* this structure holds all of our different implementation so it can 
    compare all the possible implementations for speed
@@ -122,7 +122,7 @@ struct _operation_implementations
 extern struct _operation_implementations arithmetics[];
 extern int number_of_arithmetics;
 
-void dumpNumber(reg_t * A, _char_t* name, reg_t ASize);
+void dumpNumber(reg_t * A, _char_t* name, numsize_t ASize);
 
 void run_test_repeat(_result_t(*unit_test)(CLOCK_T * out_algorithmExecutionTiming, struct _operation_implementations*),
 	struct _operation_implementations* op,
@@ -142,6 +142,7 @@ void initTest();
 void testCompare();
 void testSum();
 void testSub();
+void testMul();
 void testBSR();
 
 void write_summary();

@@ -10,7 +10,7 @@ TODO: tests, don't use this until not tested
 
 
 #define _HEXTODEC(c) (((c) >= L'0' && (c) <= L'9') ? (c) - L'0' : (((c) >= 'A' && (c) <= 'F') ? (c) - L'A' + 10 : ((c)>='a' && (c)<='f') ? (c) - L'a' - 10 : -1))
-int parseFromHex(wchar_t const * const nullTerminatedString, reg_t * const outBuffer, reg_t bufferSizeInWords, reg_t * outNumberSizeInWords )
+int parseFromHex(wchar_t const * const nullTerminatedString, reg_t * const outBuffer, numsize_t bufferSizeInWords, numsize_t * outNumberSizeInWords )
 {	
 	const int word_bytes = sizeof(reg_t);
 	reg_t strSize = 0;
@@ -72,11 +72,11 @@ int parseFromHex(wchar_t const * const nullTerminatedString, reg_t * const outBu
 	return _OK;
 }
 
-int parseFromByteArrayLittleEndian(unsigned char* input, reg_t sizeOfInput, reg_t * const outBuffer, reg_t bufferSizeInWords, reg_t * outNumberSizeInWords)
+_result_t parseFromByteArrayLittleEndian(unsigned char* input, numsize_t sizeOfInput, reg_t * const outBuffer, numsize_t bufferSizeInWords, numsize_t * outNumberSizeInWords)
 {
-	const int word_bytes = sizeof(reg_t);
-	int nextWord = 0;
-	int nextByte = 0;
+	const unsigned short word_bytes = sizeof(reg_t);
+	numsize_t nextWord = 0;
+	numsize_t nextByte = 0;
 	int c;
 	*outNumberSizeInWords = 0;
 
@@ -91,7 +91,7 @@ int parseFromByteArrayLittleEndian(unsigned char* input, reg_t sizeOfInput, reg_
 		return _FAIL;
 
 	outBuffer[nextWord] = _R(0);
-	int i = 0;
+	numsize_t i = 0;
 	while (i < sizeOfInput)
 	{		
 		c = input[i];

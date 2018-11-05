@@ -40,7 +40,7 @@ static reg_t _TWO_WORDS_B[2];
 static reg_t * initA();
 static reg_t * initB();
 static reg_t * expected();
-static int expected_digits = 1;
+static numsize_t expected_digits = 1;
 
 static void each_op(_result_t(*unit_test)(CLOCK_T* outAlgorithmElapsedTime, struct _operation_implementations*), int boolRepeat,
 	 _char_t const * const test_description
@@ -75,7 +75,7 @@ static void each_op(_result_t(*unit_test)(CLOCK_T* outAlgorithmElapsedTime, stru
 static reg_t * initA()
 {
 
-	int i;
+	numsize_t i;
 	reg_t * A;
 
 	A = malloc(A_BYTES);
@@ -92,7 +92,7 @@ static reg_t * initA()
 
 static reg_t * expected()
 {
-	int i;
+	numsize_t i;
 	reg_t * A;
 
 	A = malloc(A_BYTES);
@@ -115,7 +115,7 @@ static reg_t * expected()
 
 static reg_t * initB()
 {
-	int i;
+	numsize_t i;
 	reg_t * B;
 	B = malloc(B_BYTES);
 	if (!B)
@@ -127,12 +127,12 @@ static reg_t * initB()
 	return B;
 }
 
-static void init_A_B_Big(reg_t ** outA, reg_t * outASize, reg_t ** outB, reg_t * outBSize, reg_t ** outR)
+static void init_A_B_Big(reg_t ** outA, numsize_t * outASize, reg_t ** outB, numsize_t * outBSize, reg_t ** outR)
 {
 
-	reg_t ASize = rand32(&_rand_seed_2) % HALF_MEGABYTE_NUMBER_WORDS;
-	reg_t BSize = rand32(&_rand_seed_2) % HALF_MEGABYTE_NUMBER_WORDS;
-	reg_t temp;
+	numsize_t ASize = 1+rand32(&_rand_seed_2) % (HALF_MEGABYTE_NUMBER_WORDS - 1);
+	numsize_t BSize = 1+rand32(&_rand_seed_2) % (HALF_MEGABYTE_NUMBER_WORDS-1);
+	numsize_t temp;
 
 	/*ensure A >= B*/
 	if (ASize < BSize)
@@ -169,9 +169,9 @@ static _result_t speedTestSubtraction512KB(CLOCK_T* delta_t, struct _operation_i
 	reg_t * A;
 	reg_t * B;
 	reg_t * R;
-	reg_t ASize;
-	reg_t BSize;
-	reg_t RSize;
+	numsize_t ASize;
+	numsize_t BSize;
+	numsize_t RSize;
 	init_A_B_Big(&A, &ASize, &B, &BSize, &R);
 
 	*delta_t = precise_clock();
@@ -201,7 +201,7 @@ static _result_t testWellKnownSubtraction(CLOCK_T* delta_t, struct _operation_im
 	
 	/* Testing C version */
 	*delta_t = precise_clock();
-	reg_t n = impl->subtraction(A, A_REG_WORDS, B, B_REG_WORDS, R);
+	numsize_t n = impl->subtraction(A, A_REG_WORDS, B, B_REG_WORDS, R);
 	*delta_t = precise_clock() - *delta_t;
 
 	if (n != expected_digits)
@@ -249,7 +249,7 @@ static _result_t testMustBorrow(CLOCK_T* delta_t, struct _operation_implementati
 	
 	/* Testing C version */
 	*delta_t = precise_clock();
-	reg_t n = impl->subtraction(A, 2, B, 1, Actual);
+	numsize_t n = impl->subtraction(A, 2, B, 1, Actual);
 	*delta_t = precise_clock() - *delta_t;
 
 	if (n != 1)
@@ -283,7 +283,7 @@ static _result_t testEqualNumbersYieldToZero(CLOCK_T* delta_t, struct _operation
 {
 	_result_t result = _OK;
 	/*the array is in reverse order, less significative on the left...*/
-	reg_t ASize;	
+	numsize_t ASize;
 	
 	ASize = rand() % A_REG_WORDS;
 
@@ -291,7 +291,7 @@ static _result_t testEqualNumbersYieldToZero(CLOCK_T* delta_t, struct _operation
 
 	/* Testing C version */
 	*delta_t = precise_clock();
-	reg_t n = impl->subtraction(_A, ASize, _A, ASize, _R1);
+	numsize_t n = impl->subtraction(_A, ASize, _A, ASize, _R1);
 	*delta_t = precise_clock() - *delta_t;
 
 	if (n != 0)
@@ -316,13 +316,13 @@ static _result_t testSubtractionIsInverseOfSum(CLOCK_T* delta_t, struct _operati
 {
 	_result_t result = _OK;	
 	operation inverse = impl->addition;
-	reg_t ASize;
-	reg_t BSize;
-	reg_t RSize;
+	numsize_t ASize;
+	numsize_t BSize;
+	numsize_t RSize;
 
-	reg_t R1Size;
-	reg_t R2Size;
-	reg_t R3Size;
+	numsize_t R1Size;
+	numsize_t R2Size;
+	numsize_t R3Size;
 	
 
 	if (inverse == NULL)
@@ -383,11 +383,11 @@ static _result_t testNullBehavesAsZero(CLOCK_T* delta_t, struct _operation_imple
 {
 	_result_t result = _OK;
 	//reg_t ASize = rand() % A_REG_WORDS;
-	reg_t ASize = rand() % 4;
+	numsize_t ASize = rand() % 4;
 	randNum(&_rand_seed_2, _A, ASize);
 
 	*delta_t = precise_clock();
-	reg_t R2Size = impl->subtraction(_A, ASize, NULL, 0, _R2);
+	numsize_t R2Size = impl->subtraction(_A, ASize, NULL, 0, _R2);
 	*delta_t = precise_clock() - *delta_t;
 
 	if (R2Size != ASize)
@@ -428,11 +428,11 @@ static _result_t testSubtractionIsInverseOfSumOfZero(CLOCK_T* delta_t, struct _o
 		return _FAIL;
 	}
 
-	reg_t R1Size = inverse(NULL, 0, NULL, 0, _R1);
+	numsize_t R1Size = inverse(NULL, 0, NULL, 0, _R1);
 
 	*delta_t = precise_clock();
-	reg_t R2Size = impl->subtraction(_R1, R1Size, NULL, 0, _R2);
-	reg_t R3Size = impl->subtraction(_R1, R1Size, NULL, 0, _R3);
+	numsize_t R2Size = impl->subtraction(_R1, R1Size, NULL, 0, _R2);
+	numsize_t R3Size = impl->subtraction(_R1, R1Size, NULL, 0, _R3);
 	*delta_t = precise_clock() - *delta_t;
 
 	if (R2Size != 0 || R3Size != 0)
