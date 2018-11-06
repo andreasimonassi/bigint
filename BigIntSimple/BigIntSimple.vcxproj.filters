@@ -57,6 +57,9 @@
     <ClCompile Include="test_mul.c">
       <Filter>Source Files\test</Filter>
     </ClCompile>
+    <ClCompile Include="test_parse.c">
+      <Filter>Source Files\test</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="BigIntSimple.h">

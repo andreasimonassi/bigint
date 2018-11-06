@@ -71,6 +71,10 @@ numsize_t LongMultiplication(reg_t* A, numsize_t m, reg_t * B, numsize_t n, reg_
 */
 int CompareWithPossibleLeadingZeroes(reg_t * A, numsize_t ASize, reg_t * B, numsize_t BSize);
 
-int parseFromHex(wchar_t const * const nullTerminatedString, reg_t * const outBuffer, numsize_t bufferSizeInWords, numsize_t * outNumberSizeInWords);
+_result_t parseFromHex(wchar_t const * const nullTerminatedString, reg_t * outBuffer, numsize_t bufferSizeInWords, numsize_t * outNumberSizeInWords);
 
 int parseFromByteArrayLittleEndian(unsigned char * input, numsize_t sizeOfInput, reg_t * const outBuffer, numsize_t bufferSizeInWords, numsize_t * outNumberSizeInWords);
+
+reg_t* AllocNumOrFail(numsize_t size);
+
+_result_t FillHexString(wchar_t*buffer, unsigned bufferSize, reg_t* number, numsize_t size);

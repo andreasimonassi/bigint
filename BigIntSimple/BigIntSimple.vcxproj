@@ -171,6 +171,7 @@
     <ClCompile Include="test_common.c" />
     <ClCompile Include="test_compare.c" />
     <ClCompile Include="test_mul.c" />
+    <ClCompile Include="test_parse.c" />
     <ClCompile Include="test_sub.c" />
     <ClCompile Include="test_sum.c" />
   </ItemGroup>

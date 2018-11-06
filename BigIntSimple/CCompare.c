@@ -27,7 +27,7 @@ int CompareWithPossibleLeadingZeroes(reg_t *A, numsize_t ASize, reg_t*B, numsize
 		
 	}
 
-	if (i == 0)
+	if (i == 0 && A[i] == B[i])
 		return 0;
 
 	if (A[i] > B[i])

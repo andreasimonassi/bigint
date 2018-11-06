@@ -240,10 +240,10 @@ static _result_t testMustBorrow(CLOCK_T* delta_t, struct _operation_implementati
 {
 	_result_t result = _OK;
 	/*the array is in reverse order, less significative on the left...*/
-	reg_t A[] = {0x0,0x1};
-	reg_t B[] = { 0x1 };
-	reg_t ExpectedR[] = { _R(-1) };
-	reg_t Actual[2];
+	reg_t A[] = {0,0,0,1};
+	reg_t B[] = { 1 };
+	reg_t ExpectedR[] = { _R(-1), _R(-1), _R(-1) };
+	reg_t Actual[4];
 
 	/* Initialization */
 	
@@ -252,7 +252,7 @@ static _result_t testMustBorrow(CLOCK_T* delta_t, struct _operation_implementati
 	numsize_t n = impl->subtraction(A, 2, B, 1, Actual);
 	*delta_t = precise_clock() - *delta_t;
 
-	if (n != 1)
+	if (n != 3)
 	{
 		LOG_ERROR(STR("Unexpected number of digits, see dump"));
 		result = _FAIL;

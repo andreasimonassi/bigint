@@ -41,6 +41,7 @@ SOME DEFS TO TWEAK FOR EACH PLATFORM */
 	#define LOG_INFO(x, ...) fwprintf(stderr, L"[INFO] " x L"\n", ##__VA_ARGS__)
 	#define MY_ASSERT(c, x, ...) if (!(c)) { fwprintf(stderr, L"assertion failed: (%s %d) - " x L"\n",  WFILE, __LINE__, ##__VA_ARGS__); abort(); }
 	#define LOG_ERROR(x, ...) fwprintf(stderr, L"[ERROR] " x L"\n", ##__VA_ARGS__)
+	
 	#define NOMEM L"NO MEMORY"	
 	#define _fprintf fwprintf	
 //#else
@@ -144,6 +145,7 @@ void testSum();
 void testSub();
 void testMul();
 void testBSR();
+void testParse();
 
 void write_summary();
 

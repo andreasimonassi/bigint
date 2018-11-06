@@ -207,15 +207,32 @@ static _result_t multiply_is_associative(CLOCK_T* delta_t, struct _operation_imp
 
 static _result_t multiply_well_known1(CLOCK_T*delta, struct _operation_implementations*impl)
 {
-	reg_t A[] = {
-0x26F8E9A2747C67F0,0x754A646616FDABC4,0x370B5486762F71BE };
+	_result_t result = _OK;
+	reg_t A[12];
+	numsize_t ASize;
+	reg_t B[12];
+	numsize_t BSize;
+	reg_t R[24];
+	numsize_t RSize;
+	reg_t Expected[24];
+	numsize_t ExpectedSize;
+	parseFromHex(STR("F015F744EECF854CA0D8D0915A7C1237ADAC9A7553A40C9E157A8E03A648D6AB2AB725FC9EEEB4F1051FBD8EDC4CEAE"), Expected, 24, &ExpectedSize);
+	parseFromHex(STR("3707A12DF36CDF1AB3716C08B88E2DD06833C7A949CF1BFD"), A, 12, &ASize);
+	parseFromHex(STR("45CE2945CA377628112A5374AE1B79DDEA427434A5879DC6"), B, 12, &BSize);
 
-	reg_t B[] = {
-	0x3A6FE4714641E35C,0x3964850F813FC7BC,0x71971188E2C1F3EF,0x176D56D1C414D802,
-	0x9497380AF2E9A9EB,0xEA754304CC701AA9, 0xBDF7F70710CB690E,0x13375D591BB50EA5 };
-	reg_t R[12];
 	*delta = 0;
-	impl->multiplication(A, sizeof(A) / sizeof(reg_t), B, sizeof(B) / sizeof(reg_t), R);
+	RSize = impl->multiplication(A, ASize, B, BSize, R);
+
+	if (CompareWithPossibleLeadingZeroes(R, RSize, Expected, ExpectedSize) != 0)
+	{
+		result = _FAIL;
+		LOG_ERROR(STR("(A * B) * C should be equals to A * (B * C)"));
+
+		dumpNumber(A, STR("A"), ASize);
+		dumpNumber(B, STR("B"), BSize);
+		dumpNumber(Expected, STR("Expected"), ExpectedSize);
+		dumpNumber(R, STR("Actual"), RSize);
+	}
 	return _OK;
 }
 
