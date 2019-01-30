@@ -149,15 +149,15 @@ _result_t FillHexString(wchar_t*buffer, unsigned bufferSize, reg_t* number, nums
 	numsize_t i;
 	const int word_bytes = sizeof(reg_t);
 	int skipzero = 1;
-	for (i = size-1; i >= 0 ; i--)
+	for (i = size; i > 0 ; )
 	{
-
+		i--;
 		if (number[i] == 0)
 			continue;
 		int current_byte = word_bytes - 1;
 		while (current_byte >= 0)
 		{
-			int byte = (int)( number[i] >> (current_byte * 8));
+			int byte = (int)( number[i] >> (current_byte * 8)) & 0xff;
 			current_byte--;
 			int hi = byte >> 4;
 			int lo = byte & 0xf;

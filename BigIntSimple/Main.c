@@ -11,7 +11,7 @@ int main()
 	setlocale(LC_ALL, "");
 
 	initTest();
-	testParse();
+	//testParse();
 	//testBSR();
 	//testCompare();
 	//testSum();

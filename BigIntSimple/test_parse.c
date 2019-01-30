@@ -23,7 +23,6 @@ void parseHexTest(wchar_t const * const text, reg_t * expected, numsize_t expect
 	}
 	free(A);
 	LOG_INFO(STR("HEX PARSE: %s PASSED"), text);
-	
 }
 
 

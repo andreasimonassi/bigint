@@ -179,6 +179,7 @@
     <ClInclude Include="BigIntSimple.h" />
     <ClInclude Include="test.h" />
     <ClInclude Include="test_config.h" />
+    <ClInclude Include="_x64BigIntSimple.h" />
   </ItemGroup>
   <ItemGroup>
     <MASM Include="BSR.asm" />

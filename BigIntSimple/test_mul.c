@@ -1,8 +1,5 @@
 #include "test.h"
-
-
 #define HALF_MEGABYTE_NUMBER_WORDS (1024*1024/sizeof(reg_t)/2)
-
 #define MEGABYTE_NUMBER_WORDS (1024*1024/sizeof(reg_t))
 
 static reg_t _HALF_MEG_mA[HALF_MEGABYTE_NUMBER_WORDS];

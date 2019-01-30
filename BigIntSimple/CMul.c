@@ -84,6 +84,8 @@ numsize_t LongMultiplication_A(reg_t* A, numsize_t m, reg_t * B, numsize_t n, re
 	return outBuffSize;
 }
 
+
+#error QUA SOTTO LA MOLTIPLICAZIONE NON RESTITUISCE CORRETTAMENTE IL NUMERO DI WORDS NEL RISULTATO
 /*
 algorithm is exactly the same but work on half sized operators with doubled length (m and n)
 */
@@ -115,6 +117,9 @@ numsize_t LongMultiplication_B(multiply_small* A, numsize_t m, multiply_small * 
 			b.dword = (multiply_big)R[k] + b.Pair.L;
 			R[k] = b.Pair.L;
 
+			if (k+1 > outBuffSize && R[k] > 0)
+				outBuffSize = k+1;
+
 			++k;
 			b.dword = (multiply_big)R[k] + r + b.Pair.H;
 			R[k] = b.Pair.L;
@@ -126,8 +131,8 @@ numsize_t LongMultiplication_B(multiply_small* A, numsize_t m, multiply_small * 
 				R[k] = b.Pair.L;				
 				r = b.Pair.H; //if there is still a carry move it to low word.
 			}
-			if (k > outBuffSize && R[k] > 0)
-				outBuffSize = k;
+			if (k + 1 > outBuffSize && R[k] > 0)
+				outBuffSize = k + 1;
 		}
 	}
 

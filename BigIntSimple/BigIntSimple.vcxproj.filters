@@ -71,6 +71,9 @@
     <ClInclude Include="test_config.h">
       <Filter>Source Files\test</Filter>
     </ClInclude>
+    <ClInclude Include="_x64BigIntSimple.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <MASM Include="Sum.asm">
