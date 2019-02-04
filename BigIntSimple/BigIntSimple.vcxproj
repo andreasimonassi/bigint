@@ -183,6 +183,7 @@
   </ItemGroup>
   <ItemGroup>
     <MASM Include="BSR.asm" />
+    <MASM Include="Mul.asm" />
     <MASM Include="Sub.asm" />
     <MASM Include="Sub2.asm" />
     <MASM Include="Sum.asm">

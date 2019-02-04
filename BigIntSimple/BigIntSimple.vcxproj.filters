@@ -88,6 +88,9 @@
     <MASM Include="Sub2.asm">
       <Filter>Source Files</Filter>
     </MASM>
+    <MASM Include="Mul.asm">
+      <Filter>Source Files</Filter>
+    </MASM>
   </ItemGroup>
   <ItemGroup>
     <None Include="test_sum_readme.md">

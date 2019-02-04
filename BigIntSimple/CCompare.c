@@ -4,6 +4,8 @@
 int CompareWithPossibleLeadingZeroes(reg_t *A, numsize_t ASize, reg_t*B, numsize_t BSize)
 {
 	numsize_t i = (ASize > BSize ? ASize : BSize) ;
+	if (i == 0)
+		return 0;
 
 	while (i > BSize) // ignore leading zeroes
 	{

@@ -6,10 +6,12 @@ static numsize_t LongMultiplication_B(multiply_small* A, numsize_t m, multiply_s
 
 numsize_t LongMultiplication(reg_t *A, numsize_t m, reg_t *B, numsize_t n, reg_t * R)
 {
+	assert(A != R && B != R);
+
 	assert(sizeof(multiply_big) == 2 * sizeof(multiply_small));
 	assert(sizeof(multiply_t) == sizeof(reg_t) || sizeof(multiply_t) == 2 * sizeof(reg_t));
 	/*
-	keep the below assertion until impement the case for which m size*sizof(reg_t) or n size
+	keep the below assertion until impement the case which handles m size*sizof(reg_t) or n size
 	* sizeof(reg_t) are not multiple of sizeof(multiply_t)
 	a
 	*/
@@ -34,8 +36,6 @@ numsize_t LongMultiplication(reg_t *A, numsize_t m, reg_t *B, numsize_t n, reg_t
 			r++;
 		return r >> 1;
 	}
-
-	
 }
 
 numsize_t LongMultiplication_A(reg_t* A, numsize_t m, reg_t * B, numsize_t n, reg_t* R)
@@ -84,8 +84,6 @@ numsize_t LongMultiplication_A(reg_t* A, numsize_t m, reg_t * B, numsize_t n, re
 	return outBuffSize;
 }
 
-
-#error QUA SOTTO LA MOLTIPLICAZIONE NON RESTITUISCE CORRETTAMENTE IL NUMERO DI WORDS NEL RISULTATO
 /*
 algorithm is exactly the same but work on half sized operators with doubled length (m and n)
 */

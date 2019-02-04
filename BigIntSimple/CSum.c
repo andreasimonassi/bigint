@@ -53,5 +53,5 @@ numsize_t LongSumWithCarryDetection(reg_t* A, numsize_t ASize, reg_t * B, numsiz
 		++i;
 	}
 
-	return  (reg_t)i;
+	return  (numsize_t)i;
 }

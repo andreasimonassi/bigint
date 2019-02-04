@@ -11,11 +11,11 @@ int main()
 	setlocale(LC_ALL, "");
 
 	initTest();
-	//testParse();
-	//testBSR();
-	//testCompare();
-	//testSum();
-	//testSub();
+	testParse();
+	testBSR();
+	testCompare();
+	testSum();
+	testSub();
 	
 	testMul();
 
