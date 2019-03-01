@@ -156,20 +156,16 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="CCompare.c" />
+    <ClCompile Include="CDiv.c" />
     <ClCompile Include="CMul.c" />
     <ClCompile Include="CParse.c" />
     <ClCompile Include="CSum.c" />
     <ClCompile Include="Main.c" />
-    <ClCompile Include="stdafx.cpp">
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
-    </ClCompile>
     <ClCompile Include="CSub.c" />
     <ClCompile Include="test_bsr.c" />
     <ClCompile Include="test_common.c" />
     <ClCompile Include="test_compare.c" />
+    <ClCompile Include="test_div.c" />
     <ClCompile Include="test_mul.c" />
     <ClCompile Include="test_parse.c" />
     <ClCompile Include="test_sub.c" />
@@ -183,6 +179,7 @@
   </ItemGroup>
   <ItemGroup>
     <MASM Include="BSR.asm" />
+    <MASM Include="cpu_divide.asm" />
     <MASM Include="Mul.asm" />
     <MASM Include="Sub.asm" />
     <MASM Include="Sub2.asm" />

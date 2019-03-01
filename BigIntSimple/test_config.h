@@ -9,13 +9,13 @@ arithmetics[] = {
 		LongSumWithCarryDetection,
 		LongSub,
 		LongMultiplication,
-		NULL
+		LongDivision
 	},
 	{
 		STR("Assembler (x64)"),
 		LongSumAsm,
 		LongSubAsm,
-		NULL,
+		LongMulAsm,
 		NULL
 	},
 	{
@@ -24,7 +24,25 @@ arithmetics[] = {
 		LongSubAsmVariant_1,
 		NULL,
 		NULL
-	},
+	}
+	/*this implementation is constantly slower than reference
+	,
+	{   
+		
+		STR("C (carry detection with branches)"),
+		LongSumWithCarryDetectionV2,
+		NULL,
+		NULL,
+		NULL
+	},*/
+	/* this implementation is constantly slower than reference
+	{
+		STR("C (using single byte carry)"),
+		LongSumWithCarryDetectionV3,
+		NULL,
+		NULL,
+		NULL
+	}*/
 };
 
 

@@ -31,7 +31,6 @@ SOME DEFS TO TWEAK FOR EACH PLATFORM */
 #endif
 
 
-//#ifdef USE_WCHAR
 	
 
 	typedef wchar_t _char_t;
@@ -44,16 +43,7 @@ SOME DEFS TO TWEAK FOR EACH PLATFORM */
 	
 	#define NOMEM L"NO MEMORY"	
 	#define _fprintf fwprintf	
-//#else
-//	typedef char _char_t;
-//	#define STR(x) x	
-//	#define LOG_INFO(x, ...) fprintf(stderr, "[INFO] " x "\n", ##__VA_ARGS__)
-//	#define MY_ASSERT(c, x, ...) if (!(x)) { fprintf(stderr, "assertion failed: (%s %s %d) - " x "\n", __FUNCTION__, __FILE__, __LINE__, ##__VA_ARGS__); abort(); }
-//	#define LOG_ERROR(x, ...) fprintf(stderr, "[ERROR] " x "\n", ##__VA_ARGS__)
-//	#define WRITE_STRING(buffer, n, x) snprintf(buffer, n, x);
-//	#define _fprintf	fprintf		
-//	#define NOMEM "NO MEMORY"	
-//#endif
+
 
 	/*
 	----- END PLATFORM SPECIFIC
@@ -97,6 +87,7 @@ typedef  reg_t(*_arithm_func) (reg_t* A, numsize_t ASize, reg_t * B, numsize_t B
 
 typedef numsize_t(*operation) (reg_t* A, numsize_t ASize, reg_t * B, numsize_t BSize, reg_t* R) ;
 
+typedef _div_result_t(*div_operation) (reg_t *A, numsize_t m, reg_t *B, numsize_t n, reg_t * Q, numsize_t * q, reg_t * R, numsize_t * r);
 /* this structure holds all of our different implementation so it can 
    compare all the possible implementations for speed
 */
@@ -109,7 +100,7 @@ struct _operation_implementations
 	operation addition;
 	operation subtraction;
 	operation multiplication;
-	operation division;
+	div_operation division;
 
 	/* count how many tests results are available for each operation */	
 
@@ -144,6 +135,7 @@ void testCompare();
 void testSum();
 void testSub();
 void testMul();
+void testDiv();
 void testBSR();
 void testParse();
 

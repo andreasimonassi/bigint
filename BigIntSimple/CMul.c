@@ -46,14 +46,14 @@ numsize_t LongMultiplication_A(reg_t* A, numsize_t m, reg_t * B, numsize_t n, re
 	numsize_t outBuffSize = m + n;
 
 	for (numsize_t k = 0; k < outBuffSize; ++k)
-		R[k] = 0; //reset output array
+		R[k] = 0; /*reset output array*/
 	outBuffSize = 0;
-	for (numsize_t j = 0; j < m; j++)// read  left number
+	for (numsize_t j = 0; j < m; j++)/* read  left number*/
 	{
 		if (A[j] == 0)
-			continue; // relatively low-cost optimization for multiply by 0, it should be measured..
+			continue; /* relatively low-cost optimization for multiply by 0, it should be measured..*/
 
-		for (numsize_t i = 0; i < n; i++) // read right number
+		for (numsize_t i = 0; i < n; i++) /* read right number*/
 		{
 			int k = i + j;
 			if (B[i] == 0)
@@ -72,11 +72,11 @@ numsize_t LongMultiplication_A(reg_t* A, numsize_t m, reg_t * B, numsize_t n, re
 			r = b.Pair.H;
 			while (r)
 			{
-				b.dword = r + (multiply_big)R[++k];       //sum the previous carry to Result[i+j+k]	
+				b.dword = r + (multiply_big)R[++k];       /*sum the previous carry to Result[i+j+k]	*/
 				R[k] = b.Pair.L;
 				if (b.Pair.L > 0)
 					outBuffSize = k;
-				r = b.Pair.H; //if there is still a carry move it to low word.
+				r = b.Pair.H; /*if there is still a carry move it to low word.*/
 			}
 		}
 	}
@@ -90,19 +90,19 @@ algorithm is exactly the same but work on half sized operators with doubled leng
 numsize_t LongMultiplication_B(multiply_small* A, numsize_t m, multiply_small * B, numsize_t n, multiply_small* R)
 {
 	multiply_small r;
-	multiply_t b; //number B[n]
+	multiply_t b; /*number B[n]*/
 
 	numsize_t outBuffSize = m + n;
 
 	for (numsize_t k = 0; k < outBuffSize; ++k)
-		R[k] = 0; //reset output array
+		R[k] = 0; /*reset output array*/
 	outBuffSize = 0;
-	for (numsize_t j = 0; j < m; j++)// read  left number
+	for (numsize_t j = 0; j < m; j++)/* read  left number*/
 	{
 		if (A[j] == 0)
-			continue; // relatively low-cost optimization for multiply by 0, it should be measured..
+			continue; /* relatively low-cost optimization for multiply by 0, it should be measured..*/
 
-		for (numsize_t i = 0; i < n; i++) // read right number
+		for (numsize_t i = 0; i < n; i++) /* read right number*/
 		{
 			unsigned k = i + j;
 			if (B[i] == 0)
@@ -125,9 +125,9 @@ numsize_t LongMultiplication_B(multiply_small* A, numsize_t m, multiply_small * 
 
 			while (r)
 			{
-				b.dword = r + (multiply_big)R[++k];       //sum the previous carry to Result[i+j+k]	
+				b.dword = r + (multiply_big)R[++k];     /*sum the previous carry to Result[i+j+k]	*/
 				R[k] = b.Pair.L;				
-				r = b.Pair.H; //if there is still a carry move it to low word.
+				r = b.Pair.H; /*if there is still a carry move it to low word.*/
 			}
 			if (k + 1 > outBuffSize && R[k] > 0)
 				outBuffSize = k + 1;

@@ -6,16 +6,23 @@
 #endif
 #include <stdio.h>
 #include <stdint.h>
+#include <stdlib.h>
+
 
 /* define _R such that appends L to int literal if necessary to keep portability, 
 but should not be necessary since compiler automatically promote int to longs  */
 #define _R(a) ((reg_t)(a ## L))
-
 typedef uint32_t numsize_t;
 typedef uint64_t reg_t;
 typedef uint32_t multiply_small;
 typedef uint64_t multiply_big;
 typedef int _result_t;
+
+typedef enum _div_result {
+	OK = 0, DIV_BY_ZERO = 1, FAILURE
+} _div_result_t;
+
+#define LEFTBIT  (1ULL << (sizeof(reg_t)*8ULL-1ULL))
 
 /* please ensure sizeof(_multiply_t) == sizeof(_reg_t) || sizeof(_multiply_t) == 2 * sizeof(reg_t) */
 typedef union
@@ -23,7 +30,7 @@ typedef union
 	multiply_big dword;
 	struct
 	{
-		multiply_small L; //little endian
+		multiply_small L; /*little endian*/
 		multiply_small H;
 	} Pair;
 } multiply_t;
@@ -38,8 +45,11 @@ Will not check array bounds on R, thus must have space to accomodate MAX(ASIZEIn
 EXTERN numsize_t LongSumAsm(reg_t * A, numsize_t ASize, reg_t * B, numsize_t BSize, reg_t* R);
 EXTERN numsize_t LongSubAsm(reg_t * A, numsize_t ASize, reg_t * B, numsize_t BSize, reg_t* R);
 EXTERN numsize_t LongSubAsmVariant_1(reg_t * A, numsize_t ASize, reg_t * B, numsize_t BSize, reg_t* R);
+EXTERN numsize_t LongMulAsm(reg_t * A, numsize_t ASize, reg_t * B, numsize_t BSize, reg_t* R);
 EXTERN numsize_t BitScanReverse(reg_t A);
 
+/* caution will not check against div by zero */
+EXTERN reg_t cpu_divide(reg_t LoWord, reg_t HiWord, reg_t Divisor, reg_t * R);
 
 /*
 Caller Must check
@@ -49,6 +59,8 @@ Caller Must check
 
 */
 numsize_t LongSumWithCarryDetection(reg_t* A, numsize_t ASize, reg_t * B, numsize_t BSize, reg_t* R);
+numsize_t LongSumWithCarryDetectionV2(reg_t* A, numsize_t ASize, reg_t * B, numsize_t BSize, reg_t* R);
+numsize_t LongSumWithCarryDetectionV3(reg_t* A, numsize_t ASize, reg_t * B, numsize_t BSize, reg_t* R);
 
 
 /*
@@ -65,6 +77,10 @@ numsize_t LongSub(reg_t* A, numsize_t ASize, reg_t * B, numsize_t BSize, reg_t* 
 /*R must be preallocated it should be able to contain up to m*n digits, return value may have 
 leading zeroes*/
 numsize_t LongMultiplication(reg_t* A, numsize_t m, reg_t * B, numsize_t n, reg_t* R);
+
+/* A must have m+1 space to support normalization, Q and R must have enough space to hold the result*/
+_div_result_t LongDivision(reg_t *A, numsize_t m, reg_t *B, numsize_t n, reg_t * Q, numsize_t * q, reg_t * R, numsize_t * r);
+
 
 /*
 	Compare number A and B returns -1 if A < B 0 if A == B and 1 if A > B

@@ -1,7 +1,7 @@
 #include "test.h"
 #define HALF_MEGABYTE_NUMBER_WORDS (1024*1024/sizeof(reg_t)/2)
 #define MEGABYTE_NUMBER_WORDS (1024*1024/sizeof(reg_t))
-#define M64KB_NUMBER (64*1024/sizeof(reg_t))
+#define M256KB_NUMBER (256*1024/sizeof(reg_t))
 static reg_t _HALF_MEG_mA[HALF_MEGABYTE_NUMBER_WORDS];
 static reg_t _HALF_MEG_mB[HALF_MEGABYTE_NUMBER_WORDS];
 static reg_t _HALF_MEG_mC[HALF_MEGABYTE_NUMBER_WORDS];
@@ -24,7 +24,7 @@ static void each_op(_result_t(*unit_test)(CLOCK_T* outAlgorithmElapsedTime, stru
 			continue;
 		}
 
-		_rand_seed_3 = _R(0x4d595df4d0f33173); //deterministic , i want all tests to be reproducible
+		_rand_seed_3 = _R(0x4d595df4d0f33173); /*deterministic , i want all tests to be reproducible*/
 		srand((unsigned int)_rand_seed_3);
 
 
@@ -42,7 +42,7 @@ static void each_op(_result_t(*unit_test)(CLOCK_T* outAlgorithmElapsedTime, stru
 static _result_t multiply_by_zero_returns_zero(CLOCK_T* delta_t, struct _operation_implementations* impl)
 {
 	_result_t result = _OK;
-	//reg_t ASize = rand() % A_REG_WORDS;
+	
 	numsize_t ASize = rand() % 10+2;
 	randNum(&_rand_seed_3, _HALF_MEG_mA, ASize);
 	randNum(&_rand_seed_3, _HALF_MEG_mB, ASize);
@@ -80,7 +80,7 @@ static _result_t multiply_by_zero_returns_zero(CLOCK_T* delta_t, struct _operati
 static _result_t multiply_by_one_is_identity(CLOCK_T* delta_t, struct _operation_implementations* impl)
 {
 	_result_t result = _OK;
-	//reg_t ASize = rand() % A_REG_WORDS;
+	
 	numsize_t ASize = rand() % 10 + 2;
 	randNum(&_rand_seed_3, _HALF_MEG_mA, ASize);
 	reg_t one = 1;
@@ -137,7 +137,7 @@ static _result_t multiply_by_one_is_identity(CLOCK_T* delta_t, struct _operation
 static _result_t multiply_is_commutative(CLOCK_T* delta_t, struct _operation_implementations* impl)
 {
 	_result_t result = _OK;
-	//reg_t ASize = rand() % A_REG_WORDS;
+	
 	numsize_t ASize = rand() % 2 + 2;
 	numsize_t BSize = rand() % 2 + 2;
 	randNum(&_rand_seed_3, _HALF_MEG_mA, ASize);
@@ -170,7 +170,7 @@ static _result_t multiply_is_commutative(CLOCK_T* delta_t, struct _operation_imp
 static _result_t multiply_is_associative(CLOCK_T* delta_t, struct _operation_implementations* impl)
 {
 	_result_t result = _OK;
-	//reg_t ASize = rand() % A_REG_WORDS;
+	
 	numsize_t ASize = rand() % 10 + 2;
 	numsize_t BSize = rand() % 10 + 2;
 	numsize_t CSize = rand() % 10 + 2;
@@ -441,11 +441,14 @@ static _result_t multiply_speed_tests(CLOCK_T*delta, struct _operation_implement
 	reg_t * R = _MEG_mRESULT1;
 
 	CLOCK_T t1 = precise_clock();
-	impl->multiplication(A, M64KB_NUMBER, B, M64KB_NUMBER /2, R);
+	impl->multiplication(A, M256KB_NUMBER, B, M256KB_NUMBER /2, R);
 
 	*delta = precise_clock() - t1;
 	return _OK;
 }
+
+
+
 
 void testMul()
 {
@@ -456,6 +459,6 @@ void testMul()
 	each_op(multiply_is_commutative, 1, STR("MUL: Multiply is commutative"));
 	each_op(multiply_is_associative, 1, STR("MUL: Multiply is associative"));
 	
-	each_op(multiply_speed_tests, 1, STR("MUL: Speed testing 64KB * 64KB (data segment allocated)"));
+	each_op(multiply_speed_tests, 1, STR("MUL: Speed testing 256KB * 256KB (data segment allocated)"));
 
 }

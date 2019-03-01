@@ -11,13 +11,16 @@ int main()
 	setlocale(LC_ALL, "");
 
 	initTest();
+/*	
 	testParse();
 	testBSR();
 	testCompare();
 	testSum();
 	testSub();
-	
 	testMul();
+
+	*/
+	testDiv();
 
 	write_summary();
 

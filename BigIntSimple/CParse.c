@@ -82,7 +82,7 @@ _result_t parseFromHex(wchar_t const * const nullTerminatedString, reg_t * outBu
 
 	int padding = (word_bytes - nextByte)*8;
 
-	if (strSize == 1) //padding 4 bit
+	if (strSize == 1) /*padding 4 bit*/
 	{
 		dlow = nullTerminatedString[0];
 		dlow = _HEXTODEC(dlow);

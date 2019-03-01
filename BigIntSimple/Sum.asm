@@ -91,12 +91,12 @@ LongSumAsm proc
         lahf                                  ; store flags into rax
         jnc B_NoCarry_Loop                    ; carry is zero no need to do more additions
         mov qword ptr [r10 + r9], rbx         ; save to R[index] the result that's in rbx    
-        add r9, 8i                            ; increase index
+        add r9, 8                            ; increase index
         jmp B_Only_Loop                       ; continue loop
 
     B_NoCarry_Loop:
         mov qword ptr [r10+ r9], rbx          ; save to R[index] the result of B[index]
-        add r9, 8i                            ; increase index
+        add r9, 8                           ; increase index
         cmp rdx, r9                           ; compare BSIze (rdx) and array index (r9)
         jle B_Only_Loop_Ends                  ; if index >= BSIZE quit loop
         mov rbx, qword ptr [r8 + r9]          ; rbx into result

@@ -1,6 +1,6 @@
 #include "test.h"
 
-//#define TEST_ITERATIONS 1
+/*#define TEST_ITERATIONS 1*/
 
 /*testing purposes A_BITS > B_BITS and A_BITS, B_BITS divisible by 64*/
 #define A_BITS   65536
@@ -93,7 +93,7 @@ static void each_op(_result_t(*unit_test)(CLOCK_T* outElapsedTime,
 		if (arithmetics[i].addition == NULL)
 			continue;
 
-		_rand_seed = 0x4d595df4d0f33173; //deterministic , i want all tests to be reproducible
+		_rand_seed = 0x4d595df4d0f33173; /*/deterministic , i want all tests to be reproducible*/
 		srand((unsigned int)_rand_seed);
 
 		if (boolRepeat)
@@ -134,7 +134,7 @@ static _result_t test_on_1000_unit(CLOCK_T * delta_t,struct _operation_implement
 	return result;
 }
 
-//SET STACK SIZE TO SOMETHING BIG TO HANDLE THIS USE CASE
+/*SET STACK SIZE TO SOMETHING BIG TO HANDLE THIS USE CASE*/
 static _result_t test_speed_1_MB_unit(CLOCK_T * delta_t, struct _operation_implementations* impl)
 {	
 	reg_t * A = _HALF_MEG_A;
@@ -151,7 +151,7 @@ static _result_t test_speed_1_MB_unit(CLOCK_T * delta_t, struct _operation_imple
 	return _OK;
 }
 
-//SET STACK SIZE TO SOMETHING BIG TO HANDLE THIS USE CASE
+/*SET STACK SIZE TO SOMETHING BIG TO HANDLE THIS USE CASE*/
 static _result_t test_speed_512KB_Plus_2Words_unit(CLOCK_T * delta_t, struct _operation_implementations* impl)
 {
 	reg_t * A = _HALF_MEG_A;
@@ -222,7 +222,7 @@ static _result_t  test_commutative_prop_unit(CLOCK_T* delta_t, struct _operation
 	/* Initialization */
 	numsize_t ASize = rand() % TEST_NUMBER_WORDS;
 	numsize_t BSize = rand() % TEST_NUMBER_WORDS;
-	//reg_t RSize = 1 + (ASize > BSize ? ASize : BSize);
+	
 	numsize_t R1Len;
 	numsize_t R2Len;
 
@@ -277,7 +277,7 @@ static _result_t  test_associative_prop_unit(CLOCK_T* delta_t, struct _operation
 	numsize_t ASize = rand() % TEST_NUMBER_WORDS;
 	numsize_t BSize = rand() % TEST_NUMBER_WORDS;
 	numsize_t CSize = rand() % TEST_NUMBER_WORDS;
-	//reg_t RSize = 1 + (ASize > BSize ? ASize : BSize);
+	
 	numsize_t R1Len;
 	numsize_t R2Len;
 	numsize_t R_tempLen;
@@ -338,8 +338,7 @@ _result_t test_zero_is_neutral_element_of_sum(CLOCK_T * delta_t, struct _operati
 	/* Initialization */
 	numsize_t ASize = 0;
 	numsize_t BSize = rand() % TEST_NUMBER_WORDS;
-	//reg_t RSize = 1 + (ASize > BSize ? ASize : BSize);
-
+	
 	numsize_t R1Len;
 	numsize_t R2Len;
 

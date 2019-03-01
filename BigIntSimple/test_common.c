@@ -14,7 +14,7 @@ static wchar_t* printHex(reg_t x, wchar_t * buffer)
 	unsigned char const * const c = (unsigned char const * const)(&x);
 	int i = s-1;
 	unsigned char byte;
-	//remove leading zeroes
+	/*/remove leading zeroes*/
 	while (i > 0 && c[i] == 0)
 	{
 		i--;
@@ -76,7 +76,7 @@ uint_fast32_t rand32(uint_fast64_t * const refState)
 PCR random generator credit O'Neill, Melissa http://www.pcg-random.org/
 */
 	static uint_fast64_t const multiplier = 6364136223846793005u;
-	static uint_fast64_t const increment = 1442695040888963407u;	// Or an arbitrary odd constant
+	static uint_fast64_t const increment = 1442695040888963407u;	/* Or an arbitrary odd constant*/
 	uint_fast64_t x;
 	x = *refState;
 	uint_fast8_t count = (uint_fast8_t)(x >> 59);
@@ -93,7 +93,7 @@ void randNum(uint_fast64_t * const refState, reg_t * const A, numsize_t size)
 	PCR random generator credit O'Neill, Melissa http://www.pcg-random.org/ 
 	*/
 	static uint_fast64_t const multiplier = 6364136223846793005u;
-	static uint_fast64_t const increment = 1442695040888963407u;	// Or an arbitrary odd constant
+	static uint_fast64_t const increment = 1442695040888963407u;	/* Or an arbitrary odd constant*/
 
 	numsize_t i;
 	numsize_t sz = size * sizeof(reg_t) / sizeof(uint_fast32_t);
