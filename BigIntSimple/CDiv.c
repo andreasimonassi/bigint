@@ -6,7 +6,10 @@
 
 static int fastcmp(reg_t *A, numsize_t ASize, reg_t*B, numsize_t BSize)
 {
-	numsize_t i = (ASize > BSize ? ASize : BSize);
+	numsize_t cmp = ASize - BSize;
+	if (cmp != 0)
+		return cmp;
+	numsize_t i = ASize;
 
 	while (i > 0)
 	{
@@ -29,12 +32,13 @@ void invert(reg_t * A, numsize_t n)
 {
 	numsize_t l = 0;
 	reg_t temp;
-	while (l != n)
+	while (l < n)
 	{
-		n--;
-		temp = A[0];
-		A[0] = A[n];
+		n--; 
+		temp = A[l];
+		A[l] = A[n];
 		A[n] = temp;
+		l++;
 	}
 }
 /* copy with regard to overlap */
@@ -74,7 +78,10 @@ numsize_t findmsw(reg_t * A, numsize_t n)
 
 numsize_t shiftl(reg_t * dest, reg_t * source, numsize_t source_l, unsigned n)
 {
+
 	/* this can work in place */
+	if(n == 0)
+		return source_l;
 	assert(n < SHIFTBITS);
 	unsigned  m = SHIFTBITS - n;
 	reg_t prev_word = 0;
@@ -84,7 +91,7 @@ numsize_t shiftl(reg_t * dest, reg_t * source, numsize_t source_l, unsigned n)
 	while (i > 0)
 	{
 		temp = source[i-1];
-		dest[i--] = temp >> m | prev_word;
+		dest[i--] = (temp >> m) | prev_word;
 		prev_word = temp << n;
 	}
 
@@ -95,6 +102,8 @@ numsize_t shiftl(reg_t * dest, reg_t * source, numsize_t source_l, unsigned n)
 numsize_t shiftr(reg_t * dest, reg_t * source, numsize_t source_l, unsigned n)
 {
 	/* this can work in place */
+	if (n == 0)
+		return source_l;
 	assert(n < SHIFTBITS);
 	reg_t  m = SHIFTBITS - n;
 	reg_t prev_word = 0;
@@ -103,14 +112,12 @@ numsize_t shiftr(reg_t * dest, reg_t * source, numsize_t source_l, unsigned n)
 	while (source_l > 0)
 	{
 		temp = source[--source_l];
-		dest[source_l] = temp >> n | prev_word;
+		dest[source_l] = (temp >> n) | prev_word;
 		prev_word = temp << m;
 	}
 	return findmsw(dest, source_l )+1;
 }
 #endif
-
-
 
 /*
 return non zero means failure
@@ -137,7 +144,7 @@ _div_result_t LongDivision(reg_t *A, numsize_t m, reg_t *B, numsize_t n, reg_t *
 	reg_t Aguess[2];
 	reg_t Qn;
 	reg_t * test;	
-#ifdef DEBUG
+#ifdef _DEBUG
 	reg_t *testpin;
 #endif
 	reg_t bleftmost;
@@ -162,7 +169,7 @@ _div_result_t LongDivision(reg_t *A, numsize_t m, reg_t *B, numsize_t n, reg_t *
 		*q = 0; /* set length of Q equals to zero so Q is equals to 0 */
 		*r = n;
 		copy(R, B, n);
-		return DIV_BY_ZERO; /* division OK */
+		return OK; /* division OK */
 	}
 	else if (compare == 0)
 	{
@@ -170,7 +177,7 @@ _div_result_t LongDivision(reg_t *A, numsize_t m, reg_t *B, numsize_t n, reg_t *
 		*q = 1; 
 		*r = 0;
 		*Q = 1;
-		return DIV_BY_ZERO; /* division OK */
+		return OK; /* division OK */
 	}
 
 	bleftmost = B[n - 1];
@@ -187,10 +194,12 @@ _div_result_t LongDivision(reg_t *A, numsize_t m, reg_t *B, numsize_t n, reg_t *
 	/* here I need A and B to be large enough to contain one more word*/
 	m = shiftl(A, A, m, shift);
 	n = shiftl(B, B, n, shift);
+	bleftmost = B[n - 1];
 
-	 test = (reg_t*) malloc((n + 1) * sizeof(reg_t)); 
-#ifdef DEBUG
-	 testpin = /* using testpin for debug reason, test is never edited but at the end the free(test) gives error... so using testpin to check if test has been changed. */
+	test = (reg_t*) malloc((n + 1) * sizeof(reg_t)); 
+
+#ifdef _DEBUG
+	 testpin = test;/* using testpin for debug reason, test is never edited but at the end the free(test) gives error... so using testpin to check if test has been changed. */
 #endif
 
 
@@ -236,18 +245,25 @@ _div_result_t LongDivision(reg_t *A, numsize_t m, reg_t *B, numsize_t n, reg_t *
 			/* An = select as many digits from A such that Aguess >= Bn*/
 			/* we may have 2 cases leftmost of A >= B so we divide 1 number*/
 			
-			if (R[*r-1] < bleftmost)
+			if (R[*r - 1] == bleftmost)
+			{
+				Qn = _R(-1);
+			}
+			else if (R[*r-1] < bleftmost)
 			{
 				Aguess[1] = R[*r-1];
-				Aguess[0] = R[*r-2];
-			}
+				Aguess[0] = R[*r-2];				
+				Qn = cpu_divide(Aguess[0], Aguess[1], bleftmost, &dummy); 
+			}			
 			else
 			{
-				Aguess[1] = 0;
-				Aguess[0] = R[*r-1];
+				/* possible optimization, when Aguess[1] = 0 then result is going to be 1 because Bleftmost is > base/2 and Aguess is less than base , since division is normalized */
+
+				/*Aguess[1] = 0;
+				Aguess[0] = R[*r-1];*/
+				Qn = 1;
 			}
-			/* Guess Qn */
-			Qn = cpu_divide(Aguess[0], Aguess[1], bleftmost, &dummy);
+			
 
 			/* now verify if Qn is good guess multiplying it by B*/
 			testLen = LongMultiplication(&Qn, 1, B, n, test);
@@ -255,7 +271,8 @@ _div_result_t LongDivision(reg_t *A, numsize_t m, reg_t *B, numsize_t n, reg_t *
 			/* verify if Test > An */
 			compare = fastcmp(test, testLen, R, *r);
 			/* if An > Test then Qn is too large */
-			while (compare > 1)
+			int debug_count = 0;
+			while (compare > 0)
 			{
 				/* 
 				since Qn is too large we decrease it by 1 until we have
@@ -264,12 +281,14 @@ _div_result_t LongDivision(reg_t *A, numsize_t m, reg_t *B, numsize_t n, reg_t *
 
 				Qn--;
 
-				/* the longsub operation is required to allow me to work in place 
+				/* 
+				the longsub operation is required to allow me to work in place 
 				i mean... write the result to the first argument... so i don't
 				have to allocate more space to store the subtraction result...
 				that is generally not required... so check that the implementation
 				of LongSub you use supports that case...
 				*/
+
 				testLen = LongSub(test, testLen, B, n, test); 
 
 				/* ok compare again to see if now we have found right Qn...
@@ -277,6 +296,10 @@ _div_result_t LongDivision(reg_t *A, numsize_t m, reg_t *B, numsize_t n, reg_t *
 				iteration for this loop.
 				*/
 				compare = fastcmp(test, testLen, R, *r);
+#ifdef _DEBUG
+				debug_count++;
+				assert(debug_count < 3);
+#endif
 			}
 		}
 
@@ -284,7 +307,8 @@ _div_result_t LongDivision(reg_t *A, numsize_t m, reg_t *B, numsize_t n, reg_t *
 		/* we have to store Qn to the higher index of Q but we don't
 		know how long Q is going to be, so we store this in reverse order
 		, before to return we will reverse the array, on next implementation iteration
-		we will compute the destination index before to start;
+		we will compute the destination index before to start, but that is marginal improvement, 
+		the outer loop dominate;
 		*/
 		Q[*q] = Qn;
 		(*q)++;
@@ -304,10 +328,9 @@ _div_result_t LongDivision(reg_t *A, numsize_t m, reg_t *B, numsize_t n, reg_t *
 		*r = *r + 1; /* to add a digit to R increase its count by 1*/
 		R[0] = A[a_offset]; /* append next digit of A to rightmost (least significant) of R */
 
-
 	} while (1);
 
-#ifdef DEBUG
+#ifdef _DEBUG
 	assert(test == testpin);	
 #endif
 	free(test);

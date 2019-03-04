@@ -50,7 +50,7 @@ EXTERN numsize_t BitScanReverse(reg_t A);
 
 /* caution will not check against div by zero */
 EXTERN reg_t cpu_divide(reg_t LoWord, reg_t HiWord, reg_t Divisor, reg_t * R);
-
+EXTERN reg_t cpu_multiply(reg_t A, reg_t B, reg_t * high);
 /*
 Caller Must check
 	* R, thus must have space to accomodate MAX(ASIZE,BSIZE)+1 digits

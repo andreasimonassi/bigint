@@ -4,6 +4,8 @@
 static numsize_t LongMultiplication_A(reg_t* A, numsize_t m, reg_t * B, numsize_t n, reg_t* R);
 static numsize_t LongMultiplication_B(multiply_small* A, numsize_t m, multiply_small * B, numsize_t n, multiply_small* R);
 
+
+
 numsize_t LongMultiplication(reg_t *A, numsize_t m, reg_t *B, numsize_t n, reg_t * R)
 {
 	assert(A != R && B != R);

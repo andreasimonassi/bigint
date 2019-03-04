@@ -97,6 +97,9 @@
     <MASM Include="cpu_divide.asm">
       <Filter>Source Files</Filter>
     </MASM>
+    <MASM Include="cpu_multiply.asm">
+      <Filter>Source Files</Filter>
+    </MASM>
   </ItemGroup>
   <ItemGroup>
     <None Include="test_sum_readme.md">
