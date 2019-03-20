@@ -60,7 +60,7 @@ SOME DEFS TO TWEAK FOR EACH PLATFORM */
 
 
 #define MAX_OUTER_TIME_FOR_TESTING_SEC 300
-#define _ITERATIONS_FOR_RANDOM_TEST 10000
+#define _ITERATIONS_FOR_RANDOM_TEST 1000
 
 
 void randNum(uint_fast64_t * const refState, reg_t * const A, numsize_t ASize);

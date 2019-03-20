@@ -1,136 +1,139 @@
 #include "BigIntSimple.h"
 #include <assert.h>
 
-static numsize_t LongMultiplication_A(reg_t* A, numsize_t m, reg_t * B, numsize_t n, reg_t* R);
-static numsize_t LongMultiplication_B(multiply_small* A, numsize_t m, multiply_small * B, numsize_t n, multiply_small* R);
-
-
-
-numsize_t LongMultiplication(reg_t *A, numsize_t m, reg_t *B, numsize_t n, reg_t * R)
+typedef reg_t (*_mul_func)(reg_t A, reg_t B,  reg_t* Hiword) ;
+EXTERN reg_t cpu_multiply(reg_t A, reg_t B, reg_t * high);
+#ifdef NO_DWORD_INTS
+static reg_t c_multiply(reg_t A, reg_t B, reg_t * high)
 {
-	assert(A != R && B != R);
-
-	assert(sizeof(multiply_big) == 2 * sizeof(multiply_small));
-	assert(sizeof(multiply_t) == sizeof(reg_t) || sizeof(multiply_t) == 2 * sizeof(reg_t));
-	/*
-	keep the below assertion until impement the case which handles m size*sizof(reg_t) or n size
-	* sizeof(reg_t) are not multiple of sizeof(multiply_t)
-	a
-	*/
-	assert(sizeof(multiply_t) == sizeof(reg_t));
-
-	/*the below line generates a warning, saying that it is a constant expression
-	... well i know it is constant but i do not know how to do this using the preprocessor
-	... so I hope in compiler inlining optimisation
-	*/
-#pragma warning(disable:4127)  
-	if (sizeof(multiply_big) == 2* sizeof(reg_t))
-#pragma warning(default:4127)
-	{
-		return LongMultiplication_A(A, m, B, n, R);
-	}
-#pragma warning(disable:4127)  
-	else if ((sizeof(multiply_big) == sizeof(reg_t)))
-#pragma warning(default:4127)
-	{
-		numsize_t r = LongMultiplication_B((multiply_small*)A, m<<1, (multiply_small*)B, n<<1, (multiply_small*)R);
-		if ((r & 1) == 1)
-			r++;
-		return r >> 1;
-	}
-}
-
-numsize_t LongMultiplication_A(reg_t* A, numsize_t m, reg_t * B, numsize_t n, reg_t* R)
-{
-	multiply_small r;
-	multiply_t b; //number B[n]
 	
-	numsize_t outBuffSize = m + n;
+	multiply_t a;
+	multiply_t b;
+	multiply_t c;
+	multiply_t d;
+	multiply_t e;
+	multiply_t f;
+	
+	/* imagine this 
+	
+			                                  [A.H]         [A.L] * 
+				                              [B.H]         [B.L] =
+-------------------------------------------------------------------
+	                                     [A.L*B.L HW]  [A.L*B.L LW] + (mult1)
+	                       [A.H*B.L HW]  [A.H*B.L LW]               + (mult2)
+			               [A.L*B.H HW]  [A.L*B.H LW]               + (mult3)
+              [A.H*B.H HW] [A.H*B.H LW]                             + (mult4)
+-------------------------------------------------------------------
+              [high HW]    [high LW]     [Return HW ]  [Return LW ]
 
-	for (numsize_t k = 0; k < outBuffSize; ++k)
-		R[k] = 0; /*reset output array*/
-	outBuffSize = 0;
-	for (numsize_t j = 0; j < m; j++)/* read  left number*/
-	{
-		if (A[j] == 0)
-			continue; /* relatively low-cost optimization for multiply by 0, it should be measured..*/
+	*/
 
-		for (numsize_t i = 0; i < n; i++) /* read right number*/
-		{
-			int k = i + j;
-			if (B[i] == 0)
-				continue;
 
-			b.dword = B[i];
-			b.dword = b.dword * A[j];
+	a.dword = A;
+	b.dword = B;
 
-			r = b.Pair.H;
-			b.dword = (multiply_big)R[k] + b.Pair.L;
-			R[k] = b.Pair.L;
+	c.dword = a.Pair.L;
+	d.dword = b.Pair.L;
 
-			++k;
-			b.dword = (multiply_big)R[k] + r + b.Pair.H;
-			R[k] = b.Pair.L;
-			r = b.Pair.H;
-			while (r)
-			{
-				b.dword = r + (multiply_big)R[++k];       /*sum the previous carry to Result[i+j+k]	*/
-				R[k] = b.Pair.L;
-				if (b.Pair.L > 0)
-					outBuffSize = k;
-				r = b.Pair.H; /*if there is still a carry move it to low word.*/
-			}
-		}
-	}
 
-	return outBuffSize;
+	/* mult1 */
+	c.dword = c.dword * d.dword;
+	e.dword = c.dword;
+
+	
+
+	/* mult2*/
+	c.dword = a.Pair.H;
+	d.dword = b.Pair.L;
+	c.dword = c.dword * d.dword;
+	e.Pair.H += c.Pair.L;
+	f.dword = 0;
+	if (e.Pair.H < c.Pair.L)
+		f.Pair.L = 1; 
+	f.Pair.L += c.Pair.H;
+
+	/* mult 3*/
+	c.dword = a.Pair.L;
+	d.dword = b.Pair.H;
+	c.dword = c.dword * d.dword;
+	e.Pair.H += c.Pair.L;
+	
+	if (e.Pair.H < c.Pair.L)
+		f.Pair.L += 1; 
+	f.Pair.L += c.Pair.H;
+	if (f.Pair.L < c.Pair.H)
+		f.Pair.H += 1;
+
+
+	/* mult 4*/
+	c.dword = a.Pair.H;
+	d.dword = b.Pair.H;
+	c.dword = c.dword * d.dword;
+	f.Pair.L += c.Pair.L;
+	if (f.Pair.L < c.Pair.L)
+		f.Pair.H += 1;
+	f.Pair.H += c.Pair.H;
+
+	/* done */
+	*high = f.dword;
+	return e.dword;
+
 }
-
-/*
-algorithm is exactly the same but work on half sized operators with doubled length (m and n)
-*/
-numsize_t LongMultiplication_B(multiply_small* A, numsize_t m, multiply_small * B, numsize_t n, multiply_small* R)
+#else
+static reg_t c_multiply(reg_t A, reg_t B, reg_t * high)
 {
-	multiply_small r;
-	multiply_t b; /*number B[n]*/
+	multiply_t a;
+	a.dword = *A;
+	a.dword *= *B;
+	*high = a.pair.H;
+	return a.pair.L;
+}
+#endif
 
+static numsize_t LongMultiplicationPortable(reg_t *A, numsize_t m, reg_t *B, numsize_t n, reg_t * R, _mul_func mfunc)
+{
 	numsize_t outBuffSize = m + n;
-
+	reg_t hiword;
+	reg_t loword;
+	int carry;
 	for (numsize_t k = 0; k < outBuffSize; ++k)
 		R[k] = 0; /*reset output array*/
+
 	outBuffSize = 0;
+
 	for (numsize_t j = 0; j < m; j++)/* read  left number*/
 	{
 		if (A[j] == 0)
-			continue; /* relatively low-cost optimization for multiply by 0, it should be measured..*/
+			continue; /* relatively low-cost optimization for multiply by 0, it should be measured... because the
+					  probability of a zero digit it is likely to be low in most cases
+					  */
 
 		for (numsize_t i = 0; i < n; i++) /* read right number*/
 		{
 			unsigned k = i + j;
+
 			if (B[i] == 0)
 				continue;
 
-			b.dword = B[i];
-			b.dword = b.dword * A[j];
+			loword = mfunc(A[j], B[i], &hiword);
 
-			r = b.Pair.H;
-			b.dword = (multiply_big)R[k] + b.Pair.L;
-			R[k] = b.Pair.L;
+			R[k] += loword;
+			carry = R[k] < loword ? 1 : 0;
 
-			if (k+1 > outBuffSize && R[k] > 0)
-				outBuffSize = k+1;
+			if (k + 1 > outBuffSize && R[k] > 0)
+				outBuffSize = k + 1;
 
 			++k;
-			b.dword = (multiply_big)R[k] + r + b.Pair.H;
-			R[k] = b.Pair.L;
-			r = b.Pair.H;
 
-			while (r)
+			R[k] += hiword + carry;
+			carry = R[k] < hiword + carry ? _R(1) : _R(0);
+
+			while (carry)
 			{
-				b.dword = r + (multiply_big)R[++k];     /*sum the previous carry to Result[i+j+k]	*/
-				R[k] = b.Pair.L;				
-				r = b.Pair.H; /*if there is still a carry move it to low word.*/
+				R[++k] += 1;     /*sum the previous carry to Result[i+j+k]	*/
+				carry = R[k] == _R(0) ? _R(1) : _R(0);
 			}
+
 			if (k + 1 > outBuffSize && R[k] > 0)
 				outBuffSize = k + 1;
 		}
@@ -139,3 +142,14 @@ numsize_t LongMultiplication_B(multiply_small* A, numsize_t m, multiply_small * 
 	return outBuffSize;
 }
 
+
+/* these are the public interface implementation */
+numsize_t LongMultiplication(reg_t *A, numsize_t m, reg_t *B, numsize_t n, reg_t * R)
+{
+	return LongMultiplicationPortable(A, m, B, n, R, cpu_multiply);
+}
+
+numsize_t LongMultiplicationNoAssembly(reg_t *A, numsize_t m, reg_t *B, numsize_t n, reg_t * R)
+{
+	return LongMultiplicationPortable(A, m, B, n, R, c_multiply);
+}

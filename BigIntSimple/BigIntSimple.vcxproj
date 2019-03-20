@@ -182,6 +182,7 @@
     <MASM Include="cpu_divide.asm" />
     <MASM Include="cpu_multiply.asm" />
     <MASM Include="Mul.asm" />
+    <MASM Include="Mul2.asm" />
     <MASM Include="Sub.asm" />
     <MASM Include="Sub2.asm" />
     <MASM Include="Sum.asm">

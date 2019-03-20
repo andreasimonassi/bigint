@@ -14,9 +14,13 @@ but should not be necessary since compiler automatically promote int to longs  *
 #define _R(a) ((reg_t)(a ## L))
 typedef uint32_t numsize_t;
 typedef uint64_t reg_t;
+typedef int _result_t;
+
+/* define that if the target compiler does not have a dword unsigned integer type */
+#define NO_DWORD_INTS
 typedef uint32_t multiply_small;
 typedef uint64_t multiply_big;
-typedef int _result_t;
+
 
 typedef enum _div_result {
 	OK = 0, DIV_BY_ZERO = 1, FAILURE
@@ -46,11 +50,10 @@ EXTERN numsize_t LongSumAsm(reg_t * A, numsize_t ASize, reg_t * B, numsize_t BSi
 EXTERN numsize_t LongSubAsm(reg_t * A, numsize_t ASize, reg_t * B, numsize_t BSize, reg_t* R);
 EXTERN numsize_t LongSubAsmVariant_1(reg_t * A, numsize_t ASize, reg_t * B, numsize_t BSize, reg_t* R);
 EXTERN numsize_t LongMulAsm(reg_t * A, numsize_t ASize, reg_t * B, numsize_t BSize, reg_t* R);
+EXTERN numsize_t LongMulAsmVariant_1(reg_t * A, numsize_t ASize, reg_t * B, numsize_t BSize, reg_t* R);
 EXTERN numsize_t BitScanReverse(reg_t A);
 
-/* caution will not check against div by zero */
-EXTERN reg_t cpu_divide(reg_t LoWord, reg_t HiWord, reg_t Divisor, reg_t * R);
-EXTERN reg_t cpu_multiply(reg_t A, reg_t B, reg_t * high);
+
 /*
 Caller Must check
 	* R, thus must have space to accomodate MAX(ASIZE,BSIZE)+1 digits
@@ -77,6 +80,7 @@ numsize_t LongSub(reg_t* A, numsize_t ASize, reg_t * B, numsize_t BSize, reg_t* 
 /*R must be preallocated it should be able to contain up to m*n digits, return value may have 
 leading zeroes*/
 numsize_t LongMultiplication(reg_t* A, numsize_t m, reg_t * B, numsize_t n, reg_t* R);
+numsize_t LongMultiplicationNoAssembly(reg_t* A, numsize_t m, reg_t * B, numsize_t n, reg_t* R);
 
 /* A must have m+1 space to support normalization, Q and R must have enough space to hold the result*/
 _div_result_t LongDivision(reg_t *A, numsize_t m, reg_t *B, numsize_t n, reg_t * Q, numsize_t * q, reg_t * R, numsize_t * r);

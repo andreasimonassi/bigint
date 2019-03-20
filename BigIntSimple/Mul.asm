@@ -90,7 +90,7 @@ LongMulAsm proc
 				mov rax, [rbp + 60o]; 
 				; rdx:rax = B[i] * A[j]
 				mul r13 
-				; se cf allora overflow quindi dx ha digit superiore				
+				; if cf then overflow so dx has higher order digit
 				mov r13, rax ; save value of rax, i need rax to store flags				
 				mov r14, r11
 				add r14, 1

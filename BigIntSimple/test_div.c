@@ -509,10 +509,7 @@ static _result_t divide_speed_test(CLOCK_T* delta_t, struct _operation_implement
 
 void testDiv()
 {
-	reg_t lo;
-	reg_t hi;		  //0xc8651a4942aca750
-	lo = cpu_multiply(0xf55ac5fc2a8052fULL, 0xc8651a4942aca750, &hi);
-	
+		
 	
 	each_op(wc2, 0, STR("DIV: well known values 2")); /* need to check this special cases */
 	each_op(wc, 0, STR("DIV: well known values"));

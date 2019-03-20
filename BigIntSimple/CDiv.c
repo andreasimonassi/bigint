@@ -4,6 +4,9 @@
 
 #define ENABLE_NORMALIZE
 
+/* caution will not check against div by zero */
+EXTERN reg_t cpu_divide(reg_t LoWord, reg_t HiWord, reg_t Divisor, reg_t * R);
+
 static int fastcmp(reg_t *A, numsize_t ASize, reg_t*B, numsize_t BSize)
 {
 	numsize_t cmp = ASize - BSize;

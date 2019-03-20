@@ -22,9 +22,17 @@ arithmetics[] = {
 		STR("Assembler (x64, variant 1)"),
 		NULL,
 		LongSubAsmVariant_1,
+		LongMulAsmVariant_1,
+		NULL
+	},
+	{
+		STR("Multiplication no assembly"),
 		NULL,
+		NULL,
+		LongMultiplicationNoAssembly,
 		NULL
 	}
+
 	/*this implementation is constantly slower than reference
 	,
 	{   

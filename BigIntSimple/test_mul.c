@@ -452,13 +452,13 @@ static _result_t multiply_speed_tests(CLOCK_T*delta, struct _operation_implement
 
 void testMul()
 {
-	each_op(multiply_by_zero_returns_zero, 0, STR("MUL: Number by zero equals zero"));
+	/*each_op(multiply_by_zero_returns_zero, 0, STR("MUL: Number by zero equals zero"));
 	each_op(multiply_by_one_is_identity, 0, STR("MUL: Multiply by one is identity"));
 	each_op(multiply_well_known1, 0, STR("MUL: Well known values test 1"));
 	each_op(multiply_subtraction_sum_inrail, 0, STR("MUL: Multiplication is adeherent to definition of repetition of sums"));
 	each_op(multiply_is_commutative, 1, STR("MUL: Multiply is commutative"));
 	each_op(multiply_is_associative, 1, STR("MUL: Multiply is associative"));
-	
+	*/
 	each_op(multiply_speed_tests, 1, STR("MUL: Speed testing 256KB * 256KB (data segment allocated)"));
 
 }
