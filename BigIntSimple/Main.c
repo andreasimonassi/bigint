@@ -12,14 +12,14 @@ int main()
 
 	initTest();
 	
-	/*testParse();
+	testParse();
 	testBSR();
 	testCompare();
 	testSum();
-	testSub();*/
+	testSub();
 	testMul();
-/*
-	testDiv();*/
+
+	testDiv();
 
 	write_summary();
 

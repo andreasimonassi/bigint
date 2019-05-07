@@ -15,7 +15,7 @@
 #define B_REG_WORDS (B_BYTES / sizeof(reg_t))
 #define R_REG_WORDS (R_BYTES / sizeof(reg_t))
 
-#define HALF_MEGABYTE_NUMBER_WORDS (1024*1024/sizeof(reg_t)/2)
+#define HALF_BIG_NUMBER (1024*1024/sizeof(reg_t)/2)
 
 #define TEST_NUMBER_WORDS 500
 
@@ -24,9 +24,9 @@ static reg_t _A[A_REG_WORDS];
 static reg_t _B[B_REG_WORDS];
 static reg_t _R[R_REG_WORDS];
 
-static reg_t _HALF_MEG_A[HALF_MEGABYTE_NUMBER_WORDS];
-static reg_t _HALF_MEG_B[HALF_MEGABYTE_NUMBER_WORDS];
-static reg_t _HALF_MEG_RESULT[HALF_MEGABYTE_NUMBER_WORDS + 1];
+static reg_t _HALF_MEG_A[HALF_BIG_NUMBER];
+static reg_t _HALF_MEG_B[HALF_BIG_NUMBER];
+static reg_t _HALF_MEG_RESULT[HALF_BIG_NUMBER + 1];
 
 static reg_t _TWO_WORDS_A[2];
 static reg_t _TWO_WORDS_B[2];
@@ -141,11 +141,11 @@ static _result_t test_speed_1_MB_unit(CLOCK_T * delta_t, struct _operation_imple
 	reg_t * B = _HALF_MEG_B;
 	reg_t * R = _HALF_MEG_RESULT;
 
-	randNum(&_rand_seed, A, HALF_MEGABYTE_NUMBER_WORDS);
-	randNum(&_rand_seed, B, HALF_MEGABYTE_NUMBER_WORDS);
+	randNum(&_rand_seed, A, HALF_BIG_NUMBER);
+	randNum(&_rand_seed, B, HALF_BIG_NUMBER);
 
 	*delta_t = precise_clock();
-	impl->addition(A, HALF_MEGABYTE_NUMBER_WORDS, B, HALF_MEGABYTE_NUMBER_WORDS, R);	
+	impl->addition(A, HALF_BIG_NUMBER, B, HALF_BIG_NUMBER, R);	
 	*delta_t = precise_clock() - *delta_t;
 
 	return _OK;
@@ -158,11 +158,11 @@ static _result_t test_speed_512KB_Plus_2Words_unit(CLOCK_T * delta_t, struct _op
 	reg_t * B = _TWO_WORDS_B;
 	reg_t * R = _HALF_MEG_RESULT;
 
-	randNum(&_rand_seed, A, HALF_MEGABYTE_NUMBER_WORDS);
+	randNum(&_rand_seed, A, HALF_BIG_NUMBER);
 	randNum(&_rand_seed, B, 2);
 
 	*delta_t = precise_clock();
-	impl->addition(A, HALF_MEGABYTE_NUMBER_WORDS, B, 2, R);
+	impl->addition(A, HALF_BIG_NUMBER, B, 2, R);
 	*delta_t = precise_clock() - *delta_t;
 
 	return _OK;

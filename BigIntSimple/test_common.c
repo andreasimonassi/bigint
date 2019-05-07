@@ -1,4 +1,5 @@
 #include "test_config.h"
+
 #include <memory.h>
 
 
@@ -187,6 +188,7 @@ void run_test_repeat(_result_t(*unit_test)(CLOCK_T * out_algorithmExecutionTimin
 		}		
 
 		cumulative += delta;
+		//assert(delta >= 0);
 
 		if (seconds_from_clock(precise_clock() - feedbacktimeout) > 2.0)
 		{
@@ -220,9 +222,10 @@ void run_test_repeat(_result_t(*unit_test)(CLOCK_T * out_algorithmExecutionTimin
 	else
 		result->avg_operations_per_second = 0;
 
+
 	test_statistics_collection_ADD(destination_array, result);
 
-	
+	LOG_INFO(STR("cumulative inner time: %f sec"),  result->inner_time_sec);
 
 }
 
@@ -256,7 +259,7 @@ void run_test_single(_result_t(*unit_test)(CLOCK_T * out_algorithmExecutionTimin
 	}
 
 	overall = precise_clock() - overall;
-	result->outer_time_sec = seconds_from_clock(overall);
+	result->outer_time_sec = seconds_from_clock(overall );
 	result->inner_time_sec = seconds_from_clock(cumulative);
 	
 	if (result->inner_time_sec > 0)
@@ -327,25 +330,27 @@ void cleanup()
 
 #if defined(_WIN32) || defined(WIN32)
 CLOCK_T precise_clock() {
-	LARGE_INTEGER o;
-	if (QueryPerformanceCounter(&o) != 0)
+	unsigned long long o;
+	if (QueryPerformanceCounter((LARGE_INTEGER*) &o) != 0)
 	{
-		return o.QuadPart;
+		return o;
 	}	
 	return clock_zero();
 }
 double seconds_from_clock(CLOCK_T clock)
 {
-	LARGE_INTEGER o;
+	unsigned long long o;
 	if (QueryPerformanceFrequency(
-		&o
+		(LARGE_INTEGER*)&o
 	) == 0)return 0.0;
 
-	return (double)clock /(double) o.QuadPart;
+	double d = (double)(clock) /(double)o;
+	//assert(d > 0);
+	return d;
 }
 CLOCK_T clock_zero()
 {	
-	return 0L;
+	return 0ULL;
 }
 #else
 #warning maybe you want to define a better clock function

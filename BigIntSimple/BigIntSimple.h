@@ -23,7 +23,7 @@ typedef uint64_t multiply_big;
 
 
 typedef enum _div_result {
-	OK = 0, DIV_BY_ZERO = 1, FAILURE
+	OK = 0, DIV_BY_ZERO = 1, GENERIC_FAILURE
 } _div_result_t;
 
 #define LEFTBIT  (1ULL << (sizeof(reg_t)*8ULL-1ULL))
@@ -81,6 +81,8 @@ numsize_t LongSub(reg_t* A, numsize_t ASize, reg_t * B, numsize_t BSize, reg_t* 
 leading zeroes*/
 numsize_t LongMultiplication(reg_t* A, numsize_t m, reg_t * B, numsize_t n, reg_t* R);
 numsize_t LongMultiplicationNoAssembly(reg_t* A, numsize_t m, reg_t * B, numsize_t n, reg_t* R);
+numsize_t LongMultiplicationV2(reg_t* A, numsize_t m, reg_t * B, numsize_t n, reg_t* R);
+numsize_t LongMultiplicationNoAssemblyV2(reg_t* A, numsize_t m, reg_t * B, numsize_t n, reg_t* R);
 
 /* A must have m+1 space to support normalization, Q and R must have enough space to hold the result*/
 _div_result_t LongDivision(reg_t *A, numsize_t m, reg_t *B, numsize_t n, reg_t * Q, numsize_t * q, reg_t * R, numsize_t * r);

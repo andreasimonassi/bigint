@@ -1,13 +1,13 @@
 #include "test.h"
-#define HALF_MEGABYTE_NUMBER_WORDS (1024*1024/sizeof(reg_t)/2)
-#define MEGABYTE_NUMBER_WORDS (1024*1024/sizeof(reg_t))
-#define M256KB_NUMBER (256*1024/sizeof(reg_t))
-static reg_t _HALF_MEG_dA[HALF_MEGABYTE_NUMBER_WORDS];
-static reg_t _HALF_MEG_dB[HALF_MEGABYTE_NUMBER_WORDS];
-static reg_t _HALF_MEG_dC[HALF_MEGABYTE_NUMBER_WORDS];
-static reg_t _HALF_MEG_dD[HALF_MEGABYTE_NUMBER_WORDS];
-static reg_t _HALF_MEG_dE[HALF_MEGABYTE_NUMBER_WORDS];
-static reg_t _HALF_MEG_dF[HALF_MEGABYTE_NUMBER_WORDS];
+#define HALF_BIG_NUMBER (1024*1024/sizeof(reg_t)/2)
+#define BIG_NUMBER (1024*1024/sizeof(reg_t))
+#define MBIG_NUMBER (256*1024/sizeof(reg_t))
+static reg_t _HALF_MEG_dA[HALF_BIG_NUMBER];
+static reg_t _HALF_MEG_dB[HALF_BIG_NUMBER];
+static reg_t _HALF_MEG_dC[HALF_BIG_NUMBER];
+static reg_t _HALF_MEG_dD[HALF_BIG_NUMBER];
+static reg_t _HALF_MEG_dE[HALF_BIG_NUMBER];
+static reg_t _HALF_MEG_dF[HALF_BIG_NUMBER];
 
 static uint_fast64_t _rand_seed_4;
 
@@ -29,11 +29,11 @@ static void each_op(_result_t(*unit_test)(CLOCK_T* outAlgorithmElapsedTime, stru
 
 		if (boolRepeat)
 		{
-			run_test_repeat(unit_test, &(arithmetics[i]), &(arithmetics[i].multiplication_test_results), test_description);
+			run_test_repeat(unit_test, &(arithmetics[i]), &(arithmetics[i].division_test_results), test_description);
 		}
 		else
 		{
-			run_test_single(unit_test, &(arithmetics[i]), &(arithmetics[i].multiplication_test_results), test_description);
+			run_test_single(unit_test, &(arithmetics[i]), &(arithmetics[i].division_test_results), test_description);
 		}
 	}
 }

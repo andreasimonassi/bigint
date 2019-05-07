@@ -64,8 +64,8 @@ LongMulAsm proc
 		mov rax, qword ptr [rcx + rbx * 8]   
 		
 		; if(A[j] == 0) continue; low cost optimization skip inner loop if number is zero
-		test rax, rax
-		jz left_number_loop_continue   
+		;test rax, rax     ;that branch not going to be smart
+		;jz left_number_loop_continue   
 
 		;i=0;
 		xor r10, r10 
@@ -83,8 +83,8 @@ LongMulAsm proc
 				; B[i] in r13
 				mov r13, qword ptr [r8 + r10 * 8] ; B[i] in R13
 				; if(B[i] == 0) continue;
-				test r13,r13
-				jz right_number_loop_continue ;low cost optimization, skip loop if zero
+				;test r13,r13 ;that branch not that smart
+				;jz right_number_loop_continue ;low cost optimization, skip loop if zero
 
 				;rax <-A[j]
 				mov rax, [rbp + 60o]; 

@@ -18,7 +18,7 @@
 static uint_fast64_t _rand_seed_2;
 
 
-#define HALF_MEGABYTE_NUMBER_WORDS (1024*1024/sizeof(reg_t)/2)
+#define HALF_BIG_NUMBER (1024*1024/sizeof(reg_t)/2)
 
 #define TEST_NUMBER_WORDS 500
 
@@ -30,9 +30,9 @@ static reg_t _R1[R_REG_WORDS];
 static reg_t _R2[R_REG_WORDS];
 static reg_t _R3[R_REG_WORDS];
 
-static reg_t _HALF_MEG_A[HALF_MEGABYTE_NUMBER_WORDS];
-static reg_t _HALF_MEG_B[HALF_MEGABYTE_NUMBER_WORDS];
-static reg_t _HALF_MEG_RESULT[HALF_MEGABYTE_NUMBER_WORDS + 1];
+static reg_t _HALF_MEG_A[HALF_BIG_NUMBER];
+static reg_t _HALF_MEG_B[HALF_BIG_NUMBER];
+static reg_t _HALF_MEG_RESULT[HALF_BIG_NUMBER + 1];
 
 static reg_t _TWO_WORDS_A[2];
 static reg_t _TWO_WORDS_B[2];
@@ -130,8 +130,8 @@ static reg_t * initB()
 static void init_A_B_Big(reg_t ** outA, numsize_t * outASize, reg_t ** outB, numsize_t * outBSize, reg_t ** outR)
 {
 
-	numsize_t ASize = 1+rand32(&_rand_seed_2) % (HALF_MEGABYTE_NUMBER_WORDS - 1);
-	numsize_t BSize = 1+rand32(&_rand_seed_2) % (HALF_MEGABYTE_NUMBER_WORDS-1);
+	numsize_t ASize = 1+rand32(&_rand_seed_2) % (HALF_BIG_NUMBER - 1);
+	numsize_t BSize = 1+rand32(&_rand_seed_2) % (HALF_BIG_NUMBER-1);
 	numsize_t temp;
 
 	/*ensure A >= B*/

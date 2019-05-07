@@ -8,7 +8,7 @@ arithmetics[] = {
 		STR("C (Reference impl)"),
 		LongSumWithCarryDetection,
 		LongSub,
-		LongMultiplication,
+		LongMultiplicationV2,
 		LongDivision
 	},
 	{
@@ -26,10 +26,24 @@ arithmetics[] = {
 		NULL
 	},
 	{
-		STR("Multiplication no assembly"),
+		STR("Multiplication no assembly version 1"),
 		NULL,
 		NULL,
 		LongMultiplicationNoAssembly,
+		NULL
+	},	
+	{
+		STR("Multiplication no assembly version 2"),
+		NULL,
+		NULL,
+		LongMultiplicationNoAssemblyV2,
+		NULL
+	},
+	{
+		STR("Multiplication reference older version"),
+		NULL,
+		NULL,
+		LongMultiplication,
 		NULL
 	}
 

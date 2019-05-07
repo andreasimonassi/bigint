@@ -1,14 +1,14 @@
 #include "test.h"
-#define HALF_MEGABYTE_NUMBER_WORDS (1024*1024/sizeof(reg_t)/2)
-#define MEGABYTE_NUMBER_WORDS (1024*1024/sizeof(reg_t))
-#define M256KB_NUMBER (256*1024/sizeof(reg_t))
-static reg_t _HALF_MEG_mA[HALF_MEGABYTE_NUMBER_WORDS];
-static reg_t _HALF_MEG_mB[HALF_MEGABYTE_NUMBER_WORDS];
-static reg_t _HALF_MEG_mC[HALF_MEGABYTE_NUMBER_WORDS];
-static reg_t _MEG_mRESULT1[MEGABYTE_NUMBER_WORDS];
-static reg_t _MEG_mRESULT2[MEGABYTE_NUMBER_WORDS];
-static reg_t _MEG_mRESULT3[MEGABYTE_NUMBER_WORDS];
-static reg_t _MEG_mRESULT4[MEGABYTE_NUMBER_WORDS];
+#define HALF_BIG_NUMBER (1024*1024/sizeof(reg_t)/2)
+#define BIG_NUMBER (1024*1024/sizeof(reg_t))
+#define MBIG_NUMBER (4*1024/sizeof(reg_t))
+static reg_t _HALF_MEG_mA[HALF_BIG_NUMBER];
+static reg_t _HALF_MEG_mB[HALF_BIG_NUMBER];
+static reg_t _HALF_MEG_mC[HALF_BIG_NUMBER];
+static reg_t _MEG_mRESULT1[BIG_NUMBER];
+static reg_t _MEG_mRESULT2[BIG_NUMBER];
+static reg_t _MEG_mRESULT3[BIG_NUMBER];
+static reg_t _MEG_mRESULT4[BIG_NUMBER];
 
 static uint_fast64_t _rand_seed_3;
 
@@ -27,7 +27,6 @@ static void each_op(_result_t(*unit_test)(CLOCK_T* outAlgorithmElapsedTime, stru
 		_rand_seed_3 = _R(0x4d595df4d0f33173); /*deterministic , i want all tests to be reproducible*/
 		srand((unsigned int)_rand_seed_3);
 
-
 		if (boolRepeat)
 		{
 			run_test_repeat(unit_test, &(arithmetics[i]), &(arithmetics[i].multiplication_test_results), test_description);
@@ -36,6 +35,7 @@ static void each_op(_result_t(*unit_test)(CLOCK_T* outAlgorithmElapsedTime, stru
 		{
 			run_test_single(unit_test, &(arithmetics[i]), &(arithmetics[i].multiplication_test_results), test_description);
 		}
+
 	}
 }
 
@@ -207,65 +207,6 @@ static _result_t multiply_is_associative(CLOCK_T* delta_t, struct _operation_imp
 static _result_t multiply_subtraction_sum_inrail(CLOCK_T* delta_t, struct _operation_implementations* impl)
 {
 
-	/*
-		static _result_t multiply_subtraction_sum_inrail(CLOCK_T* delta_t, struct _operation_implementations* impl)
-		base is random number
-		at step 0 num1 = base and multiplier = 1
-
-		at each iteration we can have 2 cases:
-
-		1) num1 = base
-		   * then we can only increase
-				i   num1 = num1 + num1
-				ii  multiplier = multiplier + multiplier
-		2) num1 > base
-			* then we randomly pick one of the following operation:
-				a) increase with 87.5% probability
-					i    num1 = num1 + num1
-					ii   multiplier = multiplier + multiplier
-				b) or decrease with 20% probability
-					i    num1 = num1 - base
-					ii   multiplier = multiplier - 1
-
-		then we compare the result of base * multiplier to num1 and they must be equals
-
-		example iteration:
-
-		base = 10
-
-		at step 0 we have num1 = 10 and multiplier = 1
-		----------------------------------------------
-
-		since base = num1 we can only increase then we do:
-
-		num1 = num1 + num1 (num1 was 10 now become 20 which is 10*2)
-		multiplier = multiplier + multiplier (multiplier is now 2)
-
-		we do base * multiplier we get 20, we compare it with num1 and we get same result, so we proceed to next step
-
-
-		second iteration
-		----------------
-
-		we have num1 > base, we roll dices we have to increase
-
-		now we have
-
-		num1 = num1+num1 => num1 becomes 40
-		multiplier becomes 4
-
-		some next iteration
-		----------------
-
-		we have num1 > base, we roll dices we have to decrease
-
-		now suppose num1 = 240
-
-		num1 = num1-base => num1 becomes 230
-		multiplier becomes 23
-
-		---------------
-	*/
 	
 	operation sum = impl->addition;
 	operation sub = impl->subtraction;
@@ -440,25 +381,32 @@ static _result_t multiply_speed_tests(CLOCK_T*delta, struct _operation_implement
 	reg_t * B = _HALF_MEG_mB;
 	reg_t * R = _MEG_mRESULT1;
 
-	CLOCK_T t1 = precise_clock();
-	impl->multiplication(A, M256KB_NUMBER, B, M256KB_NUMBER /2, R);
+
+	randNum(&_rand_seed_3, A, MBIG_NUMBER);
+
+	randNum(&_rand_seed_3, B, MBIG_NUMBER / 2);
+
+	CLOCK_T t1 = precise_clock();	
+
+	impl->multiplication(A, MBIG_NUMBER, B, MBIG_NUMBER /2, R);
 
 	*delta = precise_clock() - t1;
+	
 	return _OK;
 }
 
 
 
-
 void testMul()
 {
-	/*each_op(multiply_by_zero_returns_zero, 0, STR("MUL: Number by zero equals zero"));
+
+	each_op(multiply_by_zero_returns_zero, 0, STR("MUL: Number by zero equals zero"));
 	each_op(multiply_by_one_is_identity, 0, STR("MUL: Multiply by one is identity"));
 	each_op(multiply_well_known1, 0, STR("MUL: Well known values test 1"));
 	each_op(multiply_subtraction_sum_inrail, 0, STR("MUL: Multiplication is adeherent to definition of repetition of sums"));
 	each_op(multiply_is_commutative, 1, STR("MUL: Multiply is commutative"));
 	each_op(multiply_is_associative, 1, STR("MUL: Multiply is associative"));
-	*/
-	each_op(multiply_speed_tests, 1, STR("MUL: Speed testing 256KB * 256KB (data segment allocated)"));
+	
+	each_op(multiply_speed_tests, 1, STR("MUL: Speed testing 4KB * 2KB (data segment allocated)"));
 
 }
