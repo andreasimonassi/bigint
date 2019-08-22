@@ -6,6 +6,7 @@
 
 /* caution will not check against div by zero */
 EXTERN reg_t cpu_divide(reg_t LoWord, reg_t HiWord, reg_t Divisor, reg_t * R);
+EXTERN reg_t cpu_multiply(reg_t A, reg_t B, reg_t * high);
 
 static int fastcmp(reg_t *A, numsize_t ASize, reg_t*B, numsize_t BSize)
 {
@@ -418,5 +419,146 @@ _div_result_t LongDivision(reg_t *A, numsize_t m, reg_t *B, numsize_t n, reg_t *
 	at this point Q array is reversed.. we need to reverse it before to return 
 	*/
 	invert(Q, *q);
+	return 0;
+}
+
+#define GetLeftmostOf(X, XSize) ((X)[(XSize)-1])
+
+static reg_t GuessDivisor(reg_t ALeftMost, reg_t ASecond, reg_t BLeftmost)
+{
+
+	if (ALeftMost == BLeftmost)
+	{
+		return R(-1);
+	}
+	else if (ALeftMost < BLeftmost)
+	{		
+		return cpu_divide(ASecond, ALeftMost, BLeftmost, &BLeftmost);
+	}
+	return 1;
+}
+static numsize_t simpleMultiplication(reg_t* A, numsize_t ASize, reg_t B, reg_t*R )
+{	
+	reg_t low;
+	reg_t high = 0;
+	numsize_t j = 1;
+	R[0] = 0;
+	for (numsize_t i = 0; i < ASize; ++i)
+	{
+		low = cpu_multiply(A[i], B, &high);
+		
+		R[i] += low;
+
+		if (R[i] < low) //carry detection
+			high++; //have carry
+		
+		R[i + 1] = high;	
+	}
+	if (R[ASize] != 0)
+		return ASize + 1;
+	return ASize;
+}
+
+
+_div_result_t LongDivisionReadableCore(reg_t * tempSpace, reg_t * A, numsize_t m, reg_t * B, numsize_t n, reg_t * Q, numsize_t *q, reg_t * R, numsize_t * r)
+{
+	reg_t bleftmost = B[n - 1]; /* leftmost digit of B */
+
+	*q = 0; /* Q empty*/
+	copy(R, B, n); // R = B
+	//An = Select as many digits from A such that An >= B;
+
+	reg_t Qn = GuessDivisor(An[AnSize - 1], An[AnSize - 2], B[BSize - 1]);
+
+	numsize_t tempSize = simpleMultiplication(B, BSize, Qn, tempSpace); /* temp = Qn * B   */
+
+	while (Test > An)
+	{
+		Qn--;
+		Test -= B;
+	}
+	return Qn;
+
+
+	Append Qn to Q;
+	Remainder = An = An - Test;
+	if (there are more digits in A)
+	{
+		Append next digit from A to An;
+		goto loop;
+	}
+	return result is : Q and Remainder;
+}
+
+static int NormalizeShiftLeft(reg_t* A, numsize_t*m, reg_t*B, numsize_t*n)
+{
+	int shift = 0;
+	BitScanReverse(B[*n - 1]);
+
+	/* here is where I need A and B to be large enough to contain one more word*/
+	m = shiftl(A, A, m, shift);
+	n = shiftl(B, B, n, shift);
+}
+
+static void NormalizeShiftRight(reg_t*A, numsize_t m, reg_t*B, numsize_t n, reg_t* R, numsize_t* r,int shift)
+{
+	shiftr(R, R, *r, shift);
+	shiftr(A, A, m, shift);
+	shiftr(B, B, n, shift);
+}
+
+_div_result_t LongDivisionReadable(reg_t *A, numsize_t m, reg_t *B, numsize_t n, reg_t * Q, numsize_t * q, reg_t * R, numsize_t * r)
+{
+	/* This function will process the input such that the LongDivisionReadableCore will work on
+	good numbers without the need for input checking or to allocate temporary memory*/
+	
+	if (RemoveLeadingZeroes(A, &m, B, &n) == DIV_BY_ZERO)
+		return DIV_BY_ZERO;
+	int compare;
+	reg_t * tempSpace;
+
+	if (m == 0) /* corner case 0 / X */
+	{	
+		*q = 0;
+		*r = 0;
+		return OK;
+	}
+	/* corner case, A is less than B */
+
+	compare = fastcmp(A, m, B, n); /* check if A <= B*/
+
+	if (compare < 0) /* A < B */
+	{
+		*q = 0; /* set length of Q equals to zero so Q is equals to 0 */
+		*r = n;
+		copy(R, B, n);
+		return OK; /* division OK */
+	}
+
+	/* corner case, A == B */
+	if (compare == 0)
+	{
+		/* A == B so return Q=1 and remainder is 0 */
+		*q = 1;
+		*r = 0;
+		*Q = 1;
+		return OK; /* division OK */
+	}
+
+	int shift = NormalizeShiftLeft(A, &m, B, &n);
+
+	tempSpace = (reg_t*)malloc((n + 1) * sizeof(reg_t));
+
+	if (!tempSpace)
+	{
+		/* if you want to be more precise you could return something like NO_MEMORY*/
+		return	GENERIC_FAILURE;
+	}
+
+	LongDivisionReadableCore(tempSpace, A, m, B, n, Q, q, R, r);
+
+	free(tempSpace);
+
+	NormalizeShiftRight(A, m, B, n, R, &r, shift);
 	return 0;
 }

@@ -51,7 +51,7 @@ EXTERN numsize_t LongSubAsm(reg_t * A, numsize_t ASize, reg_t * B, numsize_t BSi
 EXTERN numsize_t LongSubAsmVariant_1(reg_t * A, numsize_t ASize, reg_t * B, numsize_t BSize, reg_t* R);
 EXTERN numsize_t LongMulAsm(reg_t * A, numsize_t ASize, reg_t * B, numsize_t BSize, reg_t* R);
 EXTERN numsize_t LongMulAsmVariant_1(reg_t * A, numsize_t ASize, reg_t * B, numsize_t BSize, reg_t* R);
-EXTERN numsize_t BitScanReverse(reg_t A);
+EXTERN int BitScanReverse(reg_t A);
 
 
 /*
@@ -86,6 +86,8 @@ numsize_t LongMultiplicationNoAssemblyV2(reg_t* A, numsize_t m, reg_t * B, numsi
 
 /* A must have m+1 space to support normalization, Q and R must have enough space to hold the result*/
 _div_result_t LongDivision(reg_t *A, numsize_t m, reg_t *B, numsize_t n, reg_t * Q, numsize_t * q, reg_t * R, numsize_t * r);
+
+_div_result_t LongDivisionReadable(reg_t * A, numsize_t m, reg_t * B, numsize_t n, reg_t * Q, numsize_t * q, reg_t * R, numsize_t * r);
 
 
 /*
