@@ -1,18 +1,31 @@
 #include "test.h"
-#define HALF_BIG_NUMBER (1024*1024/sizeof(reg_t)/2)
+#define HALF_MEG_NUMBER (1024*1024/sizeof(reg_t)/2)
 #define BIG_NUMBER (1024*1024/sizeof(reg_t))
 #define MBIG_NUMBER (256*1024/sizeof(reg_t))
-static reg_t _HALF_MEG_dA[HALF_BIG_NUMBER];
-static reg_t _HALF_MEG_dB[HALF_BIG_NUMBER];
-static reg_t _HALF_MEG_dC[HALF_BIG_NUMBER];
-static reg_t _HALF_MEG_dD[HALF_BIG_NUMBER];
-static reg_t _HALF_MEG_dE[HALF_BIG_NUMBER];
-static reg_t _HALF_MEG_dF[HALF_BIG_NUMBER];
+
+static reg_t _HALF_MEG_dA[HALF_MEG_NUMBER];
+static reg_t _HALF_MEG_dB[HALF_MEG_NUMBER];
+static reg_t _HALF_MEG_dC[HALF_MEG_NUMBER];
+static reg_t _HALF_MEG_dD[HALF_MEG_NUMBER];
+static reg_t _HALF_MEG_dE[HALF_MEG_NUMBER];
+static reg_t _HALF_MEG_dF[HALF_MEG_NUMBER];
 
 static uint_fast64_t _rand_seed_4;
 
-static void each_op(_result_t(*unit_test)(CLOCK_T* outAlgorithmElapsedTime, struct _operation_implementations*), int boolRepeat,
-	_char_t const * const test_description
+/* In order to test division with different operand sizes create the following structure, it is used just for test*/
+struct _speedtest_param
+{
+	numsize_t asize;
+	numsize_t bsize;
+};
+
+#ifdef  _IMPLEMENTATION_DIVISION_IMPROVED_COLLECT_VERBOSE_DATA
+void startReadableDivisionDebug();
+void printReadableDivisionDebug();
+#endif //  
+
+static void each_op(_result_t(*unit_test)(CLOCK_T* outAlgorithmElapsedTime, struct _operation_implementations*, void*userData), int boolRepeat,
+	_char_t const * const test_description,  void  *  userData
 )
 {
 
@@ -23,19 +36,30 @@ static void each_op(_result_t(*unit_test)(CLOCK_T* outAlgorithmElapsedTime, stru
 			continue;
 		}
 
+#ifdef _IMPLEMENTATION_DIVISION_IMPROVED_COLLECT_VERBOSE_DATA
+		startReadableDivisionDebug();
+#endif	
+
+
 		_rand_seed_4 = _R(0x4d595df4d0f33173); /*deterministic , i want all tests to be reproducible*/
 		srand((unsigned int)_rand_seed_4);
 
 
 		if (boolRepeat)
 		{
-			run_test_repeat(unit_test, &(arithmetics[i]), &(arithmetics[i].division_test_results), test_description);
+			run_test_repeat(unit_test, &(arithmetics[i]), &(arithmetics[i].division_test_results), test_description, userData);
 		}
 		else
 		{
-			run_test_single(unit_test, &(arithmetics[i]), &(arithmetics[i].division_test_results), test_description);
+			run_test_single(unit_test, &(arithmetics[i]), &(arithmetics[i].division_test_results), test_description, userData);
 		}
+#ifdef _IMPLEMENTATION_DIVISION_IMPROVED_COLLECT_VERBOSE_DATA
+		printReadableDivisionDebug();
+#endif
 	}
+
+
+
 }
 
 
@@ -162,6 +186,65 @@ static _result_t wc(CLOCK_T* delta_t, struct _operation_implementations* impl)
 		dumpNumber(ComputedR, STR("ComputedR"), computedRsize);
 	}
 	return result;
+}
+
+static _result_t wc3(CLOCK_T* delta_t, struct _operation_implementations* impl)
+{
+	_result_t result = _OK;
+	reg_t A[] = {
+		0x9be3a689d1f19fc0,
+		0xd52991985bf6af10,
+		0xdc2d5219d8bdc6f9,
+		0xe9bf91c519078d70, 0x0 };
+	reg_t B[] = {
+		0xe592143e04ff1ef0, 0x0 };
+	reg_t Q[] = {
+		0x0,0x0,0x0,0x0,0X0
+	};
+	reg_t R[] = {
+		0x0,0x0,0x0,0x0,0X0
+	};
+	reg_t ExpectedQ[] = { 0x75421d1c541433b6, 0xe34ad1170b3cf83a, 0x04a89d9e9ce0d519 , 1 };
+	reg_t ExpectedR[] = { 0x413c3b1e46a7d120 };
+
+	numsize_t asize = 4;
+	numsize_t bsize = 2;
+	numsize_t qsize;
+	numsize_t rsize;
+
+
+	CLOCK_T t1 = precise_clock();
+	_div_result_t divresult = impl->division(A, asize, B, bsize, Q, &qsize, R, &rsize);
+	*delta_t = precise_clock() - t1;
+
+	if (divresult != OK)
+	{
+		result = _FAIL;
+		LOG_ERROR(STR("Division returned error"));
+
+		
+	}
+	if (CompareWithPossibleLeadingZeroes(Q, qsize, ExpectedQ, 4) != 0
+		||
+		CompareWithPossibleLeadingZeroes(R, rsize, ExpectedR, 1) != 0)
+	{
+		result = _FAIL;
+		LOG_ERROR(STR("EXPECTED VALUES NOT MEET"));
+	}
+
+	if (result == _FAIL)
+	{
+		dumpNumber(A, STR("A"), asize);
+		dumpNumber(B, STR("B"), bsize);
+		dumpNumber(Q, STR("Q"), qsize);
+		dumpNumber(R, STR("R"), rsize);
+		dumpNumber(ExpectedQ, STR("ExpectedQ"), 4);
+		dumpNumber(ExpectedR, STR("ExpectedR"), 1);
+	}
+
+
+	return result;
+
 }
 
 static _result_t wc2(CLOCK_T* delta_t, struct _operation_implementations* impl)
@@ -308,8 +391,8 @@ static _result_t divide_ok_to_definition_ext(CLOCK_T* delta_t, struct _operation
 
 	/*Q = A/B, R is A mod B and A = Q*B + R*/
 	numsize_t asize;
-	numsize_t bsize = rand() % 100 + 1;
-	numsize_t qsize = rand() % 100 + 1;
+	numsize_t bsize = rand() % 128 + 1;
+	numsize_t qsize = rand() % 128 + 1;
 	numsize_t rsize = 1;
 	numsize_t computedQsize;
 	numsize_t computedRsize;
@@ -401,8 +484,8 @@ static _result_t divide_small_vs_big(CLOCK_T* delta_t, struct _operation_impleme
 	_result_t result = _OK;
 
 	numsize_t qsize;
-	numsize_t asize = rand() % 100 + 1;
-	numsize_t bsize = rand() % 100 + 1;
+	numsize_t asize = rand() % 128 + 1;
+	numsize_t bsize = rand() % 8 + 1;
 	numsize_t rsize;	
 
 	reg_t* A = _HALF_MEG_dA;
@@ -457,15 +540,81 @@ static _result_t divide_small_vs_big(CLOCK_T* delta_t, struct _operation_impleme
 }
 
 
-static _result_t divide_speed_test(CLOCK_T* delta_t, struct _operation_implementations* impl)
+
+static _result_t divide_random_test(CLOCK_T* delta_t, struct _operation_implementations* impl)
 {
 	_result_t result = _OK;
 
 	/*Q = A/B, R is A mod B and A = Q*B + R*/
-	numsize_t asize = 2000; /* my current impl is too slow to be play better than that size*/
-	numsize_t bsize = 50;	
-	numsize_t qsize, rsize;
+	numsize_t asize = 4; /* my current impl is too slow to be play better than that size*/
+	numsize_t bsize = 1 + (rand() & 0x1);
+	numsize_t qsize, rsize, actualSize;
+
+	reg_t* A = _HALF_MEG_dA;
+	reg_t* B = _HALF_MEG_dB;
+	reg_t* Q = _HALF_MEG_dC;
+	reg_t* R = _HALF_MEG_dD;
+	reg_t* temp = _HALF_MEG_dE;
+	reg_t* actual = _HALF_MEG_dF;
+
+
+	randNum(&_rand_seed_4, A, asize);
+	randNum(&_rand_seed_4, B, bsize);
+
+	/* we want A > B */
+	if (CompareWithPossibleLeadingZeroes(A, asize, B, bsize) < 0)
+	{
+		/*swap A <-> B*/
+		reg_t* temp2 = A;
+		A = B;
+		B = temp2;
+		numsize_t temps = asize;
+		asize = bsize;
+		bsize = temps;
+	}
+
+	/* we're ready to test */
+
+	CLOCK_T t1 = precise_clock();
+	_div_result_t divresult = impl->division(A, asize, B, bsize, Q, &qsize, R, &rsize);
+	*delta_t = precise_clock() - t1;
+
+	if (divresult != OK)
+	{
+		result = _FAIL;
+		LOG_ERROR(STR("Division returned error"));
+
+		dumpNumber(A, STR("A"), asize);
+		dumpNumber(B, STR("B"), bsize);
+	}
+
+	actualSize = LongMultiplication(Q, qsize, B, bsize, temp);
+	actualSize = LongSumWithCarryDetection(temp, actualSize, R, rsize, actual);
+	if (CompareWithPossibleLeadingZeroes(A, asize, actual, actualSize) != 0)
+	{
+		result = _FAIL;
+		LOG_ERROR(STR("Q * B + R should be A "));
+
+		dumpNumber(A, STR("A"), asize);
+		dumpNumber(B, STR("B"), bsize);
+		dumpNumber(Q, STR("Q"), qsize);
+		dumpNumber(R, STR("R"), rsize);
+		dumpNumber(actual, STR("ACTUAL"), actualSize);
+	}
+
+	return result;
+}
+
+static _result_t divide_speed_test(CLOCK_T* delta_t, struct _operation_implementations* impl, void * userData)
+{
+	_result_t result = _OK;
+	struct _speedtest_param* p1 = (struct _speedtest_param*) userData;
+	/*Q = A/B, R is A mod B and A = Q*B + R*/
 	
+
+	numsize_t qsize, rsize;	
+	numsize_t asize = p1->asize, bsize = p1->bsize;
+
 
 	reg_t* A = _HALF_MEG_dA;
 	reg_t* B = _HALF_MEG_dB;
@@ -507,19 +656,74 @@ static _result_t divide_speed_test(CLOCK_T* delta_t, struct _operation_implement
 
 
 
+
+
+
+
 void testDiv()
 {
-		
-	
-	each_op(wc2, 0, STR("DIV: well known values 2")); /* need to check this special cases */
+
+	/*each_op(wc3, 0, STR("DIV: well known values 3")); 
+	each_op(wc2, 0, STR("DIV: well known values 2")); 
 	each_op(wc, 0, STR("DIV: well known values"));
+	
+	each_op(divide_random_test, 1, STR("DIV: random tests on small numbers"));
 
 	each_op(divide_by_zero_returns_error, 0, STR("DIV: Check divide by zero"));
 	each_op(divide_by_one_is_identity, 1, STR("DIV: Divide by one must returns same as A"));
 	each_op(divide_ok_to_definition, 1, STR("DIV: Q = A/B, R is A mod B and A = Q*B + R (R is a single reg_t digit)"));
 	each_op(divide_ok_to_definition_ext, 1, STR("DIV: big values Q = A/B, R is A mod B and A = Q*B + R (R is a single reg_t digit)"));
-	each_op(divide_small_vs_big, 1, STR("DIV: when A < B then A / B = 0 and remainder is B"));
-	each_op(divide_speed_test, 1, STR("DIV: speed test (2000 Words / 50 Words)"));
+	each_op(divide_small_vs_big, 1, STR("DIV: when A < B then A / B = 0 and remainder is B"));*/
+
+
+	struct _speedtest_param p1;
+	p1.asize = 2048;
+
+
+	p1.bsize = 1;
+	each_op(divide_speed_test, 1, STR("DIV: speed test (2048 Words / 1 Words)"), &p1);
+	p1.bsize = 2;
+	each_op(divide_speed_test, 1, STR("DIV: speed test (2048 Words / 2 Words)"), &p1);
+	p1.bsize = 4;
+	each_op(divide_speed_test, 1, STR("DIV: speed test (2048 Words / 4 Words)"), &p1);
+	p1.bsize = 8;
+	each_op(divide_speed_test, 1, STR("DIV: speed test (2048 Words / 8 Words)"), &p1);
+	p1.bsize = 16;
+	each_op(divide_speed_test, 1, STR("DIV: speed test (2048 Words / 16 Words)"), &p1);
+	p1.bsize = 32;
+	each_op(divide_speed_test, 1, STR("DIV: speed test (2048 Words / 32 Words)"), &p1);
+	p1.bsize = 64;
+	each_op(divide_speed_test, 1, STR("DIV: speed test (2048 Words / 64 Words)"), &p1);
+	p1.bsize = 128;
+	each_op(divide_speed_test, 1, STR("DIV: speed test (2048 Words / 128 Words)"), &p1);
+	p1.bsize = 257;
+	each_op(divide_speed_test, 1, STR("DIV: speed test (2048 Words / 256 Words)"), &p1);
+	p1.bsize = 512;
+	each_op(divide_speed_test, 1, STR("DIV: speed test (2048 Words / 512 Words)"), &p1);
+	p1.bsize = 1024;
+	each_op(divide_speed_test, 1, STR("DIV: speed test (2048 Words / 1024 Words)"), &p1);
+	p1.bsize = 1536;
+	each_op(divide_speed_test, 1, STR("DIV: speed test (2048 Words / 1536 Words)"), &p1);
+	p1.bsize = 1792;
+	each_op(divide_speed_test, 1, STR("DIV: speed test (2048 Words / 1792 Words)"), &p1);
+	p1.bsize = 1920;
+	each_op(divide_speed_test, 1, STR("DIV: speed test (2048 Words / 1920 Words)"), &p1);
+	p1.bsize = 1984;
+	each_op(divide_speed_test, 1, STR("DIV: speed test (2048 Words / 1984 Words)"), &p1);
+	p1.bsize = 2016;
+	each_op(divide_speed_test, 1, STR("DIV: speed test (2048 Words / 2016 Words)"), &p1);
+	p1.bsize = 2032;
+	each_op(divide_speed_test, 1, STR("DIV: speed test (2048 Words / 2032 Words)"), &p1);
+	p1.bsize = 2040;
+	each_op(divide_speed_test, 1, STR("DIV: speed test (2048 Words / 2040 Words)"), &p1);
+	p1.bsize = 2044;
+	each_op(divide_speed_test, 1, STR("DIV: speed test (2048 Words / 2044 Words)"), &p1);
+	p1.bsize = 2046;
+	each_op(divide_speed_test, 1, STR("DIV: speed test (2048 Words / 2046 Words)"), &p1);
+	p1.bsize = 2047;
+	each_op(divide_speed_test, 1, STR("DIV: speed test (2048 Words / 2047 Words)"), &p1);
+		
+
 
 
 

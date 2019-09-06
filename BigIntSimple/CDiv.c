@@ -4,12 +4,33 @@
 
 #define ENABLE_NORMALIZE
 
-/* caution will not check against div by zero */
-EXTERN reg_t cpu_divide(reg_t LoWord, reg_t HiWord, reg_t Divisor, reg_t * R);
-EXTERN reg_t cpu_multiply(reg_t A, reg_t B, reg_t * high);
+#ifdef _IMPLEMENTATION_DIVISION_IMPROVED_COLLECT_VERBOSE_DATA
+long long cpu_mul_count;
+long long cpu_div_count;
+long long sub_count;
+long long compare_count;
 
-static int fastcmp(reg_t *A, numsize_t ASize, reg_t*B, numsize_t BSize)
+void startReadableDivisionDebug() {
+	compare_count = sub_count = cpu_div_count = cpu_mul_count = 0;
+}
+void printReadableDivisionDebug()
 {
+	fprintf(stderr, "Total multiplications %lld\n" , cpu_mul_count);
+	fprintf(stderr, "Total divisions %lld\n", cpu_div_count);
+	fprintf(stderr, "Total subtractions %lld\n", cpu_div_count);
+	fprintf(stderr, "Total comparisons %lld\n", compare_count);
+}
+#endif
+
+/* caution will not check against div by zero */
+EXTERN reg_t cpu_divide(reg_t LoWord, reg_t HiWord, reg_t Divisor, reg_t* R);
+EXTERN reg_t cpu_multiply(reg_t A, reg_t B, reg_t* high);
+
+static int fastcmp(reg_t* A, numsize_t ASize, reg_t* B, numsize_t BSize)
+{
+#ifdef _IMPLEMENTATION_DIVISION_IMPROVED_COLLECT_VERBOSE_DATA
+	compare_count++;
+#endif 
 	numsize_t cmp = ASize - BSize;
 	if (cmp != 0)
 		return cmp;
@@ -17,6 +38,9 @@ static int fastcmp(reg_t *A, numsize_t ASize, reg_t*B, numsize_t BSize)
 
 	while (i > 0)
 	{
+#ifdef _IMPLEMENTATION_DIVISION_IMPROVED_COLLECT_VERBOSE_DATA
+		compare_count++;
+#endif 
 		i--;
 		if (A[i] != B[i])
 			break;
@@ -25,8 +49,8 @@ static int fastcmp(reg_t *A, numsize_t ASize, reg_t*B, numsize_t BSize)
 	if (i == 0 && A[i] == B[i])
 		return 0;
 
-	/* if we were sure that A[i] - B[i] does not overflow an int we could do 
-	
+	/* if we were sure that A[i] - B[i] does not overflow an int we could do
+
 	return A[i] - B[i];
 
 	but reg_t could be larger than int so don't do that!
@@ -41,13 +65,13 @@ static int fastcmp(reg_t *A, numsize_t ASize, reg_t*B, numsize_t BSize)
 }
 
 /* reverse array */
-static void invert(reg_t * A, numsize_t n)
+static void invert(reg_t* A, numsize_t n)
 {
 	numsize_t l = 0;
 	reg_t temp;
 	while (l < n)
 	{
-		n--; 
+		n--;
 		temp = A[l];
 		A[l] = A[n];
 		A[n] = temp;
@@ -55,8 +79,8 @@ static void invert(reg_t * A, numsize_t n)
 	}
 }
 /* copy with regard to overlap */
-static void copy(reg_t *dest, reg_t*source, numsize_t n)
-{	
+static void copy(reg_t* dest, reg_t* source, numsize_t n)
+{
 	if (dest > source)
 	{
 		while (n != 0)
@@ -65,11 +89,11 @@ static void copy(reg_t *dest, reg_t*source, numsize_t n)
 			dest[n] = source[n];
 		}
 	}
-	else if(dest < source)
+	else if (dest < source)
 	{
 		numsize_t m = 0;
 		while (m < n)
-		{			
+		{
 			dest[m] = source[m];
 			m++;
 		}
@@ -78,22 +102,21 @@ static void copy(reg_t *dest, reg_t*source, numsize_t n)
 
 #ifdef  ENABLE_NORMALIZE
 #define SHIFTBITS (sizeof(reg_t) * 8)
-static numsize_t findmsw(reg_t * A, numsize_t n)
+static numsize_t findmsw(reg_t* A, numsize_t n)
 {
 	while (n > 0)
 	{
 		n--;
 		if (A[n] != 0)
-			return n;		
+			return n;
 	}
 	return 0;
 }
 
-static numsize_t shiftl(reg_t * dest, reg_t * source, numsize_t source_l, unsigned n)
+static numsize_t shiftl(reg_t* dest, reg_t* source, numsize_t source_l, unsigned n)
 {
-
 	/* this can work in place */
-	if(n == 0)
+	if (n == 0)
 		return source_l;
 	assert(n < SHIFTBITS);
 	unsigned  m = SHIFTBITS - n;
@@ -103,7 +126,7 @@ static numsize_t shiftl(reg_t * dest, reg_t * source, numsize_t source_l, unsign
 
 	while (i > 0)
 	{
-		temp = source[i-1];
+		temp = source[i - 1];
 		dest[i--] = (temp >> m) | prev_word;
 		prev_word = temp << n;
 	}
@@ -112,7 +135,7 @@ static numsize_t shiftl(reg_t * dest, reg_t * source, numsize_t source_l, unsign
 	return findmsw(dest, source_l + 1) + 1;
 }
 
-static  numsize_t shiftr(reg_t * dest, reg_t * source, numsize_t source_l, unsigned n)
+static  numsize_t shiftr(reg_t* dest, reg_t* source, numsize_t source_l, unsigned n)
 {
 	/* this can work in place */
 	if (n == 0)
@@ -128,7 +151,7 @@ static  numsize_t shiftr(reg_t * dest, reg_t * source, numsize_t source_l, unsig
 		dest[source_l] = (temp >> n) | prev_word;
 		prev_word = temp << m;
 	}
-	return findmsw(dest, source_l )+1;
+	return findmsw(dest, source_l) + 1;
 }
 #endif
 
@@ -150,37 +173,36 @@ the interface is quite raw you will need to encapsulate this if you want to crea
 as a corollary of the previous statements we does not make A and B constant because we need to modify them but after return they will be the same as they were passed in
 
 */
-_div_result_t LongDivision(reg_t *A, numsize_t m, reg_t *B, numsize_t n, reg_t * Q, numsize_t * q, reg_t * R, numsize_t * r)
+_div_result_t LongDivision(reg_t* A, numsize_t m, reg_t* B, numsize_t n, reg_t* Q, numsize_t* q, reg_t* R, numsize_t* r)
 {
-	
 	if (n == 0)
 		return DIV_BY_ZERO; /*failure*/
 
 	int compare;
 #ifdef  ENABLE_NORMALIZE
-	int shift=0; /* keep track of how many shifts we do to have the leftmost bit of divisor (B) be 1*/
-#endif	
+	int shift = 0; /* keep track of how many shifts we do to have the leftmost bit of divisor (B) be 1*/
+#endif
 	reg_t Aguess[2]; /* the one or 2 leftmost digits of next divisor that we use to guess Qn */
 	reg_t Qn;        /* the Qn, at first it will be a guess and we will reduce it by 1 until we find the right one */
-	reg_t * test;	 /* this is used to do test = B * Qn to check whether or not Qn is the correct divisor */
+	reg_t* test;	 /* this is used to do test = B * Qn to check whether or not Qn is the correct divisor */
 #ifdef _DEBUG
-	reg_t *testpin; /* for debugging we check that the above test pointer has not been altered by keeping track of its original value */
+	reg_t* testpin; /* for debugging we check that the above test pointer has not been altered by keeping track of its original value */
 	int debug_count; /* will use this to count how many times we do the guessing correction loop. we will assert that the loop is executed maximum 2 times*/
 #endif
 	reg_t bleftmost; /* leftmost digit of B */
 
 	/*get rid of leading zeroes*/
-	m = findmsw(A, m)+1;
-	n = findmsw(B, n)+1;
+	m = findmsw(A, m) + 1;
+	n = findmsw(B, n) + 1;
 
 	/* handling corner case, divide by zero*/
-	if (n == 0) 
+	if (n == 0)
 		return DIV_BY_ZERO; /* failure divide by zero */
 
 	/* corner case 0 divided by x */
-	if (m == 0) 
-	{		
-		/* zero divided by anything returns 0 with a remainder of 0 
+	if (m == 0)
+	{
+		/* zero divided by anything returns 0 with a remainder of 0
 		because by definition
 
 		A = qB + R
@@ -191,7 +213,7 @@ _div_result_t LongDivision(reg_t *A, numsize_t m, reg_t *B, numsize_t n, reg_t *
 		*q = 0;
 		*r = 0;
 		return OK;
-	}	
+	}
 
 	/* corner case, A is less than B */
 	compare = fastcmp(A, m, B, n); /* check if A <= B*/
@@ -206,14 +228,13 @@ _div_result_t LongDivision(reg_t *A, numsize_t m, reg_t *B, numsize_t n, reg_t *
 	if (compare == 0)
 	{
 		/* A == B so return Q=1 and remainder is 0 */
-		*q = 1; 
+		*q = 1;
 		*r = 0;
 		*Q = 1;
 		return OK; /* division OK */
 	}
 
 	bleftmost = B[n - 1]; /*leftmost digit of B*/
-	
 
 #ifdef  ENABLE_NORMALIZE
 	/* now normalize the division, leftmost digit of B must have its leftmost bit to 1 */
@@ -235,26 +256,26 @@ _div_result_t LongDivision(reg_t *A, numsize_t m, reg_t *B, numsize_t n, reg_t *
 		..
 		1  |       2    |63     |  (1 out of 2^64)
 		0  | that case does not exist because we removed the zero digits at left
-		
-		we could use an hardware instruction BSR to find the number of shift though on 
+
+		we could use an hardware instruction BSR to find the number of shift though on
 		next implementation
 
 		*/
 		bleftmost = bleftmost << 1;
-		shift++; /*count how many shifts, on x64 processor maximum shifts are 63, 
+		shift++; /*count how many shifts, on x64 processor maximum shifts are 63,
 				 50% of times there will be no shifts, because there are as many
 				 numbers having left bit to 1 and having left bit to 0*/
 	}
-	
+
 	/* here is where I need A and B to be large enough to contain one more word*/
 	m = shiftl(A, A, m, shift);
 	n = shiftl(B, B, n, shift);
 	bleftmost = B[n - 1];
 
-	test = (reg_t*) malloc((n + 1) * sizeof(reg_t)); 
+	test = (reg_t*)malloc((((size_t)n + 1) * sizeof(reg_t)));
 
 #ifdef _DEBUG
-	 testpin = test;/* using testpin for debug reason, test is never edited but at the end the free(test) could crash the program if we changed it ... so using testpin to check if test has been changed. */
+	testpin = test;/* using testpin for debug reason, test is never edited but at the end the free(test) could crash the program if we changed it ... so using testpin to check if test has been changed. */
 #endif
 
 	if (!test)
@@ -263,22 +284,22 @@ _div_result_t LongDivision(reg_t *A, numsize_t m, reg_t *B, numsize_t n, reg_t *
 		return	GENERIC_FAILURE;
 	}
 
-#endif 
-	
+#endif
+
 	/* initialize result Q=0 (is zero when its size q is 0 or only contains zeroes) */
-	*q = 0;
+	* q = 0;
 
 	/* we should now copy as many digits from A into Remainder (R) */
 
-	numsize_t a_offset = m -  n; /* index of A such that A[a_offset] ... A[m] has same number of digits as B */	
-	
+	numsize_t a_offset = m - n; /* index of A such that A[a_offset] ... A[m] has same number of digits as B */
+
 	if (fastcmp(&A[a_offset], n, B, n) < 0) /*An is still less than B*/
 	{
 		a_offset--; /* pick one more digit on A*/
 	}
 
 	/* initialize first remainder (remainder equals An) */
-	*r = m - a_offset ; 
+	*r = m - a_offset;
 
 	/* copy digits from A[offset]...A[m] to first remainder */
 	copy(R, &A[a_offset], *r);
@@ -286,7 +307,7 @@ _div_result_t LongDivision(reg_t *A, numsize_t m, reg_t *B, numsize_t n, reg_t *
 	do
 	{
 		/* now guessing next divisor */
-		
+
 		reg_t dummy;
 		numsize_t testLen;
 
@@ -299,17 +320,20 @@ _div_result_t LongDivision(reg_t *A, numsize_t m, reg_t *B, numsize_t n, reg_t *
 		{
 			/* An = select as many digits from A such that Aguess >= Bn*/
 			/* we may have 2 cases leftmost of A >= B so we divide 1 number*/
-			
+
 			if (R[*r - 1] == bleftmost)
 			{
 				Qn = _R(-1);
 			}
-			else if (R[*r-1] < bleftmost)
+			else if (R[*r - 1] < bleftmost)
 			{
-				Aguess[1] = R[*r-1];
-				Aguess[0] = R[*r-2];				
-				Qn = cpu_divide(Aguess[0], Aguess[1], bleftmost, &dummy); 
-			}			
+				Aguess[1] = R[*r - 1];
+				Aguess[0] = R[*r - 2];
+#ifdef _IMPLEMENTATION_DIVISION_IMPROVED_COLLECT_VERBOSE_DATA
+				cpu_div_count++;
+#endif
+				Qn = cpu_divide(Aguess[0], Aguess[1], bleftmost, &dummy);
+			}
 			else
 			{
 				/* possible optimization, when Aguess[1] = 0 then result is going to be 1 because Bleftmost is > base/2 and Aguess is less than base , because division is normalized */
@@ -317,10 +341,10 @@ _div_result_t LongDivision(reg_t *A, numsize_t m, reg_t *B, numsize_t n, reg_t *
 				/*Aguess[1] = 0;
 				Aguess[0] = R[*r-1];*/
 				Qn = 1;
-			}			
+			}
 
 			/* now verify if Qn is good guess multiplying it by B*/
-			testLen = LongMultiplication(&Qn, 1, B, n, test);
+			testLen = LongMultiplication(&Qn, 1, B, n, test);			
 
 			/* verify if Test > An */
 			compare = fastcmp(test, testLen, R, *r);
@@ -330,15 +354,15 @@ _div_result_t LongDivision(reg_t *A, numsize_t m, reg_t *B, numsize_t n, reg_t *
 #endif
 			while (compare > 0)
 			{
-				/* 
+				/*
 				since Qn is too large we decrease it by 1 until we have
-				that Qn is the correct one 
+				that Qn is the correct one
 				*/
 
 				Qn--;
 
-				/* 
-				the longsub operation is required to allow me to work in place 
+				/*
+				the longsub operation is required to allow me to work in place
 				i mean... write the result to the first argument... so i don't
 				have to allocate more space to store the subtraction result...
 				that is generally not required for most LongSub implements...
@@ -346,10 +370,10 @@ _div_result_t LongDivision(reg_t *A, numsize_t m, reg_t *B, numsize_t n, reg_t *
 				use here supports that case...
 				*/
 
-				testLen = LongSub(test, testLen, B, n, test); 
+				testLen = LongSub(test, testLen, B, n, test);
 
 				/* ok compare again to see if now we have found right Qn...
-				remember that if division is normalized we can have a maximum of 2 
+				remember that if division is normalized we can have a maximum of 2
 				iteration for this loop.
 				*/
 				compare = fastcmp(test, testLen, R, *r);
@@ -370,44 +394,43 @@ _div_result_t LongDivision(reg_t *A, numsize_t m, reg_t *B, numsize_t n, reg_t *
 		/* ok now Qn contain the correct Qn or eventually 0*/
 		/* we have to store Qn to the higher index of Q but we don't
 		know how long Q is going to be, so we store this in reverse order
-		, before to return we will reverse the array, on next implementation 
-		we will compute the destination index before to start, but that is marginal improvement, 
+		, before to return we will reverse the array, on next implementation
+		we will compute the destination index before to start, but that is marginal improvement,
 		the outer loop dominates;
 		*/
 		Q[*q] = Qn;
 		(*q)++;
 
 		/* now we compute remainder, as usual we do subtraction in place */
-		if(testLen > 0)
-			*r = LongSub(R, *r, test, testLen, R);
+		if (testLen > 0)
+			* r = LongSub(R, *r, test, testLen, R);
 
 		/* let's see if there are more digits on A */
-		
+
 		if (a_offset == 0)
 			break; /* no more digits on A */
-		
+
 		/* more digits on A ... shift remainder and append next digit of A */
 		copy(&R[1], &R[0], *r); /* shift significative digits left by one position to the left*/
 		a_offset--; /* next digit of A */
 		*r = *r + 1; /* to add a digit to R increase its count by 1*/
 		R[0] = A[a_offset]; /* append next digit of A to rightmost (least significant) of R */
-
 	} while (1);
 
 #ifdef _DEBUG
-	/* 
+	/*
 	we assert that test has not been changed by the division code otherwise the free will fail
 	*/
-	assert(test == testpin);	
+	assert(test == testpin);
 #endif
 	free(test);
 #ifdef  ENABLE_NORMALIZE
 	if (shift != 0)
-	{		
-		/* 
-		restore the remainder, 
+	{
+		/*
+		restore the remainder,
 		A and B were modified in place so we must restore them before return
-		since the caller does not expect that we modified the input arrays...		
+		since the caller does not expect that we modified the input arrays...
 		*/
 		shiftr(R, R, *r, shift);
 		shiftr(A, A, m, shift);
@@ -415,44 +438,52 @@ _div_result_t LongDivision(reg_t *A, numsize_t m, reg_t *B, numsize_t n, reg_t *
 	}
 #endif
 
-	/* 
-	at this point Q array is reversed.. we need to reverse it before to return 
+	/*
+	at this point Q array is reversed.. we need to reverse it before to return
 	*/
 	invert(Q, *q);
-	return 0;
+	return OK;
 }
 
 #define GetLeftmostOf(X, XSize) ((X)[(XSize)-1])
 
 static reg_t GuessDivisor(reg_t ALeftMost, reg_t ASecond, reg_t BLeftmost)
 {
-
 	if (ALeftMost == BLeftmost)
 	{
-		return R(-1);
+		return _R(-1);
 	}
 	else if (ALeftMost < BLeftmost)
-	{		
+	{
+#ifdef _IMPLEMENTATION_DIVISION_IMPROVED_COLLECT_VERBOSE_DATA
+		cpu_div_count++;
+#endif
 		return cpu_divide(ASecond, ALeftMost, BLeftmost, &BLeftmost);
 	}
-	return 1;
+	return _R(1);
 }
-static numsize_t simpleMultiplication(reg_t* A, numsize_t ASize, reg_t B, reg_t*R )
-{	
+
+
+static numsize_t simpleMultiplication(reg_t* A, numsize_t ASize, reg_t B, reg_t* R)
+{
 	reg_t low;
 	reg_t high = 0;
-	numsize_t j = 1;
+
 	R[0] = 0;
 	for (numsize_t i = 0; i < ASize; ++i)
 	{
 		low = cpu_multiply(A[i], B, &high);
-		
+
+#ifdef _IMPLEMENTATION_DIVISION_IMPROVED_COLLECT_VERBOSE_DATA
+		cpu_mul_count++;
+#endif
+
 		R[i] += low;
 
 		if (R[i] < low) //carry detection
 			high++; //have carry
-		
-		R[i + 1] = high;	
+
+		R[i + 1] = high;
 	}
 	if (R[ASize] != 0)
 		return ASize + 1;
@@ -460,65 +491,115 @@ static numsize_t simpleMultiplication(reg_t* A, numsize_t ASize, reg_t B, reg_t*
 }
 
 
-_div_result_t LongDivisionReadableCore(reg_t * tempSpace, reg_t * A, numsize_t m, reg_t * B, numsize_t n, reg_t * Q, numsize_t *q, reg_t * R, numsize_t * r)
+static void LongDivisionReadableCore(reg_t* temp, reg_t* A, numsize_t m, reg_t* B, numsize_t n, reg_t* Q, numsize_t q, reg_t* R, numsize_t* r)
 {
-	reg_t bleftmost = B[n - 1]; /* leftmost digit of B */
+	/**r = 0;
+	return;*/
 
-	*q = 0; /* Q empty*/
-	copy(R, B, n); // R = B
-	//An = Select as many digits from A such that An >= B;
+	reg_t  bleftmost = B[n - 1]; /* leftmost digit of B */
+#ifdef _DEBUG
+	int debug_count; /* will use this to count how many times we do the guessing correction loop. we will assert that the loop is executed maximum 2 times*/
+#endif
 
-	reg_t Qn = GuessDivisor(An[AnSize - 1], An[AnSize - 2], B[BSize - 1]);
+	/* An = Select as many digits from A such that An >= B; */
+	reg_t* An = temp + n + 1; /* using preallocated memory to keep copy of A*/
+	numsize_t AnSize = n;
+	copy(An, A, m); /* copy A into An*/
 
-	numsize_t tempSize = simpleMultiplication(B, BSize, Qn, tempSpace); /* temp = Qn * B   */
-
-	while (Test > An)
+	if (A[m - 1] < B[n - 1])
 	{
-		Qn--;
-		Test -= B;
+		AnSize++;
 	}
-	return Qn;
 
-
-	Append Qn to Q;
-	Remainder = An = An - Test;
-	if (there are more digits in A)
+	An += m - AnSize;
+	while (q > 0)
 	{
-		Append next digit from A to An;
-		goto loop;
+		reg_t Qn;
+
+		if (AnSize > 1)
+			Qn = GuessDivisor(An[AnSize - 1], An[AnSize - 2], bleftmost);
+		else
+			Qn = GuessDivisor(0, An[AnSize - 1], bleftmost);
+
+		numsize_t tempSize = simpleMultiplication(B, n, Qn, temp); /* temp = Qn * B   */
+#ifdef _DEBUG
+		debug_count = 0;
+#endif
+		while (fastcmp(temp, tempSize, An, AnSize) > 0)/* while (Temp > An),  maximum 2 iterations here*/
+		{
+			Qn--;
+			tempSize = LongSub(temp, tempSize, B, n, temp);/*Temp -= B;*/
+#ifdef _DEBUG
+
+	/* our assumption is that this loop must execute maximum 2 times
+	   ... let's assert this and find if it's true at debug time
+	*/
+			debug_count++;
+			assert(debug_count < 3);
+#endif
+		}
+
+		AnSize = LongSub(An, AnSize, temp, tempSize, An); /*Remainder = An = An - Test; */
+		Q[--q] = Qn; /* Append Qn to Q; */
+
+		if (q > 0)
+		{
+			An--;
+			AnSize++;
+		}
 	}
-	return result is : Q and Remainder;
+	copy(R, An, AnSize);
+	*r = AnSize;
 }
 
-static int NormalizeShiftLeft(reg_t* A, numsize_t*m, reg_t*B, numsize_t*n)
+static unsigned int NormalizeShiftLeft(reg_t* A, numsize_t* m, reg_t* B, numsize_t* n)
 {
-	int shift = 0;
-	BitScanReverse(B[*n - 1]);
+	unsigned int shift = 0;
+	shift = 8 * sizeof(reg_t) - BitScanReverse(B[(*n) - 1]) - 1;
 
 	/* here is where I need A and B to be large enough to contain one more word*/
-	m = shiftl(A, A, m, shift);
-	n = shiftl(B, B, n, shift);
+	*m = shiftl(A, A, *m, shift);
+	*n = shiftl(B, B, *n, shift);
+	return shift;
 }
 
-static void NormalizeShiftRight(reg_t*A, numsize_t m, reg_t*B, numsize_t n, reg_t* R, numsize_t* r,int shift)
+static void NormalizeShiftRight(reg_t* A, numsize_t m, reg_t* B, numsize_t n, reg_t* R, numsize_t* r, int shift)
 {
 	shiftr(R, R, *r, shift);
 	shiftr(A, A, m, shift);
 	shiftr(B, B, n, shift);
 }
 
-_div_result_t LongDivisionReadable(reg_t *A, numsize_t m, reg_t *B, numsize_t n, reg_t * Q, numsize_t * q, reg_t * R, numsize_t * r)
+static int RemoveLeadingZeroes(reg_t* A, numsize_t* _m, reg_t* B, numsize_t* _n)
+{
+	while (*_m > 0 && A[(*_m) - 1] == 0)
+		(*_m)--;
+	while (*_n > 0 && B[(*_n) - 1] == 0)
+		(*_n)--;
+
+	if ((*_n) == 0)
+		return DIV_BY_ZERO;
+	return OK;
+}
+
+
+
+_div_result_t LongDivisionReadable(reg_t* A, numsize_t m, reg_t* B, numsize_t n, reg_t* Q, numsize_t* q, reg_t* R, numsize_t* r)
 {
 	/* This function will process the input such that the LongDivisionReadableCore will work on
-	good numbers without the need for input checking or to allocate temporary memory*/
-	
+	  * good numbers (A > B)
+	  * without the need for input checking
+	  * without to allocate temporary memory
+	  * without to compute the lenght of the result
+	*/
+
 	if (RemoveLeadingZeroes(A, &m, B, &n) == DIV_BY_ZERO)
 		return DIV_BY_ZERO;
 	int compare;
-	reg_t * tempSpace;
+	reg_t* tempSpace;
 
 	if (m == 0) /* corner case 0 / X */
-	{	
+	{
 		*q = 0;
 		*r = 0;
 		return OK;
@@ -547,7 +628,7 @@ _div_result_t LongDivisionReadable(reg_t *A, numsize_t m, reg_t *B, numsize_t n,
 
 	int shift = NormalizeShiftLeft(A, &m, B, &n);
 
-	tempSpace = (reg_t*)malloc((n + 1) * sizeof(reg_t));
+	tempSpace = (reg_t*)malloc((((size_t)n + m + 2)) * sizeof(reg_t));
 
 	if (!tempSpace)
 	{
@@ -555,10 +636,16 @@ _div_result_t LongDivisionReadable(reg_t *A, numsize_t m, reg_t *B, numsize_t n,
 		return	GENERIC_FAILURE;
 	}
 
-	LongDivisionReadableCore(tempSpace, A, m, B, n, Q, q, R, r);
+	/* computing lenght of Q */
+	*q = m - n;
+	if (fastcmp(A + m - n, n, B, n) > 0)
+		(*q)++;
+	/* end computing length of Q */
+
+	LongDivisionReadableCore(tempSpace, A, m, B, n, Q, *q, R, r);
 
 	free(tempSpace);
 
-	NormalizeShiftRight(A, m, B, n, R, &r, shift);
-	return 0;
+	NormalizeShiftRight(A, m, B, n, R, r, shift);
+	return OK;
 }

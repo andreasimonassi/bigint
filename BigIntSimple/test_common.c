@@ -131,11 +131,14 @@ static void copystr(_char_t const * const src, _char_t* dest)
 
 static void test_statistics_collection_ADD(test_statistics_collection * destination_array, test_statistics * result)
 {
+	void* temp;
 	if (destination_array->capacity == destination_array->count)
 	{
 		destination_array->capacity += 10;
-		destination_array->items = (test_statistics**)realloc(destination_array->items, destination_array->capacity * sizeof(test_statistics*));
-		MY_ASSERT(destination_array->items, STR("CAN'T ALLOCATE MEMORY"));
+		temp = (test_statistics**)realloc(destination_array->items, destination_array->capacity * sizeof(test_statistics*));
+		MY_ASSERT(temp, STR("CAN'T ALLOCATE MEMORY"));
+		
+		destination_array->items = temp;
 	}
 	
 	destination_array->items[destination_array->count] = result;
@@ -153,10 +156,11 @@ static void test_statistics_collection_CLEAR(test_statistics_collection * array)
 	array->capacity =  array->count = 0;
 }
 
-void run_test_repeat(_result_t(*unit_test)(CLOCK_T * out_algorithmExecutionTiming, struct _operation_implementations*),
+void run_test_repeat(_result_t(*unit_test)(CLOCK_T * out_algorithmExecutionTiming, struct _operation_implementations*, void* userData),
 	struct _operation_implementations* op,
 	test_statistics_collection * destination_array,
-	_char_t const * const test_description
+	_char_t const * const test_description,
+	void *  userData
 	)
 {
 
@@ -181,7 +185,7 @@ void run_test_repeat(_result_t(*unit_test)(CLOCK_T * out_algorithmExecutionTimin
 
 	for (j = 0; j < _ITERATIONS_FOR_RANDOM_TEST; ++j)
 	{
-		result->test_result = unit_test(&delta, op);
+		result->test_result = unit_test(&delta, op, userData);
 		if (FAILED(result->test_result))
 		{			
 			break;
@@ -190,7 +194,7 @@ void run_test_repeat(_result_t(*unit_test)(CLOCK_T * out_algorithmExecutionTimin
 		cumulative += delta;
 		//assert(delta >= 0);
 
-		if (seconds_from_clock(precise_clock() - feedbacktimeout) > 2.0)
+		if (seconds_from_clock(precise_clock() - feedbacktimeout) > 5.0)
 		{
 			LOG_INFO(STR("\tITS A LONG OPERATION: %d/%d"), j, _ITERATIONS_FOR_RANDOM_TEST);
 			feedbacktimeout = precise_clock();
@@ -229,10 +233,10 @@ void run_test_repeat(_result_t(*unit_test)(CLOCK_T * out_algorithmExecutionTimin
 
 }
 
-void run_test_single(_result_t(*unit_test)(CLOCK_T * out_algorithmExecutionTiming, struct _operation_implementations*),
+void run_test_single(_result_t(*unit_test)(CLOCK_T * out_algorithmExecutionTiming, struct _operation_implementations*, void * userData),
 	struct _operation_implementations* op,
 	test_statistics_collection * destination_array,
-	_char_t const * const test_description)
+	_char_t const * const test_description, void*userData)
 {
 	test_statistics * result = (test_statistics*)malloc(sizeof(test_statistics));
 	MY_ASSERT(result, NOMEM);
@@ -246,7 +250,7 @@ void run_test_single(_result_t(*unit_test)(CLOCK_T * out_algorithmExecutionTimin
 	CLOCK_T cumulative = clock_zero();
 	CLOCK_T overall = precise_clock();
 	
-	result->test_result = unit_test(&cumulative, op);
+	result->test_result = unit_test(&cumulative, op, userData);
 	if (FAILED(result->test_result))
 	{
 		LOG_INFO(STR("...FAILED"));	

@@ -1,5 +1,6 @@
 #include "test.h"
 
+
 /*#define TEST_ITERATIONS 1*/
 
 /*testing purposes A_BITS > B_BITS and A_BITS, B_BITS divisible by 64*/
@@ -15,18 +16,18 @@
 #define B_REG_WORDS (B_BYTES / sizeof(reg_t))
 #define R_REG_WORDS (R_BYTES / sizeof(reg_t))
 
-#define HALF_BIG_NUMBER (1024*1024/sizeof(reg_t)/2)
+#define HALF_MEG_NUMBER (1024*1024/sizeof(reg_t)/2)
 
-#define TEST_NUMBER_WORDS 500
+#define TEST_NUMBER_WORDS 200
 
 
 static reg_t _A[A_REG_WORDS];
 static reg_t _B[B_REG_WORDS];
 static reg_t _R[R_REG_WORDS];
 
-static reg_t _HALF_MEG_A[HALF_BIG_NUMBER];
-static reg_t _HALF_MEG_B[HALF_BIG_NUMBER];
-static reg_t _HALF_MEG_RESULT[HALF_BIG_NUMBER + 1];
+static reg_t _HALF_MEG_A[HALF_MEG_NUMBER];
+static reg_t _HALF_MEG_B[HALF_MEG_NUMBER];
+static reg_t _HALF_MEG_RESULT[HALF_MEG_NUMBER + 1];
 
 static reg_t _TWO_WORDS_A[2];
 static reg_t _TWO_WORDS_B[2];
@@ -81,8 +82,8 @@ static void init_test()
 
 
 static void each_op(_result_t(*unit_test)(CLOCK_T* outElapsedTime, 
-	struct _operation_implementations*), int boolRepeat,
-	_char_t const * const test_description
+	struct _operation_implementations*, void * userData), int boolRepeat,
+	_char_t const * const test_description, void * userData
 	)
 {
 
@@ -98,18 +99,19 @@ static void each_op(_result_t(*unit_test)(CLOCK_T* outElapsedTime,
 
 		if (boolRepeat)
 		{
-			run_test_repeat(unit_test, &(arithmetics[i]), &(arithmetics[i].addition_test_results), test_description);
+			run_test_repeat(unit_test, &(arithmetics[i]), &(arithmetics[i].addition_test_results), test_description, userData);
 		}
 		else
 		{
-			run_test_single(unit_test, &(arithmetics[i]), &(arithmetics[i].addition_test_results), test_description);
+			run_test_single(unit_test, &(arithmetics[i]), &(arithmetics[i].addition_test_results), test_description, userData);
 		}
 	}
 }
 
 
-static _result_t test_on_1000_unit(CLOCK_T * delta_t,struct _operation_implementations* impl)
+static _result_t test_on_1000_unit(CLOCK_T * delta_t,struct _operation_implementations* impl, void * userData)
 {
+	UNUSED(userData);
 	/*the array is in reverse order, less significative on the left...*/
 	
 	_result_t result = _OK;
@@ -135,41 +137,44 @@ static _result_t test_on_1000_unit(CLOCK_T * delta_t,struct _operation_implement
 }
 
 /*SET STACK SIZE TO SOMETHING BIG TO HANDLE THIS USE CASE*/
-static _result_t test_speed_1_MB_unit(CLOCK_T * delta_t, struct _operation_implementations* impl)
-{	
+static _result_t test_speed_1_MB_unit(CLOCK_T * delta_t, struct _operation_implementations* impl, void* userData)
+{
+	UNUSED(userData);
 	reg_t * A = _HALF_MEG_A;
 	reg_t * B = _HALF_MEG_B;
 	reg_t * R = _HALF_MEG_RESULT;
 
-	randNum(&_rand_seed, A, HALF_BIG_NUMBER);
-	randNum(&_rand_seed, B, HALF_BIG_NUMBER);
+	randNum(&_rand_seed, A, HALF_MEG_NUMBER);
+	randNum(&_rand_seed, B, HALF_MEG_NUMBER);
 
 	*delta_t = precise_clock();
-	impl->addition(A, HALF_BIG_NUMBER, B, HALF_BIG_NUMBER, R);	
+	impl->addition(A, HALF_MEG_NUMBER, B, HALF_MEG_NUMBER, R);	
 	*delta_t = precise_clock() - *delta_t;
 
 	return _OK;
 }
 
 /*SET STACK SIZE TO SOMETHING BIG TO HANDLE THIS USE CASE*/
-static _result_t test_speed_512KB_Plus_2Words_unit(CLOCK_T * delta_t, struct _operation_implementations* impl)
+static _result_t test_speed_512KB_Plus_2Words_unit(CLOCK_T * delta_t, struct _operation_implementations* impl, void* userData)
 {
+	UNUSED(userData);
 	reg_t * A = _HALF_MEG_A;
 	reg_t * B = _TWO_WORDS_B;
 	reg_t * R = _HALF_MEG_RESULT;
 
-	randNum(&_rand_seed, A, HALF_BIG_NUMBER);
+	randNum(&_rand_seed, A, HALF_MEG_NUMBER);
 	randNum(&_rand_seed, B, 2);
 
 	*delta_t = precise_clock();
-	impl->addition(A, HALF_BIG_NUMBER, B, 2, R);
+	impl->addition(A, HALF_MEG_NUMBER, B, 2, R);
 	*delta_t = precise_clock() - *delta_t;
 
 	return _OK;
 }
 
-static _result_t test_last_carry(CLOCK_T * delta_t, struct _operation_implementations * impl)
+static _result_t test_last_carry(CLOCK_T * delta_t, struct _operation_implementations * impl, void* userData)
 {
+	UNUSED(userData);
 	_result_t result = _OK;
 	reg_t A[] = {_R(-1)};
 
@@ -210,8 +215,9 @@ static _result_t test_last_carry(CLOCK_T * delta_t, struct _operation_implementa
 }
 
 
-static _result_t  test_commutative_prop_unit(CLOCK_T* delta_t, struct _operation_implementations* impl)
+static _result_t  test_commutative_prop_unit(CLOCK_T* delta_t, struct _operation_implementations* impl, void* userData)
 {
+	UNUSED(userData);
 	_result_t result = _OK;
 	/*the array is in reverse order, less significative on the left...*/
 	reg_t A[TEST_NUMBER_WORDS];
@@ -262,8 +268,9 @@ static _result_t  test_commutative_prop_unit(CLOCK_T* delta_t, struct _operation
 
 }
 
-static _result_t  test_associative_prop_unit(CLOCK_T* delta_t, struct _operation_implementations* impl)
+static _result_t  test_associative_prop_unit(CLOCK_T* delta_t, struct _operation_implementations* impl, void* userData)
 {
+	UNUSED(userData);
 	_result_t result = _OK;
 	/*the array is in reverse order, less significative on the left...*/
 	reg_t A[TEST_NUMBER_WORDS];
@@ -324,9 +331,9 @@ static _result_t  test_associative_prop_unit(CLOCK_T* delta_t, struct _operation
 }
 
 
-_result_t test_zero_is_neutral_element_of_sum(CLOCK_T * delta_t, struct _operation_implementations* impl)
+_result_t test_zero_is_neutral_element_of_sum(CLOCK_T * delta_t, struct _operation_implementations* impl, void*userData)
 {
-	
+	UNUSED(userData);
 	_result_t result = _OK;
 	/*the array is in reverse order, less significative on the left...*/
 
@@ -386,16 +393,16 @@ void testSum()
 	init_test();
 	
 	
-	each_op(test_zero_is_neutral_element_of_sum, 1, STR("SUM: Testing zero should be neutral element of sum"));
+	each_op(test_zero_is_neutral_element_of_sum, 1, STR("SUM: Testing zero should be neutral element of sum"), NULL);
 
-	each_op(test_on_1000_unit, 1, STR("SUM: Testing that numbers like ff,fe,ff + 1,1 = 1,0,0,0"));
-	each_op(test_speed_1_MB_unit, 1, STR("SUM: Testing 1MB (512KB+512KB) of data segment allocated numbers"));
-	each_op(test_speed_512KB_Plus_2Words_unit, 1, STR("SUM: Testing 512KB+2words of data segment allocated numbers"));	
+	each_op(test_on_1000_unit, 1, STR("SUM: Testing that numbers like ff,fe,ff + 1,1 = 1,0,0,0"), NULL);
+	each_op(test_speed_1_MB_unit, 1, STR("SUM: Testing 1MB (512KB+512KB) of data segment allocated numbers"), NULL);
+	each_op(test_speed_512KB_Plus_2Words_unit, 1, STR("SUM: Testing 512KB+2words of data segment allocated numbers"), NULL);
 	
-	each_op(test_commutative_prop_unit, 1, STR("SUM: Test Commutative Property"));
-	each_op(test_associative_prop_unit, 1, STR("SUM: Test Associative Property"));
+	each_op(test_commutative_prop_unit, 1, STR("SUM: Test Commutative Property"), NULL);
+	each_op(test_associative_prop_unit, 1, STR("SUM: Test Associative Property"), NULL);
 
-	each_op(test_last_carry, 0, STR("SUM: Testing last carry (1 + allonebits equals to 1 followed by all zero bits)"));
+	each_op(test_last_carry, 0, STR("SUM: Testing last carry (1 + allonebits equals to 1 followed by all zero bits)"), NULL);
 	
 
 

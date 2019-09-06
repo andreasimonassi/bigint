@@ -40,11 +40,11 @@ arithmetics[] = {
 		NULL
 	},
 	{
-		STR("Multiplication reference older version"),
+		STR("C variant 1"),
 		NULL,
 		NULL,
 		LongMultiplication,
-		NULL
+		LongDivisionReadable
 	}
 
 	/*this implementation is constantly slower than reference

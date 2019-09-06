@@ -18,21 +18,21 @@
 static uint_fast64_t _rand_seed_2;
 
 
-#define HALF_BIG_NUMBER (1024*1024/sizeof(reg_t)/2)
+#define HALF_MEG_NUMBER (1024*1024/sizeof(reg_t)/2)
 
 #define TEST_NUMBER_WORDS 500
 
 
-static reg_t _A[A_REG_WORDS];
-static reg_t _B[B_REG_WORDS];
-static reg_t _C[B_REG_WORDS];
-static reg_t _R1[R_REG_WORDS];
-static reg_t _R2[R_REG_WORDS];
-static reg_t _R3[R_REG_WORDS];
+static reg_t _A[HALF_MEG_NUMBER];
+static reg_t _B[HALF_MEG_NUMBER];
+static reg_t _C[HALF_MEG_NUMBER];
+static reg_t _R1[HALF_MEG_NUMBER];
+static reg_t _R2[HALF_MEG_NUMBER];
+static reg_t _R3[HALF_MEG_NUMBER];
 
-static reg_t _HALF_MEG_A[HALF_BIG_NUMBER];
-static reg_t _HALF_MEG_B[HALF_BIG_NUMBER];
-static reg_t _HALF_MEG_RESULT[HALF_BIG_NUMBER + 1];
+static reg_t _HALF_MEG_A[HALF_MEG_NUMBER];
+static reg_t _HALF_MEG_B[HALF_MEG_NUMBER];
+static reg_t _HALF_MEG_RESULT[HALF_MEG_NUMBER + 1];
 
 static reg_t _TWO_WORDS_A[2];
 static reg_t _TWO_WORDS_B[2];
@@ -42,8 +42,8 @@ static reg_t * initB();
 static reg_t * expected();
 static numsize_t expected_digits = 1;
 
-static void each_op(_result_t(*unit_test)(CLOCK_T* outAlgorithmElapsedTime, struct _operation_implementations*), int boolRepeat,
-	 _char_t const * const test_description
+static void each_op(_result_t(*unit_test)(CLOCK_T* outAlgorithmElapsedTime, struct _operation_implementations*, void * userData), int boolRepeat,
+	 _char_t const * const test_description, void * userData
 )
 {
 
@@ -60,11 +60,11 @@ static void each_op(_result_t(*unit_test)(CLOCK_T* outAlgorithmElapsedTime, stru
 
 		if (boolRepeat)
 		{
-			run_test_repeat(unit_test, &(arithmetics[i]), &(arithmetics[i].subtraction_test_results), test_description);
+			run_test_repeat(unit_test, &(arithmetics[i]), &(arithmetics[i].subtraction_test_results), test_description, userData);
 		}
 		else
 		{
-			run_test_single(unit_test, &(arithmetics[i]), &(arithmetics[i].subtraction_test_results), test_description);
+			run_test_single(unit_test, &(arithmetics[i]), &(arithmetics[i].subtraction_test_results), test_description, userData);
 		}
 	}
 }
@@ -78,9 +78,12 @@ static reg_t * initA()
 	numsize_t i;
 	reg_t * A;
 
-	A = malloc(A_BYTES);
-	if (!A)
+	A = (reg_t*) malloc(A_BYTES);
+	if (A == NULL)
+	{
 		perror("CAN'T ALLOCATE MEMORY");
+		return NULL; /* compiler throw warnings otherwise*/
+	}
 	for (i = 0; i < A_REG_WORDS-1; i++)
 	{
 		A[i] = _R(0);
@@ -95,21 +98,23 @@ static reg_t * expected()
 	numsize_t i;
 	reg_t * A;
 
-	A = malloc(A_BYTES);
+	A = (reg_t*)malloc(A_BYTES);
 	if (!A)
 		perror("CAN'T ALLOCATE MEMORY");
-	A[0] = _R(1);
-	for (i = 1; i < B_REG_WORDS; i++)
+	else
 	{
-		A[i] = _R(0);
-	}
+		A[0] = _R(1);
+		for (i = 1; i < B_REG_WORDS; i++)
+		{
+			A[i] = _R(0);
+		}
 
-	for (i = B_REG_WORDS; i < A_REG_WORDS - 1; i++)
-	{
-		A[i] = _R(-1);
-	}
-	A[A_REG_WORDS - 1] = 0;
+		for (i = B_REG_WORDS; i < A_REG_WORDS; i++)
+		{
+			A[i] = _R(-1);
+		}
 
+	}
 	return A;
 }
 
@@ -118,11 +123,16 @@ static reg_t * initB()
 	numsize_t i;
 	reg_t * B;
 	B = malloc(B_BYTES);
-	if (!B)
-		perror("CAN'T ALLOCATE MEMORY");
-	for (i = 0; i < B_REG_WORDS; i++)
+	if (B)	
 	{
-		B[i] = _R(-1);
+		for (i = 0; i < B_REG_WORDS; i++)
+		{
+			B[i] = _R(-1);
+		}
+	}
+	else
+	{
+		perror("NO MEMORY");
 	}
 	return B;
 }
@@ -130,8 +140,8 @@ static reg_t * initB()
 static void init_A_B_Big(reg_t ** outA, numsize_t * outASize, reg_t ** outB, numsize_t * outBSize, reg_t ** outR)
 {
 
-	numsize_t ASize = 1+rand32(&_rand_seed_2) % (HALF_BIG_NUMBER - 1);
-	numsize_t BSize = 1+rand32(&_rand_seed_2) % (HALF_BIG_NUMBER-1);
+	numsize_t ASize = 1+rand32(&_rand_seed_2) % (HALF_MEG_NUMBER - 1);
+	numsize_t BSize = 1+rand32(&_rand_seed_2) % (HALF_MEG_NUMBER-1);
 	numsize_t temp;
 
 	/*ensure A >= B*/
@@ -164,8 +174,9 @@ static void init_A_B_Big(reg_t ** outA, numsize_t * outASize, reg_t ** outB, num
 	*outR = _R1;
 }
 
-static _result_t speedTestSubtraction512KB(CLOCK_T* delta_t, struct _operation_implementations* impl)
+static _result_t speedTestSubtraction512KB(CLOCK_T* delta_t, struct _operation_implementations* impl, void* userData)
 {
+	UNUSED(userData);
 	reg_t * A;
 	reg_t * B;
 	reg_t * R;
@@ -182,8 +193,9 @@ static _result_t speedTestSubtraction512KB(CLOCK_T* delta_t, struct _operation_i
 }
 
 
-static _result_t testWellKnownSubtraction(CLOCK_T* delta_t, struct _operation_implementations* impl)
+static _result_t testWellKnownSubtraction(CLOCK_T* delta_t, struct _operation_implementations* impl, void* userData)
 {	
+	UNUSED(userData);
 	_result_t result = _OK;
 	/*the array is in reverse order, less significative on the left...*/
 	reg_t * A;
@@ -279,8 +291,9 @@ static _result_t testMustBorrow(CLOCK_T* delta_t, struct _operation_implementati
 
 
 
-static _result_t testEqualNumbersYieldToZero(CLOCK_T* delta_t, struct _operation_implementations* impl)
+static _result_t testEqualNumbersYieldToZero(CLOCK_T* delta_t, struct _operation_implementations* impl, void* userData)
 {
+	UNUSED(userData);
 	_result_t result = _OK;
 	/*the array is in reverse order, less significative on the left...*/
 	numsize_t ASize;
@@ -312,8 +325,9 @@ static _result_t testEqualNumbersYieldToZero(CLOCK_T* delta_t, struct _operation
 }
 
 
-static _result_t testSubtractionIsInverseOfSum(CLOCK_T* delta_t, struct _operation_implementations* impl)
+static _result_t testSubtractionIsInverseOfSum(CLOCK_T* delta_t, struct _operation_implementations* impl, void* userData)
 {
+	UNUSED(userData);
 	_result_t result = _OK;	
 	operation inverse = impl->addition;
 	numsize_t ASize;
@@ -379,8 +393,9 @@ static _result_t testSubtractionIsInverseOfSum(CLOCK_T* delta_t, struct _operati
 	return result;
 }
 
-static _result_t testNullBehavesAsZero(CLOCK_T* delta_t, struct _operation_implementations* impl)
+static _result_t testNullBehavesAsZero(CLOCK_T* delta_t, struct _operation_implementations* impl, void* userData)
 {
+	UNUSED(userData);
 	_result_t result = _OK;
 	//reg_t ASize = rand() % A_REG_WORDS;
 	numsize_t ASize = rand() % 4;
@@ -412,8 +427,9 @@ static _result_t testNullBehavesAsZero(CLOCK_T* delta_t, struct _operation_imple
 	return result;
 }
 
-static _result_t testSubtractionIsInverseOfSumOfZero(CLOCK_T* delta_t, struct _operation_implementations* impl)
+static _result_t testSubtractionIsInverseOfSumOfZero(CLOCK_T* delta_t, struct _operation_implementations* impl, void* userData)
 {
+	UNUSED(userData);
 	_result_t result = _OK;
 	operation inverse = impl->addition;
 	
@@ -451,12 +467,10 @@ static _result_t testSubtractionIsInverseOfSumOfZero(CLOCK_T* delta_t, struct _o
 void testSub()
 {
 	
-	each_op(testNullBehavesAsZero, 0, STR("SUB: A - NULL = A"));
-	each_op(testSubtractionIsInverseOfSumOfZero, 0, STR("SUB: 0 + 0 - 0 = 0"));
-
-
-	each_op(testWellKnownSubtraction, 1,STR("SUB: Testing subtraction with wellknown values"));
-	each_op(testSubtractionIsInverseOfSum, 1, STR("SUB: Testing subtraction is inverse of sum"));
-	each_op(speedTestSubtraction512KB, 1, STR("SUB: Test speed on 512KB numbers A-B"));
-	each_op(testEqualNumbersYieldToZero, 1, STR("SUB: A - A = 0"));
+	each_op(testNullBehavesAsZero, 0, STR("SUB: A - NULL = A"), NULL);
+	each_op(testSubtractionIsInverseOfSumOfZero, 0, STR("SUB: 0 + 0 - 0 = 0"), NULL);
+	each_op(testWellKnownSubtraction, 1,STR("SUB: Testing subtraction with wellknown values"), NULL);
+	each_op(testSubtractionIsInverseOfSum, 1, STR("SUB: Testing subtraction is inverse of sum"), NULL);
+	each_op(speedTestSubtraction512KB, 1, STR("SUB: Test speed on 512KB numbers A-B"), NULL);
+	each_op(testEqualNumbersYieldToZero, 1, STR("SUB: A - A = 0"), NULL);
 }

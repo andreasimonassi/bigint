@@ -115,6 +115,10 @@ static numsize_t LongMultiplicationPortable(reg_t *A, numsize_t m, reg_t *B, num
 			if (B[i] == 0)
 				continue;
 
+#ifdef _IMPLEMENTATION_DIVISION_IMPROVED_COLLECT_VERBOSE_DATA
+			cpu_mul_count++;
+#endif 
+
 			loword = mfunc(A[j], B[i], &hiword);
 
 			R[k] += loword;

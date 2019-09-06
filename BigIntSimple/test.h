@@ -6,6 +6,9 @@
 #include <locale.h>
 #include <stdint.h>
 
+#define UNUSED(x) (void)(x)
+
+
 /* START ----------------------------------
 SOME DEFS TO TWEAK FOR EACH PLATFORM */
 
@@ -116,17 +119,19 @@ extern int number_of_arithmetics;
 
 void dumpNumber(reg_t * A, _char_t* name, numsize_t ASize);
 
-void run_test_repeat(_result_t(*unit_test)(CLOCK_T * out_algorithmExecutionTiming, struct _operation_implementations*),
+void run_test_repeat(_result_t(*unit_test)(CLOCK_T * out_algorithmExecutionTiming, struct _operation_implementations*,  void  *  userData),
 	struct _operation_implementations* op,
 	test_statistics_collection * destination_array,
-	 _char_t const * const test_description
+	 _char_t const * const test_description,
+	void *  userData
 	);
 
 
-void run_test_single(_result_t(*unit_test)(CLOCK_T * out_algorithmExecutionTiming, struct _operation_implementations*),
+void run_test_single(_result_t(*unit_test)(CLOCK_T * out_algorithmExecutionTiming, struct _operation_implementations*, void * userData),
 	struct _operation_implementations* op,
 	test_statistics_collection * destination_array,
-	_char_t const * const test_description);
+	_char_t const * const test_description,
+	void * userData);
 
 
 

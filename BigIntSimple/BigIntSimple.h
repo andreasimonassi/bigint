@@ -9,6 +9,15 @@
 #include <stdlib.h>
 
 
+#define _IMPLEMENTATION_DIVISION_IMPROVED_COLLECT_VERBOSE_DATA /* counting number of multiplication, divisions, this code have to be removed i just use it once to better undestand inner working of divisions*/
+#ifdef _IMPLEMENTATION_DIVISION_IMPROVED_COLLECT_VERBOSE_DATA
+extern long long cpu_mul_count;
+extern long long cpu_div_count;
+extern long long sub_count;
+extern long long compare_count;
+#endif
+
+
 /* define _R such that appends L to int literal if necessary to keep portability, 
 but should not be necessary since compiler automatically promote int to longs  */
 #define _R(a) ((reg_t)(a ## L))
@@ -86,8 +95,8 @@ numsize_t LongMultiplicationNoAssemblyV2(reg_t* A, numsize_t m, reg_t * B, numsi
 
 /* A must have m+1 space to support normalization, Q and R must have enough space to hold the result*/
 _div_result_t LongDivision(reg_t *A, numsize_t m, reg_t *B, numsize_t n, reg_t * Q, numsize_t * q, reg_t * R, numsize_t * r);
-
 _div_result_t LongDivisionReadable(reg_t * A, numsize_t m, reg_t * B, numsize_t n, reg_t * Q, numsize_t * q, reg_t * R, numsize_t * r);
+
 
 
 /*
@@ -102,3 +111,4 @@ int parseFromByteArrayLittleEndian(unsigned char * input, numsize_t sizeOfInput,
 reg_t* AllocNumOrFail(numsize_t size);
 
 _result_t FillHexString(wchar_t*buffer, unsigned bufferSize, reg_t* number, numsize_t size);
+
