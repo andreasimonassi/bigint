@@ -321,9 +321,12 @@ _div_result_t LongDivision(reg_t* A, numsize_t m, reg_t* B, numsize_t n, reg_t* 
 			/* An = select as many digits from A such that Aguess >= Bn*/
 			/* we may have 2 cases leftmost of A >= B so we divide 1 number*/
 
-			if (R[*r - 1] == bleftmost)
+			if (R[*r - 1] >= bleftmost)
 			{
-				Qn = _R(-1);
+				/*
+				could be something like 599 : 598 
+				*/
+				Qn = 1; 
 			}
 			else if (R[*r - 1] < bleftmost)
 			{
@@ -333,14 +336,6 @@ _div_result_t LongDivision(reg_t* A, numsize_t m, reg_t* B, numsize_t n, reg_t* 
 				cpu_div_count++;
 #endif
 				Qn = cpu_divide(Aguess[0], Aguess[1], bleftmost, &dummy);
-			}
-			else
-			{
-				/* possible optimization, when Aguess[1] = 0 then result is going to be 1 because Bleftmost is > base/2 and Aguess is less than base , because division is normalized */
-
-				/*Aguess[1] = 0;
-				Aguess[0] = R[*r-1];*/
-				Qn = 1;
 			}
 
 			/* now verify if Qn is good guess multiplying it by B*/
@@ -448,19 +443,15 @@ _div_result_t LongDivision(reg_t* A, numsize_t m, reg_t* B, numsize_t n, reg_t* 
 #define GetLeftmostOf(X, XSize) ((X)[(XSize)-1])
 
 static reg_t GuessDivisor(reg_t ALeftMost, reg_t ASecond, reg_t BLeftmost)
-{
-	if (ALeftMost == BLeftmost)
-	{
-		return _R(-1);
-	}
-	else if (ALeftMost < BLeftmost)
+{	
+	if (ALeftMost < BLeftmost)
 	{
 #ifdef _IMPLEMENTATION_DIVISION_IMPROVED_COLLECT_VERBOSE_DATA
 		cpu_div_count++;
 #endif
 		return cpu_divide(ASecond, ALeftMost, BLeftmost, &BLeftmost);
 	}
-	return _R(1);
+	return _R(1); /* this only works for normalized division where BLeftmost is >= b/2 , example 9/5 = 1, 8/5=1, any_single_digit / 5 = 1 */
 }
 
 
@@ -519,7 +510,7 @@ static void LongDivisionReadableCore(reg_t* temp, reg_t* A, numsize_t m, reg_t* 
 		if (AnSize > 1)
 			Qn = GuessDivisor(An[AnSize - 1], An[AnSize - 2], bleftmost);
 		else
-			Qn = GuessDivisor(0, An[AnSize - 1], bleftmost);
+			Qn = 1;
 
 		numsize_t tempSize = simpleMultiplication(B, n, Qn, temp); /* temp = Qn * B   */
 #ifdef _DEBUG

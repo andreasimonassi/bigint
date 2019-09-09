@@ -12,12 +12,12 @@ int main()
 
 	initTest();
 	
-	/*testParse();
+	testParse();
 	testBSR();
 	testCompare();
 	testSum();
 	testSub();
-	testMul();*/
+	testMul();
 
 	testDiv();
 

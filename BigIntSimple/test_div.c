@@ -63,8 +63,9 @@ static void each_op(_result_t(*unit_test)(CLOCK_T* outAlgorithmElapsedTime, stru
 }
 
 
-static _result_t divide_by_zero_returns_error(CLOCK_T* delta_t, struct _operation_implementations* impl)
+static _result_t divide_by_zero_returns_error(CLOCK_T* delta_t, struct _operation_implementations* impl, void* userData)
 {
+	UNUSED(userData);
 	_result_t result = _OK;
 	numsize_t ASize = rand() % 10 + 2;
 	randNum(&_rand_seed_4, _HALF_MEG_dA, ASize);
@@ -85,8 +86,9 @@ static _result_t divide_by_zero_returns_error(CLOCK_T* delta_t, struct _operatio
 }
 
 
-static _result_t divide_by_one_is_identity(CLOCK_T* delta_t, struct _operation_implementations* impl)
+static _result_t divide_by_one_is_identity(CLOCK_T* delta_t, struct _operation_implementations* impl, void* userData)
 {
+	UNUSED(userData);
 
 	_result_t result = _OK;
 	numsize_t m = rand() % 10 + 1;
@@ -129,8 +131,9 @@ static _result_t divide_by_one_is_identity(CLOCK_T* delta_t, struct _operation_i
 	return result;
 }
 
-static _result_t wc(CLOCK_T* delta_t, struct _operation_implementations* impl)
+static _result_t wc(CLOCK_T* delta_t, struct _operation_implementations* impl, void* userData)
 {
+	UNUSED(userData);
 
 	_result_t result = _OK;
 
@@ -188,8 +191,9 @@ static _result_t wc(CLOCK_T* delta_t, struct _operation_implementations* impl)
 	return result;
 }
 
-static _result_t wc3(CLOCK_T* delta_t, struct _operation_implementations* impl)
+static _result_t wc3(CLOCK_T* delta_t, struct _operation_implementations* impl, void* userData)
 {
+	UNUSED(userData);
 	_result_t result = _OK;
 	reg_t A[] = {
 		0x9be3a689d1f19fc0,
@@ -247,8 +251,85 @@ static _result_t wc3(CLOCK_T* delta_t, struct _operation_implementations* impl)
 
 }
 
-static _result_t wc2(CLOCK_T* delta_t, struct _operation_implementations* impl)
+
+
+static _result_t wc4(CLOCK_T* delta_t, struct _operation_implementations* impl, void*userData)
 {
+	UNUSED(userData);
+	/*
+	
+	if you assert that the guess loop must take 2 tries at most, then this test will make your 
+	implementation fail if it will handle that specific case in a not so correct way, or it may 
+	let your code throw arithmetic overflow 
+
+	[b-1, 9, 9]  DIV [b-1, 8, 8] => Q => [1] R => [1, 1]
+
+	decimal example : 999 / 988 => Q => 1, Remainder 11
+
+	*/
+
+	_result_t result = _OK;
+	reg_t A[] = {
+		9,
+		9,
+		_R(-1),
+		0x0 /*padding*/ };
+	reg_t B[] = { 8,
+		8,
+		_R(-1) ,
+		0x0 /*padding*/ };
+	reg_t Q[] = {
+		0x0,0x0,0x0,0x0,0X0
+	};
+	reg_t R[] = {
+		0x0,0x0,0x0,0x0,0X0
+	};
+	reg_t ExpectedQ[] = { 0x1 };
+	reg_t ExpectedR[] = { 0x1, 0x1};
+
+	numsize_t asize = 3;
+	numsize_t bsize = 3;
+	numsize_t qsize;
+	numsize_t rsize;
+
+
+	CLOCK_T t1 = precise_clock();
+	_div_result_t divresult = impl->division(A, asize, B, bsize, Q, &qsize, R, &rsize);
+	*delta_t = precise_clock() - t1;
+
+	if (divresult != OK)
+	{
+		result = _FAIL;
+		LOG_ERROR(STR("Division returned error"));
+	}
+
+	if 
+		(
+			CompareWithPossibleLeadingZeroes(Q, qsize, ExpectedQ, 1) != 0
+				||
+			CompareWithPossibleLeadingZeroes(R, rsize, ExpectedR, 2) != 0
+		)
+	{
+		result = _FAIL;
+		LOG_ERROR(STR("EXPECTED VALUES NOT MEET"));
+	}
+
+	if (result == _FAIL)
+	{
+		dumpNumber(A, STR("A"), asize);
+		dumpNumber(B, STR("B"), bsize);
+		dumpNumber(Q, STR("Q"), qsize);
+		dumpNumber(R, STR("R"), rsize);
+		dumpNumber(ExpectedQ, STR("ExpectedQ"), 4);
+		dumpNumber(ExpectedR, STR("ExpectedR"), 1);
+	}
+
+	return result;
+}
+
+static _result_t wc2(CLOCK_T* delta_t, struct _operation_implementations* impl, void* userData)
+{
+	UNUSED(userData);
 
 	_result_t result = _OK;
 
@@ -271,7 +352,6 @@ static _result_t wc2(CLOCK_T* delta_t, struct _operation_implementations* impl)
 	numsize_t qsize;
 	numsize_t rsize;
 
-
 	CLOCK_T t1 = precise_clock();
 	_div_result_t divresult = impl->division(A, asize, B, bsize, Q, &qsize, R, &rsize);
 	*delta_t = precise_clock() - t1;
@@ -289,10 +369,9 @@ static _result_t wc2(CLOCK_T* delta_t, struct _operation_implementations* impl)
 	return result;
 }
 
-
-
-static _result_t divide_ok_to_definition(CLOCK_T* delta_t, struct _operation_implementations* impl)
+static _result_t divide_ok_to_definition(CLOCK_T* delta_t, struct _operation_implementations* impl, void* userData)
 {
+	UNUSED(userData);
 	_result_t result = _OK;
 	
 	/*Q = A/B, R is A mod B and A = Q*B + R*/
@@ -313,7 +392,6 @@ static _result_t divide_ok_to_definition(CLOCK_T* delta_t, struct _operation_imp
 	randNum(&_rand_seed_4, B, bsize);
 	randNum(&_rand_seed_4, Q, qsize);
 	randNum(&_rand_seed_4, R, 1);
-
 
 	/* to compute A as B*Q+R we need to pick operation SUM and MUL, we try to pick from current arithmetic otherwise we get it from reference impl */
 	
@@ -385,8 +463,9 @@ static _result_t divide_ok_to_definition(CLOCK_T* delta_t, struct _operation_imp
 	return result;
 }
 
-static _result_t divide_ok_to_definition_ext(CLOCK_T* delta_t, struct _operation_implementations* impl)
+static _result_t divide_ok_to_definition_ext(CLOCK_T* delta_t, struct _operation_implementations* impl, void* userData)
 {
+	UNUSED(userData);
 	_result_t result = _OK;
 
 	/*Q = A/B, R is A mod B and A = Q*B + R*/
@@ -408,16 +487,17 @@ static _result_t divide_ok_to_definition_ext(CLOCK_T* delta_t, struct _operation
 	randNum(&_rand_seed_4, Q, qsize);
 	randNum(&_rand_seed_4, R, 1);
 
-
 	/* to compute A as B*Q+R we need to pick operation SUM and MUL, we try to pick from current arithmetic otherwise we get it from reference impl */
 
 	/* pickup sum and subtraction operations */
 	operation sum = impl->addition;
 	operation mul = impl->multiplication;
+
 	if (sum == NULL)
 	{
 		sum = arithmetics[0].addition;
 	}
+
 	if (sum == NULL)
 	{
 		LOG_ERROR(STR("Sum operation is not defined for reference arithmetic"));
@@ -428,12 +508,12 @@ static _result_t divide_ok_to_definition_ext(CLOCK_T* delta_t, struct _operation
 	{
 		mul = arithmetics[0].multiplication;
 	}
+
 	if (mul == NULL)
 	{
 		LOG_ERROR(STR("Multiplication operation is not defined for reference arithmetic"));
 		return _FAIL;
 	}
-
 
 	/* we want B > R */
 	if (CompareWithPossibleLeadingZeroes(R, rsize, B, bsize) > 0)
@@ -479,8 +559,9 @@ static _result_t divide_ok_to_definition_ext(CLOCK_T* delta_t, struct _operation
 	return result;
 }
 
-static _result_t divide_small_vs_big(CLOCK_T* delta_t, struct _operation_implementations* impl)
+static _result_t divide_small_vs_big(CLOCK_T* delta_t, struct _operation_implementations* impl, void* userData)
 {
+	UNUSED(userData);
 	_result_t result = _OK;
 
 	numsize_t qsize;
@@ -536,13 +617,11 @@ static _result_t divide_small_vs_big(CLOCK_T* delta_t, struct _operation_impleme
 	}
 
 	return result;
-
 }
 
-
-
-static _result_t divide_random_test(CLOCK_T* delta_t, struct _operation_implementations* impl)
+static _result_t divide_random_test(CLOCK_T* delta_t, struct _operation_implementations* impl, void* userData)
 {
+	UNUSED(userData);
 	_result_t result = _OK;
 
 	/*Q = A/B, R is A mod B and A = Q*B + R*/
@@ -556,7 +635,6 @@ static _result_t divide_random_test(CLOCK_T* delta_t, struct _operation_implemen
 	reg_t* R = _HALF_MEG_dD;
 	reg_t* temp = _HALF_MEG_dE;
 	reg_t* actual = _HALF_MEG_dF;
-
 
 	randNum(&_rand_seed_4, A, asize);
 	randNum(&_rand_seed_4, B, bsize);
@@ -610,17 +688,14 @@ static _result_t divide_speed_test(CLOCK_T* delta_t, struct _operation_implement
 	_result_t result = _OK;
 	struct _speedtest_param* p1 = (struct _speedtest_param*) userData;
 	/*Q = A/B, R is A mod B and A = Q*B + R*/
-	
 
 	numsize_t qsize, rsize;	
 	numsize_t asize = p1->asize, bsize = p1->bsize;
-
 
 	reg_t* A = _HALF_MEG_dA;
 	reg_t* B = _HALF_MEG_dB;
 	reg_t* Q = _HALF_MEG_dC;
 	reg_t* R = _HALF_MEG_dD;
-	
 
 	randNum(&_rand_seed_4, A, asize);
 	randNum(&_rand_seed_4, B, bsize);
@@ -662,19 +737,19 @@ static _result_t divide_speed_test(CLOCK_T* delta_t, struct _operation_implement
 
 void testDiv()
 {
-
-	/*each_op(wc3, 0, STR("DIV: well known values 3")); 
-	each_op(wc2, 0, STR("DIV: well known values 2")); 
-	each_op(wc, 0, STR("DIV: well known values"));
+	each_op(wc4, 0, STR("DIV: well known values 4"), NULL);
+	each_op(wc3, 0, STR("DIV: well known values 3"), NULL); 
+	each_op(wc2, 0, STR("DIV: well known values 2"), NULL);
+	each_op(wc, 0, STR("DIV: well known values"), NULL);
 	
-	each_op(divide_random_test, 1, STR("DIV: random tests on small numbers"));
+	each_op(divide_random_test, 1, STR("DIV: random tests on small numbers"), NULL);
 
-	each_op(divide_by_zero_returns_error, 0, STR("DIV: Check divide by zero"));
-	each_op(divide_by_one_is_identity, 1, STR("DIV: Divide by one must returns same as A"));
-	each_op(divide_ok_to_definition, 1, STR("DIV: Q = A/B, R is A mod B and A = Q*B + R (R is a single reg_t digit)"));
-	each_op(divide_ok_to_definition_ext, 1, STR("DIV: big values Q = A/B, R is A mod B and A = Q*B + R (R is a single reg_t digit)"));
-	each_op(divide_small_vs_big, 1, STR("DIV: when A < B then A / B = 0 and remainder is B"));*/
-
+	each_op(divide_by_zero_returns_error, 0, STR("DIV: Check divide by zero"), NULL);
+	each_op(divide_by_one_is_identity, 1, STR("DIV: Divide by one must returns same as A"), NULL);
+	each_op(divide_ok_to_definition, 1, STR("DIV: Q = A/B, R is A mod B and A = Q*B + R (R is a single reg_t digit)"), NULL);
+	each_op(divide_ok_to_definition_ext, 1, STR("DIV: big values Q = A/B, R is A mod B and A = Q*B + R (R is a single reg_t digit)"), NULL);
+	each_op(divide_small_vs_big, 1, STR("DIV: when A < B then A / B = 0 and remainder is B"), NULL);
+	
 
 	struct _speedtest_param p1;
 	p1.asize = 2048;
@@ -722,6 +797,7 @@ void testDiv()
 	each_op(divide_speed_test, 1, STR("DIV: speed test (2048 Words / 2046 Words)"), &p1);
 	p1.bsize = 2047;
 	each_op(divide_speed_test, 1, STR("DIV: speed test (2048 Words / 2047 Words)"), &p1);
+	
 		
 
 
