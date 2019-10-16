@@ -37,21 +37,15 @@ static wchar_t* printHex(reg_t x, wchar_t * buffer)
 #endif
 void dumpNumber(reg_t * A, _char_t* name, numsize_t ASize)
 {
-	_char_t buffer[sizeof(reg_t) * 2 + 1];
-	_fprintf(stderr, STR("\nreg_t %s [] = {\n"), name);
-	for (numsize_t i = 0; i < ASize; ++i)
-	{
-		if (i != 0)
-		{
-			_fprintf(stderr, STR(","));
-			if (i % 6 == 0)
-				_fprintf(stderr, STR("\n"));
-		}
-		_fprintf(stderr, STR("0x"));
-		_fprintf(stderr, printHex(A[i], buffer));
-		
-	}
-	_fprintf(stderr, STR("};\n"));
+	int charsize = ASize * sizeof(reg_t) * 2 + 1;
+	int memsize = charsize * sizeof(_char_t);
+
+	_char_t * buffer = (_char_t*)malloc(memsize);
+	FillHexString(buffer, charsize, A, ASize);
+	_fprintf(stderr, STR("\n%s = \""), name);
+	_fprintf(stderr, buffer);
+	_fprintf(stderr, STR("\";\n"));
+	free(buffer);
 }
 
 void initTest()

@@ -221,7 +221,7 @@ static _result_t testWellKnownSubtraction(CLOCK_T* delta_t, struct _operation_im
 		LOG_ERROR(STR("Unexpected number of digits, see dump"));
 		result = _FAIL;
 	}
-	else if (CompareWithPossibleLeadingZeroes(R, A_REG_WORDS, _exp, A_REG_WORDS) != 0)
+	else if (CompareWithPossibleLeadingZeroes(R, n, _exp, expected_digits) != 0)
 	{
 		LOG_ERROR(STR("A - B result was unexpected, see dump"));
 		result = _FAIL;

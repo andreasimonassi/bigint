@@ -110,7 +110,7 @@ static numsize_t findmsw(reg_t* A, numsize_t n)
 		if (A[n] != 0)
 			return n;
 	}
-	return 0;
+	return -1;
 }
 
 static numsize_t shiftl(reg_t* dest, reg_t* source, numsize_t source_l, unsigned n)
@@ -220,8 +220,8 @@ _div_result_t LongDivision(reg_t* A, numsize_t m, reg_t* B, numsize_t n, reg_t* 
 	if (compare < 0) /* A < B */
 	{
 		*q = 0; /* set length of Q equals to zero so Q is equals to 0 */
-		*r = n;
-		copy(R, B, n);
+		*r = m;
+		copy(R, A, m);
 		return OK; /* division OK */
 	}
 	/* corner case, A == B */
@@ -321,12 +321,21 @@ _div_result_t LongDivision(reg_t* A, numsize_t m, reg_t* B, numsize_t n, reg_t* 
 			/* An = select as many digits from A such that Aguess >= Bn*/
 			/* we may have 2 cases leftmost of A >= B so we divide 1 number*/
 
-			if (R[*r - 1] >= bleftmost)
+			if (R[*r - 1] > bleftmost)
+			{				
+				Qn = 1; 
+			}
+			else if (R[*r - 1] == bleftmost)
 			{
 				/*
-				could be something like 599 : 598 
+				could be something like 599 : 598 or 599 : 599
+				or something like 5980 : 599
+				cannot be like 5990 : 599
 				*/
-				Qn = 1; 
+				if (*r > n) /* means An lenght > B length*/
+					Qn = _R(-1);
+				else
+					Qn = _R(1);
 			}
 			else if (R[*r - 1] < bleftmost)
 			{
@@ -408,8 +417,10 @@ _div_result_t LongDivision(reg_t* A, numsize_t m, reg_t* B, numsize_t n, reg_t* 
 		/* more digits on A ... shift remainder and append next digit of A */
 		copy(&R[1], &R[0], *r); /* shift significative digits left by one position to the left*/
 		a_offset--; /* next digit of A */
-		*r = *r + 1; /* to add a digit to R increase its count by 1*/
+		*r = *r + 1; /* to add a digit to R increase its count by 1, only if its left digt is not going to be zero*/	
 		R[0] = A[a_offset]; /* append next digit of A to rightmost (least significant) of R */
+		while (*r > 0 && R[*r-1] == 0) /* trim leading zeroes */
+			*r = *r - 1;
 	} while (1);
 
 #ifdef _DEBUG
@@ -442,16 +453,14 @@ _div_result_t LongDivision(reg_t* A, numsize_t m, reg_t* B, numsize_t n, reg_t* 
 
 #define GetLeftmostOf(X, XSize) ((X)[(XSize)-1])
 
-static reg_t GuessDivisor(reg_t ALeftMost, reg_t ASecond, reg_t BLeftmost)
+static reg_t RunHwDivision(reg_t ALeftMost, reg_t ASecond, reg_t BLeftmost)
 {	
-	if (ALeftMost < BLeftmost)
-	{
+	
 #ifdef _IMPLEMENTATION_DIVISION_IMPROVED_COLLECT_VERBOSE_DATA
 		cpu_div_count++;
 #endif
 		return cpu_divide(ASecond, ALeftMost, BLeftmost, &BLeftmost);
-	}
-	return _R(1); /* this only works for normalized division where BLeftmost is >= b/2 , example 9/5 = 1, 8/5=1, any_single_digit / 5 = 1 */
+	
 }
 
 
@@ -495,9 +504,11 @@ static void LongDivisionReadableCore(reg_t* temp, reg_t* A, numsize_t m, reg_t* 
 	/* An = Select as many digits from A such that An >= B; */
 	reg_t* An = temp + n + 1; /* using preallocated memory to keep copy of A*/
 	numsize_t AnSize = n;
+
 	copy(An, A, m); /* copy A into An*/
 
-	if (A[m - 1] < B[n - 1])
+
+	if (fastcmp(An+m-AnSize, AnSize,B, n) <0)
 	{
 		AnSize++;
 	}
@@ -506,13 +517,61 @@ static void LongDivisionReadableCore(reg_t* temp, reg_t* A, numsize_t m, reg_t* 
 	while (q > 0)
 	{
 		reg_t Qn;
+		numsize_t tempSize;
 
-		if (AnSize > 1)
-			Qn = GuessDivisor(An[AnSize - 1], An[AnSize - 2], bleftmost);
+		if (An[AnSize - 1] == bleftmost)
+		{		
+			if (AnSize < n)
+			{
+				Qn = 0;
+				tempSize = 0;
+			}
+			else if (AnSize == n)
+			{
+				Qn = 1;
+				copy(temp, B, n);
+				tempSize = n;
+			}
+			else //AnSize bigger than n, no other case exist			
+			{
+				Qn = _R(-1);
+				copy(temp+1, B, n);
+				temp[0] = 0;
+				tempSize = n +1;
+				LongSub(temp, tempSize, B, n, temp);	
+				
+			}
+		}
+		else if (AnSize == 1 )
+		{
+			if (An[AnSize - 1] < bleftmost)
+			{
+				Qn = 0;
+				tempSize = 0;
+			}
+			else
+			{
+				Qn = 1;
+				copy(temp, B, n);
+				tempSize = n;
+			}
+		}
 		else
-			Qn = 1;
+		{
+			if (An[AnSize - 1] > bleftmost)
 
-		numsize_t tempSize = simpleMultiplication(B, n, Qn, temp); /* temp = Qn * B   */
+			{
+				Qn = 1;
+				copy(temp, B, n);
+				tempSize = n;
+			}
+			else
+			{
+				Qn = RunHwDivision(An[AnSize - 1], An[AnSize - 2], bleftmost);
+				tempSize = simpleMultiplication(B, n, Qn, temp); /* temp = Qn * B   */
+			}
+		}
+		
 #ifdef _DEBUG
 		debug_count = 0;
 #endif
@@ -602,8 +661,8 @@ _div_result_t LongDivisionReadable(reg_t* A, numsize_t m, reg_t* B, numsize_t n,
 	if (compare < 0) /* A < B */
 	{
 		*q = 0; /* set length of Q equals to zero so Q is equals to 0 */
-		*r = n;
-		copy(R, B, n);
+		*r = m;
+		copy(R, A, m);
 		return OK; /* division OK */
 	}
 
@@ -629,8 +688,10 @@ _div_result_t LongDivisionReadable(reg_t* A, numsize_t m, reg_t* B, numsize_t n,
 
 	/* computing lenght of Q */
 	*q = m - n;
-	if (fastcmp(A + m - n, n, B, n) > 0)
+
+	if (fastcmp(A + m - n, n, B, n) >= 0)
 		(*q)++;
+	
 	/* end computing length of Q */
 
 	LongDivisionReadableCore(tempSpace, A, m, B, n, Q, *q, R, r);
