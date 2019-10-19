@@ -41,6 +41,11 @@ void dumpNumber(reg_t * A, _char_t* name, numsize_t ASize)
 	int memsize = charsize * sizeof(_char_t);
 
 	_char_t * buffer = (_char_t*)malloc(memsize);
+	if (buffer == NULL)
+	{
+		_fprintf(stderr, STR("[ERROR] CANNOT DUMP NUMBER, NO MEMORY FOR MALLOC"), name);
+		return;
+	}
 	FillHexString(buffer, charsize, A, ASize);
 	_fprintf(stderr, STR("\n%s = \""), name);
 	_fprintf(stderr, buffer);
