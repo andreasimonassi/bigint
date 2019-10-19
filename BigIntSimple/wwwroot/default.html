@@ -1,0 +1,270 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <title></title>
+    <style>
+        .container {
+           
+        }
+
+        #A, #B {
+            width: 100%
+        }
+
+        #result {
+            clear: both;
+            margin-top: 2em;
+            font-family: "Lucida Console", Monaco, monospace;
+            width:100%
+        }
+
+        .aline ,.bline ,.rline, .intermediateline, .qline {
+            clear:right;
+            width: 100%;
+            display: block;
+            break-after: always; 
+            text-align: right
+        }
+
+        #buttons {
+            padding: 2px;
+            float: right;
+        }
+
+        .rline {
+            border-top: 1px solid black
+        }
+
+        input { 
+            text-align: right; 
+            font-family: "Lucida Console", Monaco, monospace;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <form id="calc" autocomplete="off">
+            <div>A</div>
+            <div><input id="A" autocomplete="off" /></div>
+            <div>B</div>
+            <div><input id="B" autocomplete="off" /></div>
+            <div id="state">base 10</div>
+            <div id="buttons">
+                <button id="sum">+</button>
+                <button id="sub">-</button>
+                <button id="mul">&times;</button>
+                <button id="divide">&divide;</button>
+                <button id="cmp">compare</button>
+                <button id="base10">base 10</button>
+                <button id="base16">base 16</button>
+            </div>
+            <div id="result"></div>
+        </form>
+
+        <script src="JavaScript.js" language="javascript" type="text/javascript">
+        </script>
+        <script language="javascript" type="text/javascript">
+
+            
+            var grouping = 3;
+            function thousandsSep (text) {
+                            const separator = '&nbsp;';
+                            let len = text.length;
+                            let spaces = ~~(len / grouping);
+                            let rem = len % grouping;
+                            let pretty = text.substring(0, rem);
+
+                            text = text.substring(rem);
+                            while (text.length > 0) {
+                                pretty += separator + text.substring(0, grouping);
+                                text = text.substring(grouping);
+                            }
+                            pretty = pretty.replace(/_/g, separator);
+                            return pretty;
+                        };
+
+            document
+                .getElementById("calc")
+                .addEventListener("submit", (e) => {
+                    e.preventDefault();
+                });
+
+
+            document.getElementById("sum")
+                .addEventListener("click", function () {
+                    try {
+
+                        let a = mp.TrimZeroes(document.getElementById("A").value);
+                        let b = mp.TrimZeroes(document.getElementById("B").value);
+
+                        document.getElementById("result").innerHTML =
+                            '<div><div class="aline">' + thousandsSep(a) + ' + (A)</div>' +
+                            '<div class="bline"> ' + thousandsSep(b) + ' = (B)</div>' +
+                            '<div class="rline"> ' + thousandsSep(mp.LongSum(a, b)) + ' &nbsp;&nbsp;(R)</div></div>';
+
+                    }
+                    catch (err) {
+                        document.getElementById("result").innerHTML = err;
+                    }
+                }
+            );
+
+            
+
+            document.getElementById("base10")
+                .addEventListener("click", function () {
+                    try {
+
+                        mp.SetBase10();
+                        grouping = 3;
+                        document.getElementById("state").innerHTML = "base 10";
+                        document.getElementById("result").innerHTML =
+                            '<div>mode changed to base 10</div>';
+
+                    }
+                    catch (err) {
+                        document.getElementById("result").innerHTML = err;
+                    }
+                }
+            );
+
+            document.getElementById("base16")
+                .addEventListener("click", function () {
+                    try {
+                        grouping = 4;
+                        mp.SetBase16();
+                        document.getElementById("state").innerHTML = "base 16";
+                        document.getElementById("result").innerHTML =
+                            '<div>mode changed to base 16</div>';
+
+                    }
+                    catch (err) {
+                        document.getElementById("result").innerHTML = err;
+                    }
+                }
+            );
+
+
+            document.getElementById("sub")
+                .addEventListener("click", function () {
+                    try {
+
+                        let a = mp.TrimZeroes(document.getElementById("A").value);
+                        let b = mp.TrimZeroes(document.getElementById("B").value);
+
+                        document.getElementById("result").innerHTML =
+                            '<div><div class="aline">' + thousandsSep(a) + ' - (A)</div>' +
+                            '<div class="bline"> ' + thousandsSep(b) + ' = (B)</div>' +
+                            '<div class="rline"> ' + thousandsSep(mp.LongSubtraction(a, b)) + ' &nbsp;&nbsp;(R)</div></div>';
+
+                    }
+                    catch (err) {
+                        document.getElementById("result").innerHTML = err;
+                    }
+                }
+            );
+
+             document.getElementById("mul")
+                 .addEventListener("click", function ()
+                 {
+                    try {
+                        let a = mp.TrimZeroes(document.getElementById("A").value);
+                        let b = mp.TrimZeroes(document.getElementById("B").value);
+                        let t = mp.LongMultiply(a, b);
+
+                        let indent = 1;
+
+                        let interm = t.intermediate.reduce(
+                            (acc, v) =>
+                            {
+                                var padding = Array(indent++).join('_');
+                                var tv = v + padding;
+                                return acc + '<div class="intermediateline"> ' + thousandsSep(v + padding) + ' + (.)</div>';                                
+                            }, ''
+                        );
+
+                        document.getElementById("result").innerHTML =
+                            '<div><div class="aline">' + thousandsSep(a) + ' &times; (A)</div>' +
+                            '<div class="bline"> ' + thousandsSep(b) + ' = (B)</div><div class="rline"></div>' + interm +
+                            '<div class="rline"> ' + thousandsSep(t.result) + ' &nbsp;&nbsp;(R)</div></div>';
+                    }
+                    catch (err)
+                    {
+                        document.getElementById("result").innerHTML = err;
+                     }
+                 }
+            );
+
+               document.getElementById("divide")
+                .addEventListener("click", function () {
+                    try {
+
+                         
+                       
+
+
+                        let a = mp.TrimZeroes(document.getElementById("A").value).toLowerCase();
+                        let b = mp.TrimZeroes(document.getElementById("B").value).toLowerCase();
+                        let c = mp.LongDivision(a, b);
+
+                        let steps = "";
+                        for (let i = 0; i < c.Steps.length; ++i) {
+                            let pad = Array(c.Steps[i].Padding).join('_');
+                            steps += '<div class="qline">&nbsp;</div><div class="qline"> ' + thousandsSep(c.Steps[i].Ai + pad) + ' - (&nbsp;&nbsp;&nbsp;Ai&nbsp;&nbsp;)</div>' +
+                                '<div class="qline"> <b> (' + c.Steps[i].Qi + '</b> &times; ' +  b + ') '  + thousandsSep(c.Steps[i].Minuend +  pad) +' = (&nbsp;&nbsp;Qi&times;B&nbsp;)</div>' +
+                                '<div class="rline"> ' + thousandsSep(c.Steps[i].Diff + pad) + ' &nbsp;&nbsp;(Ai-Qi&times;B)</div>';
+                        }
+
+                        let test = mp.TrimZeroes(mp.LongSum(mp.LongMultiply(b, c.Q).result, c.R)).toLowerCase();
+                        let check = "Check result by doing (B*Q+R&lt;A AND R&lt;B): ";
+
+                        if (test === a) {
+                            if (mp.LongCompare(c.R, b)>=0) {
+                                check += "Failed, R too large";
+                            }
+                            else
+                                check += "Passed";
+                        }
+                        else {
+                            check += "Failed, QxB+R=" + test;
+                        }
+
+
+                        document.getElementById("result").innerHTML =
+                            '<div><div class="aline">' + thousandsSep(a) + ' &divide; (&nbsp;&nbsp;&nbsp;A&nbsp;&nbsp;&nbsp;)</div>' +
+                        '<div class="bline"> ' + thousandsSep(b) + ' = (&nbsp;&nbsp;&nbsp;B&nbsp;&nbsp;&nbsp;)</div><div class="rline"></div>' + steps +
+                            '<div class="qline">&nbsp;</div>'+
+                            '<div class="rline"> <b>' + thousandsSep(c.Q) + '</b> &nbsp;&nbsp;(&nbsp;&nbsp;&nbsp;<b>Q</b>&nbsp;&nbsp;&nbsp;)</div>' + 
+                            '<div class="qline"> <b>' + thousandsSep(c.R) + '</b> &nbsp;&nbsp;(&nbsp;&nbsp;&nbsp;<b>R</b>&nbsp;&nbsp;&nbsp;)</div><div>' + check + '</div></div > ';
+
+                    }
+                    catch (err) {
+                        document.getElementById("result").innerHTML = err;
+                    }
+                }
+            );
+
+             document.getElementById("cmp")
+                .addEventListener("click", function () {
+                    try {
+
+                        let a = mp.TrimZeroes(document.getElementById("A").value);
+                        let b = mp.TrimZeroes(document.getElementById("B").value);
+                        let r = mp.LongCompare(a, b);
+                        let d = r < 0 ? 'A less than B' : (r == 0 ? 'A equals B' : 'A greater than B');
+                        document.getElementById("result").innerHTML =
+                            '<div><div class="aline">' + a + ' ? (A)</div>' +
+                            '<div class="bline"> ' + b + ' = (B)</div>' +
+                            '<div class="rline"> ' + d + ' &nbsp;&nbsp;(R)</div></div>';
+
+                    }
+                    catch (err) {
+                        document.getElementById("result").innerHTML = err;
+                    }
+                }
+                );
+        </script>
+    </div>
+</body>
+</html>

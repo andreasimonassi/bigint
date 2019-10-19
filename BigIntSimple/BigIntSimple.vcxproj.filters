@@ -108,6 +108,8 @@
     <None Include="test_sum_readme.md">
       <Filter>Source Files\test</Filter>
     </None>
+    <None Include="wwwroot\default.html" />
+    <None Include="wwwroot\JavaScript.js" />
   </ItemGroup>
   <ItemGroup>
     <Text Include="readme.md" />

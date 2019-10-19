@@ -191,6 +191,8 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="test_sum_readme.md" />
+    <None Include="wwwroot\default.html" />
+    <None Include="wwwroot\JavaScript.js" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
