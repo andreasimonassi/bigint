@@ -51,7 +51,7 @@ _result_t parseFromHex(wchar_t const * const nullTerminatedString, reg_t * outBu
 
 	while (strSize > 1)
 	{
-		strSize--;
+		strSize--;		
 		dlow = nullTerminatedString[strSize];
 		strSize--;
 		dhigh = nullTerminatedString[strSize];

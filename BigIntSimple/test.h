@@ -46,6 +46,7 @@ SOME DEFS TO TWEAK FOR EACH PLATFORM */
 	
 	#define NOMEM L"NO MEMORY"	
 	#define _fprintf fwprintf	
+	#define _sprintf  swprintf 
 
 
 	/*
@@ -62,8 +63,8 @@ SOME DEFS TO TWEAK FOR EACH PLATFORM */
 
 
 
-#define MAX_OUTER_TIME_FOR_TESTING_SEC 300
-#define _ITERATIONS_FOR_RANDOM_TEST 10000
+#define MAX_OUTER_TIME_FOR_TESTING_SEC 100
+#define _ITERATIONS_FOR_RANDOM_TEST 100
 
 
 void randNum(uint_fast64_t * const refState, reg_t * const A, numsize_t ASize);
@@ -86,7 +87,6 @@ typedef struct _test_statistics_collection
 	test_statistics ** items;
 }test_statistics_collection;
 
-typedef  reg_t(*_arithm_func) (reg_t* A, numsize_t ASize, reg_t * B, numsize_t BSize, reg_t* R) ;
 
 typedef numsize_t(*operation) (reg_t* A, numsize_t ASize, reg_t * B, numsize_t BSize, reg_t* R) ;
 
@@ -123,7 +123,8 @@ void run_test_repeat(_result_t(*unit_test)(CLOCK_T * out_algorithmExecutionTimin
 	struct _operation_implementations* op,
 	test_statistics_collection * destination_array,
 	 _char_t const * const test_description,
-	void *  userData
+	void *  userData,
+	unsigned int repeatCount
 	);
 
 

@@ -1,6 +1,8 @@
 #include "BigIntSimple.h"
 #include <assert.h>
 
+typedef numsize_t(*operation) (reg_t* A, numsize_t ASize, reg_t* B, numsize_t BSize, reg_t* R);
+
 typedef reg_t (*_mul_func)(reg_t A, reg_t B,  reg_t* Hiword) ;
 EXTERN reg_t cpu_multiply(reg_t A, reg_t B, reg_t * high);
 #ifdef NO_DWORD_INTS
@@ -208,7 +210,6 @@ static numsize_t LongMultiplicationPortableV2(reg_t *A, numsize_t m, reg_t *B, n
 	return outBuffSize;
 }
 
-
 /* these are the public interface implementation */
 numsize_t LongMultiplication(reg_t *A, numsize_t m, reg_t *B, numsize_t n, reg_t * R)
 {
@@ -229,3 +230,285 @@ numsize_t LongMultiplicationNoAssemblyV2(reg_t *A, numsize_t m, reg_t *B, numsiz
 {
 	return LongMultiplicationPortableV2(A, m, B, n, R, c_multiply);
 }
+
+/*
+KaratsubaRecursive: beware:
+	te simpleSum and simpleSub are required to allow operation in place (i.e the result could be any of A or B)
+	
+	please ensure simple
+*/
+
+numsize_t KaratsubaRecursive(reg_t* A, numsize_t m, reg_t* B, numsize_t n, reg_t* R, 
+	operation simpleMul,
+	operation simpleSum,
+	operation simpleSub,
+	numsize_t simpleMulThreshold)
+{
+	assert(simpleMulThreshold > 0);
+
+	numsize_t min = m;
+	numsize_t max = n;
+	if (m > n)
+	{
+		min = n;
+		max = m;
+	}
+
+	/* the length of one of the operand is zero the result is zero */
+	if (min == 0)
+		return 0;
+
+	/* the length of one of the operands is 1 so complexity is going to be N even for simpleMul */
+	if (min < simpleMulThreshold)
+		return simpleMul(A, m, B, n, R);
+
+	/*
+		we are going to split numbers so that the right group is longer than the left group, for example
+
+		A = 99999
+		B = 9999
+
+		longest number is 5 long
+
+		(5+1)/2 = 3 so right group will be long 3
+
+		A=99|999
+		B= 9|999
+	*/
+
+	numsize_t split_point = (max + 1) >> 1;
+
+
+	/*
+	when one of the 2 numbers is smaller than the minimum group we move the split point so that the split point is equals to the minimum group
+
+	example
+
+	A= 99|999
+	B=   | 99
+
+	we move split point such that
+
+	A= 999|99  (note that 4 digits will still accomodate 999+99, see allocation much below)
+	B=    |99
+
+
+	*/
+
+
+
+	if (split_point > min)
+		split_point = min;
+
+	/* now split A into a|b an B into c|d */
+	reg_t* a = A + split_point;
+	reg_t* b = A;
+	reg_t* c = B + split_point;
+	reg_t* d = B;
+
+	numsize_t len_a = m - split_point,		
+		len_c = n - split_point;
+
+	/*
+		allocate space for later usage, we allocate in adbundance, we'll try to refine later
+	*/
+#ifdef _DEBUG
+	numsize_t alloc_size_a = max - split_point + 2;
+	numsize_t alloc_size_b = max - split_point + 2;
+	numsize_t alloc_size_z1 = ((max - split_point + 2) << 1);
+#endif
+	reg_t* a_plus_b = (reg_t*)malloc(
+		((max - split_point + 2)
+			+ (max - split_point + 2) + 
+			((max - split_point + 2) << 1)
+			)
+		* sizeof(reg_t));
+	reg_t* c_plus_d = a_plus_b + (max - split_point + 2) ;
+	reg_t* z1 = c_plus_d + (max - split_point + 2);
+
+
+	if (a_plus_b == NULL )
+	{
+		/*
+		cleanup and return
+		*/
+		free(a_plus_b);
+		
+		/* revert to simple mul which will likely not allocate other memory */
+		return simpleMul(A, m, B, n, R);
+	}
+
+	/* 
+		doing a*c, result go to R[split_point*2]
+
+	*/
+	numsize_t len_z0 = KaratsubaRecursive(a, len_a, c, len_c, R + (split_point << 1), simpleMul, simpleSum, simpleSub, simpleMulThreshold);
+	/*
+		doing b*d result go to R[0]
+	*/
+	numsize_t len_z2 = KaratsubaRecursive(b, split_point, d, split_point, R, simpleMul, simpleSum, simpleSub, simpleMulThreshold);
+
+	/*
+		now we have this:
+
+		xxxx = a*c; we stored those digits in R[split_point<<1]
+		yyyy = b*d; we store those in R[0]
+
+		where xxxx are digits resulting from a*c , and yyyy digits from b*d
+
+		length of yyyy is split_point * 2
+		length of xxxx is less or equals than split_point * 2
+
+		R = [x]xxx|yyyy	
+	*/
+
+	/*
+		now we will do (a+b)x(c+d), we divide in 2 parts
+		
+		1) First do the inner sums 
+		2) Multiply the result
+	*/
+
+	/*
+		1) First inner sums	
+	*/
+#if _DEBUG
+	assert(len_a + 1 <= alloc_size_a);
+	assert(split_point + 1 <= alloc_size_a);
+	assert(len_c + 1 <= alloc_size_b);
+	assert(split_point + 1 <= alloc_size_b);
+#endif
+	numsize_t len_a_plus_b = simpleSum(a, len_a, b, split_point, a_plus_b);
+	numsize_t len_c_plus_d = simpleSum(c, len_c, d, split_point, c_plus_d);
+
+
+
+	/*
+		2) now multiply together
+	*/
+#if _DEBUG
+	assert(len_a_plus_b + len_c_plus_d <= alloc_size_z1);
+#endif
+	numsize_t z1_len = KaratsubaRecursive(a_plus_b, len_a_plus_b, c_plus_d, len_c_plus_d, z1, simpleMul, simpleSum, simpleSub, simpleMulThreshold);
+
+
+
+	/*
+		now we will do z1 - yyyy, remember that simpleSub can subtract in place
+
+		we will reuse z1_len...
+	*/
+	z1_len = simpleSub(z1, z1_len, R, len_z2, z1);
+
+	/*
+		now we will do z1 - xxxx, remember that simpleSub can subtract in place
+
+		we will reuse z1_len...
+	*/
+	z1_len = simpleSub(z1, z1_len, R + (split_point << 1), len_z0, z1);
+
+
+	/* 
+		ok now we have z0, z1, z2
+		
+		we have to arrange them.
+
+		z0 = most significant, z1 middle, z2 least significant.
+
+		z0 is already in its place in R, and also z2 is already in place.
+
+		in fact, as I show before, R = xx|yy where xx are digits in z0 and yy are digits in z2
+
+		we have to add z1 shifted left of split_point positions...
+
+		so now we'll run simple sum 	
+
+		we will reuse z1_len to save a bit , only concession to optimization on this first implementation
+
+		simpleSum must allow us to sum in place.
+	*/	
+
+#if _DEBUG
+	/*
+		we should not use more than m+n elements of output array R	
+	*/
+	assert(len_z0 + split_point + split_point  <= m+n);
+	assert(z1_len + split_point  <= m + n);
+#endif
+	/*
+		if len_z2 = 0 means we have a zero , which yet occupy 1 digit 
+	*/
+	z1_len = simpleSum(R + split_point, len_z0 + split_point, z1, z1_len, R+split_point);
+
+	free(a_plus_b);
+
+	return z1_len+split_point;
+}
+
+
+/*
+KaratsubaRecursive: beware:
+	te simpleSum and simpleSub are required to allow operation in place (i.e the result could be any of A or B)
+
+	please ensure simple
+*/
+
+
+
+
+numsize_t KaratsubaMultiplicationUsingPortablePrimitive16(reg_t* A, numsize_t m, reg_t* B, numsize_t n, reg_t* R)
+{
+	return KaratsubaRecursive(A, m, B, n, R,
+		LongMultiplicationV2,
+		LongSumWithCarryDetection,
+		LongSub, 16
+	);
+}
+
+numsize_t KaratsubaMultiplicationUsingPortablePrimitive32(reg_t* A, numsize_t m, reg_t* B, numsize_t n, reg_t* R)
+{
+	return KaratsubaRecursive(A, m, B, n, R,
+		LongMultiplicationV2,
+		LongSumWithCarryDetection,
+		LongSub, 32
+	);
+}
+
+numsize_t KaratsubaMultiplicationUsingPortablePrimitive8(reg_t* A, numsize_t m, reg_t* B, numsize_t n, reg_t* R)
+{
+	return KaratsubaRecursive(A, m, B, n, R,
+		LongMultiplicationV2,
+		LongSumWithCarryDetection,
+		LongSub, 8
+	);
+}
+
+
+
+numsize_t KaratsubaMultiplicationUsingPortablePrimitive12(reg_t* A, numsize_t m, reg_t* B, numsize_t n, reg_t* R)
+{
+	return KaratsubaRecursive(A, m, B, n, R,
+		LongMultiplicationV2,
+		LongSumWithCarryDetection,
+		LongSub, 12
+	);
+}
+numsize_t KaratsubaMultiplicationUsingPortablePrimitive24(reg_t* A, numsize_t m, reg_t* B, numsize_t n, reg_t* R)
+{
+	return KaratsubaRecursive(A, m, B, n, R,
+		LongMultiplicationV2,
+		LongSumWithCarryDetection,
+		LongSub, 24
+	);
+}
+
+
+//numsize_t KaratsubaMultiplicationUsingNonPortablePrimitive(reg_t* A, numsize_t m, reg_t* B, numsize_t n, reg_t* R)
+//{
+//	return KaratsubaRecursive(A, m, B, n, R,
+//		LongMulAsmVariant_1,
+//		LongSumAsm,
+//		LongSubAsmVariant_1
+//	);
+//}
+

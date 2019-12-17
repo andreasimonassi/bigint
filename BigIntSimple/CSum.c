@@ -11,21 +11,24 @@ numsize_t LongSumWithCarryDetection(reg_t* A, numsize_t ASize, reg_t * B, numsiz
 	register reg_t carry;
 	register numsize_t i;
 	reg_t min_a_b = ASize > BSize ? BSize : ASize;
-
+	/* temp allow me to work in place*/
+	reg_t temp;
 	carry = i = 0;
 
 
 	while (min_a_b > i)
 	{		
-		R[i] = A[i] + B[i] + carry;
-		carry = R[i] < A[i] + carry ? _R(1) : _R(0);
+		temp = A[i] + B[i] + carry;
+		carry = temp < A[i] + carry ? _R(1) : _R(0);
+		R[i] = temp;
 		++i;
 	}
 
 	while (ASize > i && carry == 1)
 	{		
-		R[i] = A[i] + carry;
-		carry = R[i] == _R(0) ? _R(1) : _R(0);
+		temp = A[i] + carry;
+		carry = temp == _R(0) ? _R(1) : _R(0);
+		R[i] = temp;
 		++i;
 	}
 
@@ -37,8 +40,9 @@ numsize_t LongSumWithCarryDetection(reg_t* A, numsize_t ASize, reg_t * B, numsiz
 
 	while (BSize > i && carry == 1)
 	{	
-		R[i] = B[i] + carry;
-		carry = R[i] == _R(0) ? _R(1) : _R(0);
+		temp = B[i] + carry;
+		carry = temp == _R(0) ? _R(1) : _R(0);
+		R[i] = temp;
 		++i;
 	}
 

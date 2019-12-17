@@ -43,7 +43,7 @@ static reg_t * expected();
 static numsize_t expected_digits = 1;
 
 static void each_op(_result_t(*unit_test)(CLOCK_T* outAlgorithmElapsedTime, struct _operation_implementations*, void * userData), int boolRepeat,
-	 _char_t const * const test_description, void * userData
+	 _char_t const * const test_description, void * userData, unsigned repeat
 )
 {
 
@@ -60,7 +60,7 @@ static void each_op(_result_t(*unit_test)(CLOCK_T* outAlgorithmElapsedTime, stru
 
 		if (boolRepeat)
 		{
-			run_test_repeat(unit_test, &(arithmetics[i]), &(arithmetics[i].subtraction_test_results), test_description, userData);
+			run_test_repeat(unit_test, &(arithmetics[i]), &(arithmetics[i].subtraction_test_results), test_description, userData, repeat);
 		}
 		else
 		{
@@ -463,14 +463,14 @@ static _result_t testSubtractionIsInverseOfSumOfZero(CLOCK_T* delta_t, struct _o
 	return result;
 }
 
-
+#define REPEAT_LONG 10000
 void testSub()
 {
 	
-	each_op(testNullBehavesAsZero, 0, STR("SUB: A - NULL = A"), NULL);
-	each_op(testSubtractionIsInverseOfSumOfZero, 0, STR("SUB: 0 + 0 - 0 = 0"), NULL);
-	each_op(testWellKnownSubtraction, 1,STR("SUB: Testing subtraction with wellknown values"), NULL);
-	each_op(testSubtractionIsInverseOfSum, 1, STR("SUB: Testing subtraction is inverse of sum"), NULL);
-	each_op(speedTestSubtraction512KB, 1, STR("SUB: Test speed on 512KB numbers A-B"), NULL);
-	each_op(testEqualNumbersYieldToZero, 1, STR("SUB: A - A = 0"), NULL);
+	each_op(testNullBehavesAsZero, 0, STR("SUB: A - NULL = A"), NULL, REPEAT_LONG);
+	each_op(testSubtractionIsInverseOfSumOfZero, 0, STR("SUB: 0 + 0 - 0 = 0"), NULL, REPEAT_LONG);
+	each_op(testWellKnownSubtraction, 1,STR("SUB: Testing subtraction with wellknown values"), NULL, REPEAT_LONG);
+	each_op(testSubtractionIsInverseOfSum, 1, STR("SUB: Testing subtraction is inverse of sum"), NULL, REPEAT_LONG);
+	each_op(speedTestSubtraction512KB, 1, STR("SUB: Test speed on 512KB numbers A-B 10K times"), NULL, REPEAT_LONG);
+	each_op(testEqualNumbersYieldToZero, 1, STR("SUB: A - A = 0"), NULL, REPEAT_LONG);
 }

@@ -42,8 +42,7 @@ numsize_t LongSub(reg_t* A, numsize_t ASize, reg_t * B, numsize_t BSize, reg_t* 
 	}	
 
 	/* copy remaining words, unless R != A*/
-	if (R != A)
-	{
+	
 		while (ASize > i)
 		{
 #ifdef _IMPLEMENTATION_DIVISION_IMPROVED_COLLECT_VERBOSE_DATA
@@ -52,7 +51,7 @@ numsize_t LongSub(reg_t* A, numsize_t ASize, reg_t * B, numsize_t BSize, reg_t* 
 			R[i] = A[i];
 			++i;
 		}
-	}
+	
 
 	while (i > 0 && R[i - 1] == 0)
 	{

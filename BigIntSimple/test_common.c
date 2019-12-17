@@ -41,14 +41,18 @@ void dumpNumber(reg_t * A, _char_t* name, numsize_t ASize)
 	int memsize = charsize * sizeof(_char_t);
 
 	_char_t * buffer = (_char_t*)malloc(memsize);
+
 	if (buffer == NULL)
 	{
-		_fprintf(stderr, STR("[ERROR] CANNOT DUMP NUMBER, NO MEMORY FOR MALLOC"), name);
+		_fprintf(stderr, STR("[ERROR] CANNOT DUMP NUMBER, NO MEMORY FOR MALLOC"));
 		return;
 	}
+
 	FillHexString(buffer, charsize, A, ASize);
 	_fprintf(stderr, STR("\n%s = \""), name);
+
 	_fprintf(stderr, buffer);
+
 	_fprintf(stderr, STR("\";\n"));
 	free(buffer);
 }
@@ -159,7 +163,7 @@ void run_test_repeat(_result_t(*unit_test)(CLOCK_T * out_algorithmExecutionTimin
 	struct _operation_implementations* op,
 	test_statistics_collection * destination_array,
 	_char_t const * const test_description,
-	void *  userData
+	void *  userData, unsigned int repeatCount
 	)
 {
 
@@ -170,7 +174,7 @@ void run_test_repeat(_result_t(*unit_test)(CLOCK_T * out_algorithmExecutionTimin
 	
 
 
-	int j;
+	unsigned int j;
 
 	result->test_result = _OK;
 
@@ -182,7 +186,7 @@ void run_test_repeat(_result_t(*unit_test)(CLOCK_T * out_algorithmExecutionTimin
 	CLOCK_T feedbacktimeout = precise_clock();
 
 
-	for (j = 0; j < _ITERATIONS_FOR_RANDOM_TEST; ++j)
+	for (j = 0; j < repeatCount; ++j)
 	{
 		result->test_result = unit_test(&delta, op, userData);
 		if (FAILED(result->test_result))
@@ -195,7 +199,7 @@ void run_test_repeat(_result_t(*unit_test)(CLOCK_T * out_algorithmExecutionTimin
 
 		if (seconds_from_clock(precise_clock() - feedbacktimeout) > 5.0)
 		{
-			LOG_INFO(STR("\tITS A LONG OPERATION: %d/%d"), j, _ITERATIONS_FOR_RANDOM_TEST);
+			LOG_INFO(STR("\tITS A LONG OPERATION: %d/%d"), j, repeatCount);
 			feedbacktimeout = precise_clock();
 		}
 		else if (seconds_from_clock(precise_clock() - overall) > MAX_OUTER_TIME_FOR_TESTING_SEC)

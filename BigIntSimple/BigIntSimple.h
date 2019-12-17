@@ -92,6 +92,11 @@ numsize_t LongMultiplication(reg_t* A, numsize_t m, reg_t * B, numsize_t n, reg_
 numsize_t LongMultiplicationNoAssembly(reg_t* A, numsize_t m, reg_t * B, numsize_t n, reg_t* R);
 numsize_t LongMultiplicationV2(reg_t* A, numsize_t m, reg_t * B, numsize_t n, reg_t* R);
 numsize_t LongMultiplicationNoAssemblyV2(reg_t* A, numsize_t m, reg_t * B, numsize_t n, reg_t* R);
+numsize_t KaratsubaMultiplicationUsingPortablePrimitive8(reg_t* A, numsize_t m, reg_t* B, numsize_t n, reg_t* R);
+numsize_t KaratsubaMultiplicationUsingPortablePrimitive12(reg_t* A, numsize_t m, reg_t* B, numsize_t n, reg_t* R);
+numsize_t KaratsubaMultiplicationUsingPortablePrimitive16(reg_t* A, numsize_t m, reg_t* B, numsize_t n, reg_t* R);
+numsize_t KaratsubaMultiplicationUsingPortablePrimitive24(reg_t* A, numsize_t m, reg_t* B, numsize_t n, reg_t* R);
+numsize_t KaratsubaMultiplicationUsingPortablePrimitive32(reg_t* A, numsize_t m, reg_t* B, numsize_t n, reg_t* R);
 
 /* A must have m+1 space to support normalization, Q and R must have enough space to hold the result*/
 _div_result_t LongDivision(reg_t *A, numsize_t m, reg_t *B, numsize_t n, reg_t * Q, numsize_t * q, reg_t * R, numsize_t * r);

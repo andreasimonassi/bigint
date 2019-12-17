@@ -7,19 +7,24 @@
 
 int main()
 {
-
-	setlocale(LC_ALL, "");
+	setlocale(LC_NUMERIC, "");
+	//setlocale(LC_ALL, "");
 
 	initTest();
 	
-	/*testParse();
+	/*
+	testParse();
 	testBSR();
 	testCompare();
 	testSum();
 	testSub();
-	testMul();*/
+	*/
+	
+	testMul();
 
+	/*
 	testDiv();
+	*/
 
 	write_summary();
 

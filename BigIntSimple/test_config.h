@@ -25,7 +25,7 @@ arithmetics[] = {
 		LongMulAsmVariant_1,
 		NULL
 	},
-	{
+	/*{
 		STR("Multiplication no assembly version 1"),
 		NULL,
 		NULL,
@@ -38,26 +38,51 @@ arithmetics[] = {
 		NULL,
 		LongMultiplicationNoAssemblyV2,
 		NULL
-	},
-	{
+	},*/
+	/*{
 		STR("C variant 1"),
 		NULL,
 		NULL,
 		LongMultiplication,
 		LongDivisionReadable
-	}
-
-	/*this implementation is constantly slower than reference
-	,
-	{   
-		
-		STR("C (carry detection with branches)"),
-		LongSumWithCarryDetectionV2,
-		NULL,
-		NULL,
-		NULL
 	},*/
-	/* this implementation is constantly slower than reference
+	{   
+		STR("C (Karatsuba mult v1 (threshold 8)"),
+		NULL,
+		NULL,
+		KaratsubaMultiplicationUsingPortablePrimitive8,
+		NULL
+	},
+	{
+		STR("C (Karatsuba mult v1 (threshold 12)"),
+		NULL,
+		NULL,
+		KaratsubaMultiplicationUsingPortablePrimitive12,
+		NULL
+	},
+	{
+		STR("C (Karatsuba mult v1 (threshold 16)"),
+		NULL,
+		NULL,
+		KaratsubaMultiplicationUsingPortablePrimitive16,
+		NULL
+	},
+	{
+		STR("C (Karatsuba mult v1 (threshold 24)"),
+		NULL,
+		NULL,
+		KaratsubaMultiplicationUsingPortablePrimitive24,
+		NULL
+	}
+	,
+	{
+		STR("C (Karatsuba mult v1 (threshold 32)"),
+		NULL,
+		NULL,
+		KaratsubaMultiplicationUsingPortablePrimitive32,
+		NULL
+	}
+	/*, this implementation is constantly slower than reference
 	{
 		STR("C (using single byte carry)"),
 		LongSumWithCarryDetectionV3,
