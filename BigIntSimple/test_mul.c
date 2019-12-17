@@ -12,11 +12,10 @@ static reg_t _MEG_mRESULT4[BIG_NUMBER];
 
 static uint_fast64_t _rand_seed_3;
 
-static void each_op(_result_t(*unit_test)(CLOCK_T* outAlgorithmElapsedTime, struct _operation_implementations*, void*userData), int boolRepeat,
-	_char_t const * const test_description, void*userData, unsigned int numberOfRepeat
+static void each_op(_result_t(*unit_test)(CLOCK_T* outAlgorithmElapsedTime, struct _operation_implementations*, void* userData), int boolRepeat,
+	_char_t const* const test_description, void* userData, unsigned int numberOfRepeat, double problemSize
 )
 {
-
 	for (int i = 0; i < number_of_arithmetics; ++i)
 	{
 		if (arithmetics[i].multiplication == NULL)
@@ -29,23 +28,22 @@ static void each_op(_result_t(*unit_test)(CLOCK_T* outAlgorithmElapsedTime, stru
 
 		if (boolRepeat)
 		{
-			run_test_repeat(unit_test, &(arithmetics[i]), &(arithmetics[i].multiplication_test_results), test_description, userData, numberOfRepeat);
+			run_test_repeat(unit_test, &(arithmetics[i]), &(arithmetics[i].multiplication_test_results), test_description, userData, numberOfRepeat, problemSize);
 		}
 		else
 		{
 			run_test_single(unit_test, &(arithmetics[i]), &(arithmetics[i].multiplication_test_results), test_description, userData);
 		}
-
 	}
 }
 
-static _result_t multiply_by_zero_returns_zero(CLOCK_T* delta_t, struct _operation_implementations* impl, void * userData)
+static _result_t multiply_by_zero_returns_zero(CLOCK_T* delta_t, struct _operation_implementations* impl, void* userData)
 {
 	UNUSED(userData);
 
 	_result_t result = _OK;
-	
-	numsize_t ASize = rand() % 10+2;
+
+	numsize_t ASize = rand() % 10 + 2;
 	randNum(&_rand_seed_3, _HALF_MEG_mA, ASize);
 	randNum(&_rand_seed_3, _HALF_MEG_mB, ASize);
 
@@ -53,7 +51,6 @@ static _result_t multiply_by_zero_returns_zero(CLOCK_T* delta_t, struct _operati
 	numsize_t R1Size = impl->multiplication(_HALF_MEG_mA, ASize, NULL, 0, _MEG_mRESULT1);
 	t1 = precise_clock() - t1;
 
-	
 	if (R1Size != 0)
 	{
 		result = _FAIL;
@@ -65,7 +62,7 @@ static _result_t multiply_by_zero_returns_zero(CLOCK_T* delta_t, struct _operati
 	CLOCK_T t2 = precise_clock();
 	numsize_t R2Size = impl->multiplication(_HALF_MEG_mB, ASize, NULL, 0, _MEG_mRESULT1);
 	t2 = precise_clock() - t2;
-	
+
 	if (R2Size != 0)
 	{
 		result = _FAIL;
@@ -79,11 +76,11 @@ static _result_t multiply_by_zero_returns_zero(CLOCK_T* delta_t, struct _operati
 	return result;
 }
 
-static _result_t multiply_by_one_is_identity(CLOCK_T* delta_t, struct _operation_implementations* impl,void* userData)
+static _result_t multiply_by_one_is_identity(CLOCK_T* delta_t, struct _operation_implementations* impl, void* userData)
 {
 	UNUSED(userData);
 	_result_t result = _OK;
-	
+
 	numsize_t ASize = rand() % 10 + 2;
 	randNum(&_rand_seed_3, _HALF_MEG_mA, ASize);
 	reg_t one = 1;
@@ -91,7 +88,6 @@ static _result_t multiply_by_one_is_identity(CLOCK_T* delta_t, struct _operation
 	CLOCK_T t1 = precise_clock();
 	numsize_t R1Size = impl->multiplication(_HALF_MEG_mA, ASize, &one, 1, _MEG_mRESULT1);
 	t1 = precise_clock() - t1;
-
 
 	if (R1Size != ASize)
 	{
@@ -114,7 +110,6 @@ static _result_t multiply_by_one_is_identity(CLOCK_T* delta_t, struct _operation
 	numsize_t R2Size = impl->multiplication(&one, 1, _HALF_MEG_mA, ASize, _MEG_mRESULT1);
 	t2 = precise_clock() - t2;
 
-
 	if (R2Size != ASize)
 	{
 		result = _FAIL;
@@ -136,12 +131,11 @@ static _result_t multiply_by_one_is_identity(CLOCK_T* delta_t, struct _operation
 	return result;
 }
 
-
 static _result_t multiply_is_commutative(CLOCK_T* delta_t, struct _operation_implementations* impl, void* userData)
 {
 	UNUSED(userData);
 	_result_t result = _OK;
-	
+
 	numsize_t ASize = rand() % 2 + 2;
 	numsize_t BSize = rand() % 2 + 2;
 	randNum(&_rand_seed_3, _HALF_MEG_mA, ASize);
@@ -151,7 +145,6 @@ static _result_t multiply_is_commutative(CLOCK_T* delta_t, struct _operation_imp
 	numsize_t R1Size = impl->multiplication(_HALF_MEG_mA, ASize, _HALF_MEG_mB, BSize, _MEG_mRESULT1);
 	numsize_t R2Size = impl->multiplication(_HALF_MEG_mB, BSize, _HALF_MEG_mA, ASize, _MEG_mRESULT2);
 	t1 = precise_clock() - t1;
-
 
 	if (CompareWithPossibleLeadingZeroes(_MEG_mRESULT1, R1Size, _MEG_mRESULT2, R2Size) != 0)
 	{
@@ -163,19 +156,16 @@ static _result_t multiply_is_commutative(CLOCK_T* delta_t, struct _operation_imp
 		dumpNumber(_MEG_mRESULT1, STR("R1"), R1Size);
 		dumpNumber(_MEG_mRESULT2, STR("R2"), R2Size);
 	}
-	   	 
 
-	*delta_t = t1 ;
+	*delta_t = t1;
 	return result;
 }
-
-
 
 static _result_t multiply_is_associative(CLOCK_T* delta_t, struct _operation_implementations* impl, void* userData)
 {
 	UNUSED(userData);
 	_result_t result = _OK;
-	
+
 	numsize_t ASize = rand() % 10 + 2;
 	numsize_t BSize = rand() % 10 + 2;
 	numsize_t CSize = rand() % 10 + 2;
@@ -186,10 +176,9 @@ static _result_t multiply_is_associative(CLOCK_T* delta_t, struct _operation_imp
 	CLOCK_T t1 = precise_clock();
 	numsize_t R1Size = impl->multiplication(_HALF_MEG_mA, ASize, _HALF_MEG_mB, BSize, _MEG_mRESULT1);
 	R1Size = impl->multiplication(_MEG_mRESULT1, R1Size, _HALF_MEG_mC, CSize, _MEG_mRESULT2);
-	numsize_t R2Size = impl->multiplication(_HALF_MEG_mB ,BSize, _HALF_MEG_mC, CSize, _MEG_mRESULT3);
+	numsize_t R2Size = impl->multiplication(_HALF_MEG_mB, BSize, _HALF_MEG_mC, CSize, _MEG_mRESULT3);
 	R2Size = impl->multiplication(_MEG_mRESULT3, R2Size, _HALF_MEG_mA, ASize, _MEG_mRESULT4);
 	t1 = precise_clock() - t1;
-
 
 	if (CompareWithPossibleLeadingZeroes(_MEG_mRESULT2, R1Size, _MEG_mRESULT4, R2Size) != 0)
 	{
@@ -203,20 +192,18 @@ static _result_t multiply_is_associative(CLOCK_T* delta_t, struct _operation_imp
 		dumpNumber(_MEG_mRESULT2, STR("R2"), R2Size);
 	}
 
-
 	*delta_t = t1;
 	return result;
 }
 
-
 static _result_t multiply_subtraction_sum_inrail(CLOCK_T* delta_t, struct _operation_implementations* impl, void* userData)
 {
 	UNUSED(userData);
-	
+
 	operation sum = impl->addition;
 	operation sub = impl->subtraction;
 
-	_result_t result = _OK;	
+	_result_t result = _OK;
 	numsize_t BaseSize = rand() % 5 + 2; /*max 7 digits*/
 	numsize_t Num1Size = 1;
 	numsize_t MultiplierSize;
@@ -224,12 +211,12 @@ static _result_t multiply_subtraction_sum_inrail(CLOCK_T* delta_t, struct _opera
 
 	/*
 	computing space requirement:
-	
+
 	highest bit can move 1 positions to the left per iteration
-	
+
 	having 400 iterations in the worst case (16 bit words) 400/16 25 words
 	or move 400/64 = 6 words for 64 bit words
-	
+
 	thus we need to allocate 25 words + 7 for results in worst case using 400 iterations.
 
 	since we have a 65K words array we have enough space we'll use 100 words per
@@ -237,16 +224,15 @@ static _result_t multiply_subtraction_sum_inrail(CLOCK_T* delta_t, struct _opera
 
 	*/
 
-	reg_t * base = _HALF_MEG_mA;
-	reg_t * num1 = &_HALF_MEG_mA[100]; 
-	reg_t * num2 = &_HALF_MEG_mA[200];
-	reg_t * num3 = &_HALF_MEG_mA[300];	
-	reg_t * multiplier = &_HALF_MEG_mA[400];
-	reg_t * test = &_HALF_MEG_mA[500];
-	reg_t * one = &_HALF_MEG_mA[600];
-	
-	reg_t * temp;
+	reg_t* base = _HALF_MEG_mA;
+	reg_t* num1 = &_HALF_MEG_mA[100];
+	reg_t* num2 = &_HALF_MEG_mA[200];
+	reg_t* num3 = &_HALF_MEG_mA[300];
+	reg_t* multiplier = &_HALF_MEG_mA[400];
+	reg_t* test = &_HALF_MEG_mA[500];
+	reg_t* one = &_HALF_MEG_mA[600];
 
+	reg_t* temp;
 
 	randNum(&_rand_seed_3, base, BaseSize);
 	*delta_t = 0;
@@ -274,11 +260,10 @@ static _result_t multiply_subtraction_sum_inrail(CLOCK_T* delta_t, struct _opera
 
 	/*copy base into num1 (num1 = base + 0)*/
 	Num1Size = sum(base, BaseSize, NULL, 0, num1);
-	
+
 	/*set multiplier = 1*/
 	*one = multiplier[0] = 1;
 	MultiplierSize = 1;
-
 
 	for (int i = 0; i < 200; ++i)
 	{
@@ -347,7 +332,7 @@ static _result_t multiply_subtraction_sum_inrail(CLOCK_T* delta_t, struct _opera
 	return result;
 }
 
-static _result_t multiply_well_known1(CLOCK_T*delta, struct _operation_implementations*impl, void* userData)
+static _result_t multiply_well_known1(CLOCK_T* delta, struct _operation_implementations* impl, void* userData)
 {
 	UNUSED(userData);
 	_result_t result = _OK;
@@ -379,25 +364,23 @@ static _result_t multiply_well_known1(CLOCK_T*delta, struct _operation_implement
 	return _OK;
 }
 
-
-static _result_t multiply_speed_tests(CLOCK_T*delta, struct _operation_implementations*impl, void* userData)
+static _result_t multiply_speed_tests(CLOCK_T* delta, struct _operation_implementations* impl, void* userData)
 {
 	unsigned int buffer = *((unsigned int*)userData);
-	reg_t * A = _HALF_MEG_mA;
-	reg_t * B = _HALF_MEG_mB;
-	reg_t * R = _MEG_mRESULT1;
-
+	reg_t* A = _HALF_MEG_mA;
+	reg_t* B = _HALF_MEG_mB;
+	reg_t* R = _MEG_mRESULT1;
 
 	randNum(&_rand_seed_3, A, buffer);
 
 	randNum(&_rand_seed_3, B, buffer);
 
-	CLOCK_T t1 = precise_clock();	
+	CLOCK_T t1 = precise_clock();
 
 	impl->multiplication(A, buffer, B, buffer, R);
 
 	*delta = precise_clock() - t1;
-	
+
 	return _OK;
 }
 
@@ -405,25 +388,22 @@ static _result_t multiply_speed_tests(CLOCK_T*delta, struct _operation_implement
 
 void testMul()
 {
-	each_op(multiply_by_zero_returns_zero, 0, STR("MUL: Number by zero equals zero"), NULL, REPEAT_LONG);
-	each_op(multiply_by_one_is_identity, 0, STR("MUL: Multiply by one is identity"), NULL, REPEAT_LONG);
-	each_op(multiply_well_known1, 0, STR("MUL: Well known values test 1"), NULL, REPEAT_LONG);
-	each_op(multiply_subtraction_sum_inrail, 0, STR("MUL: Multiplication is adeherent to definition of repetition of sums"), NULL, REPEAT_LONG);
-	each_op(multiply_is_commutative, 1, STR("MUL: Multiply is commutative"), NULL, REPEAT_LONG);
-	each_op(multiply_is_associative, 1, STR("MUL: Multiply is associative"), NULL, REPEAT_LONG);
-	
-	_char_t buffer[256];
+	each_op(multiply_by_zero_returns_zero, 0, STR("MUL: Number by zero equals zero"), NULL, REPEAT_LONG, 0);
+	each_op(multiply_by_one_is_identity, 0, STR("MUL: Multiply by one is identity"), NULL, REPEAT_LONG, 0);
+	each_op(multiply_well_known1, 0, STR("MUL: Well known values test 1"), NULL, REPEAT_LONG, 0);
+	each_op(multiply_subtraction_sum_inrail, 0, STR("MUL: Multiplication is adeherent to definition of repetition of sums"), NULL, REPEAT_LONG, 0);
+	each_op(multiply_is_commutative, 1, STR("MUL: Multiply is commutative"), NULL, REPEAT_LONG, 0);
+	each_op(multiply_is_associative, 1, STR("MUL: Multiply is associative"), NULL, REPEAT_LONG, 0);
 
-	int wordsize=4;
-	unsigned int times = 32768;
+	int wordsize = 4;
+	unsigned int times = 20;
 
-/*	unsigned ‭times = 32768‬;*/
-	
+	/*	unsigned ‭times = 32768‬;*/
+
 	for (int i = 0; i < 14; ++i)
 	{		
-		_sprintf(buffer, 256, STR("MUL: Speed testing %lubit * %lubit * %d times"), wordsize*8*sizeof(reg_t), wordsize * 8 * sizeof(reg_t), times);
-		each_op(multiply_speed_tests, 1, buffer, &wordsize, times);
-		wordsize <<= 1;		
-		times >>=1;
+		each_op(multiply_speed_tests, 1, STR("MUL: Speed testing"), &wordsize, times, wordsize*(double)wordsize);
+		wordsize <<= 1;
+		/*times >>= 1;*/
 	}
 }

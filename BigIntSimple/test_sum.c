@@ -83,7 +83,7 @@ static void init_test()
 
 static void each_op(_result_t(*unit_test)(CLOCK_T* outElapsedTime, 
 	struct _operation_implementations*, void * userData), int boolRepeat,
-	_char_t const * const test_description, void * userData, unsigned repeat
+	_char_t const * const test_description, void * userData, unsigned repeat, double singleIterationProblemSize
 	)
 {
 
@@ -99,7 +99,7 @@ static void each_op(_result_t(*unit_test)(CLOCK_T* outElapsedTime,
 
 		if (boolRepeat)
 		{
-			run_test_repeat(unit_test, &(arithmetics[i]), &(arithmetics[i].addition_test_results), test_description, userData, repeat);
+			run_test_repeat(unit_test, &(arithmetics[i]), &(arithmetics[i].addition_test_results), test_description, userData, repeat, singleIterationProblemSize);
 		}
 		else
 		{
@@ -391,13 +391,13 @@ void testSum()
 {	
 	init_test();	
 	
-	each_op(test_zero_is_neutral_element_of_sum, 1, STR("SUM: Testing zero should be neutral element of sum"), NULL, REPEAT_LONG);
-	each_op(test_on_1000_unit, 1, STR("SUM: Testing that numbers like ff,fe,ff + 1,1 = 1,0,0,0"), NULL, REPEAT_LONG);
-	each_op(test_speed_1_MB_unit, 1, STR("SUM: Testing 1MB (512KB+512KB) of data segment allocated numbers"), NULL, REPEAT_LONG);
-	each_op(test_speed_512KB_Plus_2Words_unit, 1, STR("SUM: Testing 512KB+2words of data segment allocated numbers"), NULL, REPEAT_LONG);	
-	each_op(test_commutative_prop_unit, 1, STR("SUM: Test Commutative Property"), NULL, REPEAT_LONG);
-	each_op(test_associative_prop_unit, 1, STR("SUM: Test Associative Property"), NULL, REPEAT_LONG);
-	each_op(test_last_carry, 0, STR("SUM: Testing last carry (1 + allonebits equals to 1 followed by all zero bits)"), NULL, REPEAT_LONG);
+	each_op(test_zero_is_neutral_element_of_sum, 1, STR("SUM: Testing zero should be neutral element of sum"), NULL, REPEAT_LONG, 0);
+	each_op(test_on_1000_unit, 1, STR("SUM: Testing that numbers like ff,fe,ff + 1,1 = 1,0,0,0"), NULL, REPEAT_LONG,0);
+	each_op(test_speed_1_MB_unit, 1, STR("SUM: Testing 1MB (512KB+512KB) of data segment allocated numbers"), NULL, REPEAT_LONG, 1048576);
+	each_op(test_speed_512KB_Plus_2Words_unit, 1, STR("SUM: Testing 512KB+2words of data segment allocated numbers"), NULL, REPEAT_LONG,524288);	
+	each_op(test_commutative_prop_unit, 1, STR("SUM: Test Commutative Property"), NULL, REPEAT_LONG,0);
+	each_op(test_associative_prop_unit, 1, STR("SUM: Test Associative Property"), NULL, REPEAT_LONG,0);
+	each_op(test_last_carry, 0, STR("SUM: Testing last carry (1 + allonebits equals to 1 followed by all zero bits)"), NULL, REPEAT_LONG,0);
 }
 
 

@@ -7,8 +7,8 @@
 
 int main()
 {
-	setlocale(LC_NUMERIC, "");
-	//setlocale(LC_ALL, "");
+	setlocale(LC_ALL, "");
+	
 
 	initTest();
 	

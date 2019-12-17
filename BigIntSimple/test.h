@@ -76,6 +76,7 @@ typedef struct _test_statistics
 	double number_of_iterations;
 	double inner_time_sec;
 	double outer_time_sec;
+	double problem_size;
 	_result_t test_result;
 	_char_t  test_description[MAXSTRING];
 }test_statistics;
@@ -124,7 +125,7 @@ void run_test_repeat(_result_t(*unit_test)(CLOCK_T * out_algorithmExecutionTimin
 	test_statistics_collection * destination_array,
 	 _char_t const * const test_description,
 	void *  userData,
-	unsigned int repeatCount
+	unsigned int repeatCount, double singleIterationProblemSize
 	);
 
 

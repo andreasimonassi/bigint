@@ -163,7 +163,7 @@ void run_test_repeat(_result_t(*unit_test)(CLOCK_T * out_algorithmExecutionTimin
 	struct _operation_implementations* op,
 	test_statistics_collection * destination_array,
 	_char_t const * const test_description,
-	void *  userData, unsigned int repeatCount
+	void *  userData, unsigned int repeatCount, double singleIterationProblemSize
 	)
 {
 
@@ -178,7 +178,7 @@ void run_test_repeat(_result_t(*unit_test)(CLOCK_T * out_algorithmExecutionTimin
 
 	result->test_result = _OK;
 
-	LOG_INFO(STR("%s on %s version..."), result->test_description, op->implementation_description);
+	LOG_INFO(STR("%s on %s, problem size [%.0f] version..."), result->test_description, op->implementation_description, singleIterationProblemSize * repeatCount);
 
 	CLOCK_T overall = precise_clock();
 	CLOCK_T cumulative = clock_zero();
@@ -223,6 +223,7 @@ void run_test_repeat(_result_t(*unit_test)(CLOCK_T * out_algorithmExecutionTimin
 	result->outer_time_sec = seconds_from_clock(overall);
 	result->inner_time_sec = seconds_from_clock(cumulative);
 	result->number_of_iterations = j;
+	result->problem_size = singleIterationProblemSize * j;
 
 	if (result->inner_time_sec > 0)
 		result->avg_operations_per_second = j / result->inner_time_sec;
@@ -296,13 +297,13 @@ static void _summary(
 		if (reference->outer_time_sec != 0)
 			relative_outer_time =  item->outer_time_sec / reference->outer_time_sec;
 
-		_fprintf(stdout, STR("\"%s\"\t\"%s\"\t\"%s\"\t%e\t%e\t%e\t%e\t\"%s\"\t%e\t%e\n"),
+		_fprintf(stdout, STR("\"%s\"\t\"%s\"\t\"%s\"\t%e\t%e\t%e\t%e\t\"%s\"\t%e\t%e\t%e\n"),
 			
 			impl, func,  item->test_description , item->inner_time_sec, item->outer_time_sec,
 			item->number_of_iterations, item->avg_operations_per_second, 			
 			(OK(item->test_result) ? STR("ok") : STR("failed")),
 			relative_inner_time, 
-			relative_outer_time
+			relative_outer_time, item->problem_size
 			);
 	}
 }
@@ -310,7 +311,7 @@ static void _summary(
 void write_summary()
 {
 	int i;
-	_fprintf(stdout, STR("\"Implementation\"\t\"Operation\"\t\"Test Description\"\t\"Inner Elapsed Seconds\"\t\"Outer Elapsed Seconds\"\t\"Number Of Iterations\"\t\"Average Op Per Second\"\t\"Result\"\t\"Relative inner time\"\t\"Relative outer time\"\n"));
+	_fprintf(stdout, STR("\"Implementation\"\t\"Operation\"\t\"Test Description\"\t\"Inner Elapsed Seconds\"\t\"Outer Elapsed Seconds\"\t\"Number Of Iterations\"\t\"Average Op Per Second\"\t\"Result\"\t\"Relative inner time\"\t\"Relative outer time\"\t\"Problem Size\"\n"));
 
 	for (i = 0; i < number_of_arithmetics; ++i)
 	{
