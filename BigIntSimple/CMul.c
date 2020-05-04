@@ -1,6 +1,20 @@
 #include "BigIntSimple.h"
 #include <assert.h>
 
+#ifndef _WIN32
+	#warning "Please define STACK_ALLOCATOR macros to use stack allocation, falling back to use malloc"
+	#define STACK_ALLOC_IF_GREATER_THAN 4*1024
+	#define STACK_ALLOCATOR(sz) malloc(sz)
+	#define STACK_DEALLOCATOR(ptr) free(ptr)
+#else
+	#include <malloc.h>
+	#define STACK_ALLOC_IF_SMALLER_THAN 4*1024
+	#define STACK_ALLOCATOR(sz) _malloca(sz)
+    #define STACK_DEALLOCATOR(ptr)
+#endif
+
+
+
 typedef numsize_t(*operation) (reg_t* A, numsize_t ASize, reg_t* B, numsize_t BSize, reg_t* R);
 
 typedef reg_t (*_mul_func)(reg_t A, reg_t B,  reg_t* Hiword) ;
@@ -244,6 +258,7 @@ numsize_t KaratsubaRecursive(reg_t* A, numsize_t m, reg_t* B, numsize_t n, reg_t
 	operation simpleSub,
 	numsize_t simpleMulThreshold)
 {
+	
 	assert(simpleMulThreshold > 0);
 
 	numsize_t min = m;
@@ -259,7 +274,7 @@ numsize_t KaratsubaRecursive(reg_t* A, numsize_t m, reg_t* B, numsize_t n, reg_t
 		return 0;
 
 	/* the length of one of the operands is 1 so complexity is going to be N even for simpleMul */
-	if (min < simpleMulThreshold)
+	if (min <= simpleMulThreshold)
 		return simpleMul(A, m, B, n, R);
 
 	/*
@@ -317,23 +332,26 @@ numsize_t KaratsubaRecursive(reg_t* A, numsize_t m, reg_t* B, numsize_t n, reg_t
 	numsize_t alloc_size_b = max - split_point + 2;
 	numsize_t alloc_size_z1 = ((max - split_point + 2) << 1);
 #endif
-	reg_t* a_plus_b = (reg_t*)malloc(
-		((max - split_point + 2)
-			+ (max - split_point + 2) + 
-			((max - split_point + 2) << 1)
-			)
-		* sizeof(reg_t));
+	numsize_t allocsize = ((max - split_point + 2)
+		+ (max - split_point + 2) +
+		((max - split_point + 2) << 1)
+		)
+		* sizeof(reg_t);
+	reg_t* a_plus_b;
+	
+	if (allocsize >= STACK_ALLOC_IF_SMALLER_THAN)
+		a_plus_b = (reg_t*)malloc(
+			allocsize
+		);
+	else
+		a_plus_b = (reg_t*)STACK_ALLOCATOR(allocsize);
+
 	reg_t* c_plus_d = a_plus_b + (max - split_point + 2) ;
 	reg_t* z1 = c_plus_d + (max - split_point + 2);
 
 
 	if (a_plus_b == NULL )
-	{
-		/*
-		cleanup and return
-		*/
-		free(a_plus_b);
-		
+	{		
 		/* revert to simple mul which will likely not allocate other memory */
 		return simpleMul(A, m, B, n, R);
 	}
@@ -440,7 +458,10 @@ numsize_t KaratsubaRecursive(reg_t* A, numsize_t m, reg_t* B, numsize_t n, reg_t
 	*/
 	z1_len = simpleSum(R + split_point, len_z0 + split_point, z1, z1_len, R+split_point);
 
-	free(a_plus_b);
+	if(allocsize >= STACK_ALLOC_IF_SMALLER_THAN)
+		free(a_plus_b);
+	else
+		STACK_DEALLOCATOR(a_plus_b);
 
 	return z1_len+split_point;
 }
@@ -480,6 +501,16 @@ numsize_t KaratsubaMultiplicationUsingPortablePrimitive8(reg_t* A, numsize_t m, 
 		LongMultiplicationV2,
 		LongSumWithCarryDetection,
 		LongSub, 8
+	);
+}
+
+
+numsize_t KaratsubaMultiplicationUsingPortablePrimitive1(reg_t* A, numsize_t m, reg_t* B, numsize_t n, reg_t* R)
+{
+	return KaratsubaRecursive(A, m, B, n, R,
+		LongMultiplicationV2,
+		LongSumWithCarryDetection,
+		LongSub, 1
 	);
 }
 

@@ -8,7 +8,6 @@
 #include <stdint.h>
 #include <stdlib.h>
 
-
 #define _IMPLEMENTATION_DIVISION_IMPROVED_COLLECT_VERBOSE_DATA /* counting number of multiplication, divisions, this code have to be removed i just use it once to better undestand inner working of divisions*/
 #ifdef _IMPLEMENTATION_DIVISION_IMPROVED_COLLECT_VERBOSE_DATA
 extern long long cpu_mul_count;
@@ -92,6 +91,7 @@ numsize_t LongMultiplication(reg_t* A, numsize_t m, reg_t * B, numsize_t n, reg_
 numsize_t LongMultiplicationNoAssembly(reg_t* A, numsize_t m, reg_t * B, numsize_t n, reg_t* R);
 numsize_t LongMultiplicationV2(reg_t* A, numsize_t m, reg_t * B, numsize_t n, reg_t* R);
 numsize_t LongMultiplicationNoAssemblyV2(reg_t* A, numsize_t m, reg_t * B, numsize_t n, reg_t* R);
+numsize_t KaratsubaMultiplicationUsingPortablePrimitive1(reg_t* A, numsize_t m, reg_t* B, numsize_t n, reg_t* R);
 numsize_t KaratsubaMultiplicationUsingPortablePrimitive8(reg_t* A, numsize_t m, reg_t* B, numsize_t n, reg_t* R);
 numsize_t KaratsubaMultiplicationUsingPortablePrimitive12(reg_t* A, numsize_t m, reg_t* B, numsize_t n, reg_t* R);
 numsize_t KaratsubaMultiplicationUsingPortablePrimitive16(reg_t* A, numsize_t m, reg_t* B, numsize_t n, reg_t* R);

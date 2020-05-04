@@ -110,7 +110,7 @@ static numsize_t findmsw(reg_t* A, numsize_t n)
 		if (A[n] != 0)
 			return n;
 	}
-	return -1;
+	return (numsize_t)-1;
 }
 
 static numsize_t shiftl(reg_t* dest, reg_t* source, numsize_t source_l, unsigned n)

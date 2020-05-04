@@ -13,7 +13,7 @@ static reg_t _MEG_mRESULT4[BIG_NUMBER];
 static uint_fast64_t _rand_seed_3;
 
 static void each_op(_result_t(*unit_test)(CLOCK_T* outAlgorithmElapsedTime, struct _operation_implementations*, void* userData), int boolRepeat,
-	_char_t const* const test_description, void* userData, unsigned int numberOfRepeat, double problemSize
+	_char_t const* const test_description, void* userData, unsigned int numberOfRepeat, double operand_size1, double operand_size2
 )
 {
 	for (int i = 0; i < number_of_arithmetics; ++i)
@@ -28,11 +28,11 @@ static void each_op(_result_t(*unit_test)(CLOCK_T* outAlgorithmElapsedTime, stru
 
 		if (boolRepeat)
 		{
-			run_test_repeat(unit_test, &(arithmetics[i]), &(arithmetics[i].multiplication_test_results), test_description, userData, numberOfRepeat, problemSize);
+			run_test_repeat(unit_test, &(arithmetics[i]), &(arithmetics[i].multiplication_test_results), test_description, userData, numberOfRepeat, operand_size1, operand_size2);
 		}
 		else
 		{
-			run_test_single(unit_test, &(arithmetics[i]), &(arithmetics[i].multiplication_test_results), test_description, userData);
+			run_test_single(unit_test, &(arithmetics[i]), &(arithmetics[i].multiplication_test_results), test_description, userData, operand_size1, operand_size2);
 		}
 	}
 }
@@ -136,8 +136,8 @@ static _result_t multiply_is_commutative(CLOCK_T* delta_t, struct _operation_imp
 	UNUSED(userData);
 	_result_t result = _OK;
 
-	numsize_t ASize = rand() % 2 + 2;
-	numsize_t BSize = rand() % 2 + 2;
+	numsize_t ASize = rand() % 100 + 2;
+	numsize_t BSize = rand() % 100 + 2;
 	randNum(&_rand_seed_3, _HALF_MEG_mA, ASize);
 	randNum(&_rand_seed_3, _HALF_MEG_mB, BSize);
 
@@ -166,9 +166,9 @@ static _result_t multiply_is_associative(CLOCK_T* delta_t, struct _operation_imp
 	UNUSED(userData);
 	_result_t result = _OK;
 
-	numsize_t ASize = rand() % 10 + 2;
-	numsize_t BSize = rand() % 10 + 2;
-	numsize_t CSize = rand() % 10 + 2;
+	numsize_t ASize = rand() % 100 + 2;
+	numsize_t BSize = rand() % 100 + 2;
+	numsize_t CSize = rand() % 100 + 2;
 	randNum(&_rand_seed_3, _HALF_MEG_mA, ASize);
 	randNum(&_rand_seed_3, _HALF_MEG_mB, BSize);
 	randNum(&_rand_seed_3, _HALF_MEG_mC, CSize);
@@ -204,7 +204,7 @@ static _result_t multiply_subtraction_sum_inrail(CLOCK_T* delta_t, struct _opera
 	operation sub = impl->subtraction;
 
 	_result_t result = _OK;
-	numsize_t BaseSize = rand() % 5 + 2; /*max 7 digits*/
+	numsize_t BaseSize = rand() % 5 + 2; 
 	numsize_t Num1Size = 1;
 	numsize_t MultiplierSize;
 	numsize_t ResultSize;
@@ -388,21 +388,30 @@ static _result_t multiply_speed_tests(CLOCK_T* delta, struct _operation_implemen
 
 void testMul()
 {
-	each_op(multiply_by_zero_returns_zero, 0, STR("MUL: Number by zero equals zero"), NULL, REPEAT_LONG, 0);
-	each_op(multiply_by_one_is_identity, 0, STR("MUL: Multiply by one is identity"), NULL, REPEAT_LONG, 0);
-	each_op(multiply_well_known1, 0, STR("MUL: Well known values test 1"), NULL, REPEAT_LONG, 0);
-	each_op(multiply_subtraction_sum_inrail, 0, STR("MUL: Multiplication is adeherent to definition of repetition of sums"), NULL, REPEAT_LONG, 0);
-	each_op(multiply_is_commutative, 1, STR("MUL: Multiply is commutative"), NULL, REPEAT_LONG, 0);
-	each_op(multiply_is_associative, 1, STR("MUL: Multiply is associative"), NULL, REPEAT_LONG, 0);
+
+	/* BE AWARE 
+	
+	if your multiply algorithm have a threshold it may be possible that the tests will not hit many part of your code 
+	because many tests works on not too heavy numbers.
+
+	please provide a variant of the algorithm with a very low threshold (on test_config.h) so that the tests will enter those least used 
+	part of the code.
+	*/
+	each_op(multiply_by_zero_returns_zero, 0, STR("MUL: Number by zero equals zero"), NULL, REPEAT_LONG, 0, 0);
+	each_op(multiply_by_one_is_identity, 0, STR("MUL: Multiply by one is identity"), NULL, REPEAT_LONG, 0, 0);
+	each_op(multiply_well_known1, 0, STR("MUL: Well known values test 1"), NULL, REPEAT_LONG, 0, 0);
+	each_op(multiply_subtraction_sum_inrail, 0, STR("MUL: Multiplication is adeherent to definition of repetition of sums"), NULL, REPEAT_LONG, 100, 100);
+	each_op(multiply_is_commutative, 1, STR("MUL: Multiply is commutative"), NULL, REPEAT_LONG, 100, 100);
+	each_op(multiply_is_associative, 1, STR("MUL: Multiply is associative"), NULL, REPEAT_LONG, 100, 100);
 
 	int wordsize = 4;
-	unsigned int times = 20;
+	const unsigned int times = 3;
 
 	/*	unsigned ‭times = 32768‬;*/
 
 	for (int i = 0; i < 14; ++i)
 	{		
-		each_op(multiply_speed_tests, 1, STR("MUL: Speed testing"), &wordsize, times, wordsize*(double)wordsize);
+		each_op(multiply_speed_tests, 1, STR("MUL: Speed testing"), &wordsize, times, (double)wordsize,(double)wordsize);
 		wordsize <<= 1;
 		/*times >>= 1;*/
 	}

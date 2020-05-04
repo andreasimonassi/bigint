@@ -46,6 +46,13 @@ arithmetics[] = {
 		LongMultiplication,
 		LongDivisionReadable
 	},*/
+	{
+		STR("C (Karatsuba mult v1 (threshold 1)"),
+		NULL,
+		NULL,
+		KaratsubaMultiplicationUsingPortablePrimitive1,
+		NULL
+	},
 	{   
 		STR("C (Karatsuba mult v1 (threshold 8)"),
 		NULL,

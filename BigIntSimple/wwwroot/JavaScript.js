@@ -217,8 +217,8 @@ var mp =
         }
 
         function LongDivision(A, B) {
-            A = trimZeroes(A.toLower());
-            B = trimZeroes(B.toLower());
+            A = trimZeroes(A.toLowerCase());
+            B = trimZeroes(B.toLowerCase());
 
             let steps = [];
 
