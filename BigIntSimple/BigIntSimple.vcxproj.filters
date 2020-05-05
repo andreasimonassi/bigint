@@ -105,11 +105,11 @@
     </MASM>
   </ItemGroup>
   <ItemGroup>
-    <None Include="test_sum_readme.md">
-      <Filter>Source Files\test</Filter>
-    </None>
     <None Include="wwwroot\default.html" />
     <None Include="wwwroot\JavaScript.js" />
+    <None Include="creating_unit_tests_readme.md">
+      <Filter>Source Files\test</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <Text Include="LICENSE" />

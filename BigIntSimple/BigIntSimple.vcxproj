@@ -185,7 +185,7 @@
     <MASM Include="Sum.asm" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="test_sum_readme.md" />
+    <None Include="creating_unit_tests_readme.md" />
     <None Include="wwwroot\default.html" />
     <None Include="wwwroot\JavaScript.js" />
   </ItemGroup>
