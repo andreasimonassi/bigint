@@ -351,7 +351,7 @@ static _result_t multiply_well_known1(CLOCK_T* delta, _operationdescriptor* impl
 		dumpNumber(Expected, STR("Expected"), ExpectedSize);
 		dumpNumber(R, STR("Actual"), RSize);
 	}
-	return _OK;
+	return result;
 }
 
 static _result_t multiply_speed_tests(CLOCK_T* delta, _operationdescriptor* impl, void* userData)

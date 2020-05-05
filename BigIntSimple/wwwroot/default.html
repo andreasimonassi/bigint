@@ -132,7 +132,7 @@
             document.getElementById("base16")
                 .addEventListener("click", function () {
                     try {
-                        grouping = 16;
+                        grouping = 8;
                         mp.SetBase16();
                         document.getElementById("state").innerHTML = "base 16";
                         document.getElementById("result").innerHTML =
@@ -217,7 +217,7 @@
                         }
 
                         let test = mp.TrimZeroes(mp.LongSum(mp.LongMultiply(b, c.Q).result, c.R)).toLowerCase();
-                        let check = "Check result by doing (B*Q+R&lt;A AND R&lt;B): ";
+                        let check = "Check result by doing (B*Q+R=A AND R&lt;B): ";
 
                         if (test === a) {
                             if (mp.LongCompare(c.R, b)>=0) {

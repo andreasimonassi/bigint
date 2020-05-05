@@ -269,17 +269,23 @@ void run_test_single(_result_t(*unit_test)(CLOCK_T * out_algorithmExecutionTimin
 	test_statistics_collection_ADD(&(op->results), result);
 }
 
-static void _summary(
+static int _summary(
 	_char_t const * const impl, 
 	_char_t const * const func, 
 	test_statistics_collection const *const op, 
 	test_statistics_collection const *const referenceOp)
 {
 	int i;
+	int errCount = 0;
 	for (i = 0; i < op->count; ++i)
 	{
 		struct _test_statistics * item = op->items[i];
 		struct _test_statistics * reference = referenceOp->items[i];
+
+		if (FAILED(item->test_result))
+		{
+			errCount++;
+		}
 		double relative_inner_time = 0.0;
 		double relative_outer_time = 0.0;
 
@@ -296,29 +302,34 @@ static void _summary(
 			relative_inner_time, 
 			relative_outer_time, item->operand1_size, item->operand2_size
 			);
-	}
+	}	
+	return errCount;
 }
 
-void write_opsummary(_char_t * operatordescr, _operationdescriptor* descriptor, size_t count)
+int write_opsummary(_char_t * operatordescr, _operationdescriptor* descriptor, size_t count)
 {
+	int errCount=0;
 	_operationdescriptor* iterator = descriptor;
 	int i ;
 	for(i=0; i< count;++i)
 	{
-		_summary(iterator->implementation_description, operatordescr, &(iterator->results), &(descriptor->results));
+		errCount += _summary(iterator->implementation_description, operatordescr, &(iterator->results), &(descriptor->results));
 		iterator++;
 	}
+	return errCount;
 }
 
 void write_summary()
 {
+	int errCount = 0;
 	_fprintf(stdout, STR("\"Implementation\"\t\"Operation\"\t\"Test Description\"\t\"Inner Elapsed Seconds\"\t\"Outer Elapsed Seconds\"\t\"Number Of Iterations\"\t\"Average Op Per Second\"\t\"Result\"\t\"Relative inner time\"\t\"Relative outer time\"\t\"Operand1 Size\"\t\"Operand2 Size\"\n"));
 
-	write_opsummary(STR("Addition"),arithmetic->sum, arithmetic->sumcount);
-	write_opsummary(STR("Subtraction"), arithmetic->subtract, arithmetic->subtractcount);
-	write_opsummary(STR("Multiplication"), arithmetic->multiply, arithmetic->multiplycount);
-	write_opsummary(STR("Division"), arithmetic->divide, arithmetic->dividecount);
+	errCount += write_opsummary(STR("Addition"),arithmetic->sum, arithmetic->sumcount);
+	errCount += write_opsummary(STR("Subtraction"), arithmetic->subtract, arithmetic->subtractcount);
+	errCount += write_opsummary(STR("Multiplication"), arithmetic->multiply, arithmetic->multiplycount);
+	errCount += write_opsummary(STR("Division"), arithmetic->divide, arithmetic->dividecount);
 	
+	_fprintf(stderr, STR("%d ERRORS FOUND"), errCount);
 }
 
 
@@ -357,7 +368,7 @@ double seconds_from_clock(CLOCK_T clock)
 	) == 0)return 0.0;
 
 	double d = (double)(clock) /(double)o;
-	//assert(d > 0);
+	assert(d >= 0);
 	return d;
 }
 CLOCK_T clock_zero()

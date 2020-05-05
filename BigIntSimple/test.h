@@ -34,19 +34,19 @@ SOME DEFS TO TWEAK FOR EACH PLATFORM */
 #endif
 
 
+#define NOMEM L"NO MEMORY"	
+#define _fprintf fwprintf	
+#define _sprintf  swprintf 
+
+typedef wchar_t _char_t;
+#define STR(x) L ## x	
+#define EXPAND_(a) STR(a)
+#define WFILE EXPAND_(__FILE__)	
+#define LOG_INFO(x, ...) _fprintf(stderr, L"[INFO] " x L"\n", ##__VA_ARGS__)
+#define MY_ASSERT(c, x, ...) if (!(c)) { _fprintf(stderr, L"assertion failed: (%s %d) - " x L"\n",  WFILE, __LINE__, ##__VA_ARGS__); abort(); }
+#define LOG_ERROR(x, ...) _fprintf(stderr, L"[ERROR] " x L"\n", ##__VA_ARGS__)
 	
 
-	typedef wchar_t _char_t;
-	#define STR(x) L ## x	
-	#define EXPAND_(a) STR(a)
-	#define WFILE EXPAND_(__FILE__)	
-	#define LOG_INFO(x, ...) fwprintf(stderr, L"[INFO] " x L"\n", ##__VA_ARGS__)
-	#define MY_ASSERT(c, x, ...) if (!(c)) { fwprintf(stderr, L"assertion failed: (%s %d) - " x L"\n",  WFILE, __LINE__, ##__VA_ARGS__); abort(); }
-	#define LOG_ERROR(x, ...) fwprintf(stderr, L"[ERROR] " x L"\n", ##__VA_ARGS__)
-	
-	#define NOMEM L"NO MEMORY"	
-	#define _fprintf fwprintf	
-	#define _sprintf  swprintf 
 
 
 	/*

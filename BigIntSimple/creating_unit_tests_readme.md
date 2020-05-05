@@ -35,7 +35,7 @@ the algorithm you are trying to measure, not the time used to initialize numbers
 nor the time spent to print information and so on, **your test function only have to count time spent doing the 
 arithmetic operation** (see example below). This measurement could be something you don't care to collect for your test
 in such case you just set its value to 0
-- _operationdescriptor* op: a pointer to the operation implementations to be called, your unit test will be called once for each requested repetition for each implementation of the arithmetic operation, _for example if you have a test for subtraction, each\_op will call your unit test N times for each available implementation of the subtraction_
+- _operationdescriptor* op: a pointer to the operation implementations to be called
 - **return value**: the test function must return a **\_result\_t** , defined in **test.h** header file.
 ```c
 /* make clear what is the result type of a function */
