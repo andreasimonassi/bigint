@@ -222,7 +222,7 @@ void run_test_repeat(_result_t(*unit_test)(CLOCK_T* out_algorithmExecutionTiming
 
 	test_statistics_collection_ADD(&(descriptor->results), result);
 
-	LOG_INFO(STR("cumulative inner time: %f sec"),  result->inner_time_sec);
+	LOG_INFO(STR("cumulative inner time: %f sec\n"),  result->inner_time_sec);	
 
 }
 
@@ -267,6 +267,7 @@ void run_test_single(_result_t(*unit_test)(CLOCK_T * out_algorithmExecutionTimin
 		result->avg_operations_per_second = 0;
 
 	test_statistics_collection_ADD(&(op->results), result);
+	LOG_INFO(STR(""));
 }
 
 static int _summary(
