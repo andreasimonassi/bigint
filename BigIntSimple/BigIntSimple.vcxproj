@@ -152,9 +152,6 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <Text Include="readme.md" />
-  </ItemGroup>
-  <ItemGroup>
     <ClCompile Include="CCompare.c" />
     <ClCompile Include="CDiv.c" />
     <ClCompile Include="CMul.c" />
@@ -174,9 +171,7 @@
   <ItemGroup>
     <ClInclude Include="BigIntSimple.h" />
     <ClInclude Include="test.h" />
-    <ClCompile Include="test_config.c">
-      <FileType>CppCode</FileType>
-    </ClCompile>
+    <ClCompile Include="test_config.c" />
     <ClInclude Include="_x64BigIntSimple.h" />
   </ItemGroup>
   <ItemGroup>
@@ -187,14 +182,15 @@
     <MASM Include="Mul2.asm" />
     <MASM Include="Sub.asm" />
     <MASM Include="Sub2.asm" />
-    <MASM Include="Sum.asm">
-      <FileType>Document</FileType>
-    </MASM>
+    <MASM Include="Sum.asm" />
   </ItemGroup>
   <ItemGroup>
     <None Include="test_sum_readme.md" />
     <None Include="wwwroot\default.html" />
     <None Include="wwwroot\JavaScript.js" />
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="LICENSE" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
