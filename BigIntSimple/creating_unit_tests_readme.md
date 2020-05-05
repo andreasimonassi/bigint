@@ -5,10 +5,10 @@ The tests are a list of function that are execute to measure either correctness 
 The entry point are the **testSum**, **testSub**, **testMul** and **testDiv** function that you find on source files 
 **test_sum.c**, **test_sub.c**, **test_mul.c" and **test_div.c** respectively.
 
-To add tests add the call to your test to the **testXXX** function on the appropriate source file.
+If you need to add a test you can do it as you want by simply add it to the MAIN function, but if you want to use the built-in data-collection routinse
+, you should create the test having a specific signature and add a call to the unit test to the **testXXX** function on the appropriate source file.
 
-In order to produce meaningful statistics you need to wrap the call to your test function into a call to 
-**each_op** and pass your test function as a callback.
+In order to produce meaningful statistics you need to wrap the call to your test function into a call to **each_op** and pass your test function as a callback.
 
 ## How to add a test function
 
@@ -16,8 +16,14 @@ Each of the 4 modules **test_sum.c**, **test_sub.c**, **test_mul.c" and **test_d
 all the modules have the same function signature
 
 ```c
-static void each_op(_result_t(*unit_test)(CLOCK_T* outAlgorithmElapsedTime, _operationdescriptor* op, void* userData) callback, int boolRepeat,
-	_char_t const* const test_description, void* userData, unsigned repeat, double operand1_size, double operand2_size)
+static void each_op(
+	_result_t(*unit_test)(CLOCK_T* outAlgorithmElapsedTime, _operationdescriptor* op, void* userData) callback, 
+	int boolRepeat,
+	_char_t const* const test_description, 
+	void* userData, 
+	unsigned repeat, 
+	double operand1_size, 
+	double operand2_size);
 ```
 
 the test function must return a **\_result\_t** , defined in **test.h** header file.
