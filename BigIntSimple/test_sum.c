@@ -21,9 +21,9 @@
 #define TEST_NUMBER_WORDS 200
 
 
-static reg_t _A[A_REG_WORDS];
-static reg_t _B[B_REG_WORDS];
-static reg_t _R[R_REG_WORDS];
+static reg_t _A[A_REG_WORDS]; /* PLEASE DO NOT USE THIS IS RESERVED FOR A SPECIAL TEST */
+static reg_t _B[B_REG_WORDS]; /* PLEASE DO NOT USE THIS IS RESERVED FOR A SPECIAL TEST */
+static reg_t _R[R_REG_WORDS]; /* PLEASE DO NOT USE THIS IS RESERVED FOR A SPECIAL TEST */
 
 static reg_t _HALF_MEG_A[HALF_MEG_NUMBER];
 static reg_t _HALF_MEG_B[HALF_MEG_NUMBER];
@@ -257,11 +257,8 @@ static _result_t  test_commutative_prop_unit(CLOCK_T* delta_t, _operationdescrip
 		dumpNumber(A, STR("A"), ASize);
 		dumpNumber(B, STR("B"), BSize);
 		LOG_INFO(STR("Commutative prop test failed, see dump"));
-	}
-	
-	
+	}	
 	return result;
-
 }
 
 static _result_t  test_associative_prop_unit(CLOCK_T* delta_t, _operationdescriptor* impl, void* userData)

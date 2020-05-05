@@ -59,7 +59,7 @@ void dumpNumber(reg_t * A, _char_t* name, numsize_t ASize)
 
 uint_fast32_t rand32(uint_fast64_t * const refState)
 {
-	/*
+/*
 PCR random generator credit O'Neill, Melissa http://www.pcg-random.org/
 */
 	static uint_fast64_t const multiplier = 6364136223846793005u;

@@ -8,8 +8,6 @@
 int main()
 {
 	setlocale(LC_ALL, "");
-	
-
 	initTest();
 	
 	
@@ -17,12 +15,8 @@ int main()
 	testBSR();
 	testCompare();
 	testSum();
-	testSub();
-	
-	
-	testMul();
-
-	
+	testSub();	
+	testMul();		
 	testDiv();
 	
 
