@@ -189,9 +189,6 @@
     <None Include="wwwroot\default.html" />
     <None Include="wwwroot\JavaScript.js" />
   </ItemGroup>
-  <ItemGroup>
-    <Text Include="LICENSE" />
-  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
     <Import Project="$(VCTargetsPath)\BuildCustomizations\masm.targets" />
