@@ -12,32 +12,31 @@ static reg_t _MEG_mRESULT4[BIG_NUMBER];
 
 static uint_fast64_t _rand_seed_3;
 
-static void each_op(_result_t(*unit_test)(CLOCK_T* outAlgorithmElapsedTime, struct _operation_implementations*, void* userData), int boolRepeat,
+static void each_op(_result_t(*unit_test)(CLOCK_T* outAlgorithmElapsedTime, _operationdescriptor* operation, void* userData), int boolRepeat,
 	_char_t const* const test_description, void* userData, unsigned int numberOfRepeat, double operand_size1, double operand_size2
 )
 {
-	for (int i = 0; i < number_of_arithmetics; ++i)
+	_operationdescriptor* descriptor = arithmetic->multiply;
+	int i;
+	for(i = 0; i < arithmetic->multiplycount; ++i)
 	{
-		if (arithmetics[i].multiplication == NULL)
-		{
-			continue;
-		}
-
 		_rand_seed_3 = _R(0x4d595df4d0f33173); /*deterministic , i want all tests to be reproducible*/
 		srand((unsigned int)_rand_seed_3);
 
 		if (boolRepeat)
 		{
-			run_test_repeat(unit_test, &(arithmetics[i]), &(arithmetics[i].multiplication_test_results), test_description, userData, numberOfRepeat, operand_size1, operand_size2);
+			run_test_repeat(unit_test, descriptor, test_description, userData, numberOfRepeat, operand_size1, operand_size2);
 		}
 		else
 		{
-			run_test_single(unit_test, &(arithmetics[i]), &(arithmetics[i].multiplication_test_results), test_description, userData, operand_size1, operand_size2);
+			run_test_single(unit_test, descriptor, test_description, userData, operand_size1, operand_size2);
 		}
+
+		descriptor++;
 	}
 }
 
-static _result_t multiply_by_zero_returns_zero(CLOCK_T* delta_t, struct _operation_implementations* impl, void* userData)
+static _result_t multiply_by_zero_returns_zero(CLOCK_T* delta_t, _operationdescriptor* impl, void* userData)
 {
 	UNUSED(userData);
 
@@ -48,7 +47,7 @@ static _result_t multiply_by_zero_returns_zero(CLOCK_T* delta_t, struct _operati
 	randNum(&_rand_seed_3, _HALF_MEG_mB, ASize);
 
 	CLOCK_T t1 = precise_clock();
-	numsize_t R1Size = impl->multiplication(_HALF_MEG_mA, ASize, NULL, 0, _MEG_mRESULT1);
+	numsize_t R1Size = impl->operation.operation(_HALF_MEG_mA, ASize, NULL, 0, _MEG_mRESULT1);
 	t1 = precise_clock() - t1;
 
 	if (R1Size != 0)
@@ -60,7 +59,7 @@ static _result_t multiply_by_zero_returns_zero(CLOCK_T* delta_t, struct _operati
 		dumpNumber(_MEG_mRESULT1, STR("ActualResult"), R1Size);
 	}
 	CLOCK_T t2 = precise_clock();
-	numsize_t R2Size = impl->multiplication(_HALF_MEG_mB, ASize, NULL, 0, _MEG_mRESULT1);
+	numsize_t R2Size = impl->operation.operation(_HALF_MEG_mB, ASize, NULL, 0, _MEG_mRESULT1);
 	t2 = precise_clock() - t2;
 
 	if (R2Size != 0)
@@ -76,7 +75,7 @@ static _result_t multiply_by_zero_returns_zero(CLOCK_T* delta_t, struct _operati
 	return result;
 }
 
-static _result_t multiply_by_one_is_identity(CLOCK_T* delta_t, struct _operation_implementations* impl, void* userData)
+static _result_t multiply_by_one_is_identity(CLOCK_T* delta_t, _operationdescriptor* impl, void* userData)
 {
 	UNUSED(userData);
 	_result_t result = _OK;
@@ -86,7 +85,7 @@ static _result_t multiply_by_one_is_identity(CLOCK_T* delta_t, struct _operation
 	reg_t one = 1;
 
 	CLOCK_T t1 = precise_clock();
-	numsize_t R1Size = impl->multiplication(_HALF_MEG_mA, ASize, &one, 1, _MEG_mRESULT1);
+	numsize_t R1Size = impl->operation.operation(_HALF_MEG_mA, ASize, &one, 1, _MEG_mRESULT1);
 	t1 = precise_clock() - t1;
 
 	if (R1Size != ASize)
@@ -107,7 +106,7 @@ static _result_t multiply_by_one_is_identity(CLOCK_T* delta_t, struct _operation
 	}
 
 	CLOCK_T t2 = precise_clock();
-	numsize_t R2Size = impl->multiplication(&one, 1, _HALF_MEG_mA, ASize, _MEG_mRESULT1);
+	numsize_t R2Size = impl->operation.operation(&one, 1, _HALF_MEG_mA, ASize, _MEG_mRESULT1);
 	t2 = precise_clock() - t2;
 
 	if (R2Size != ASize)
@@ -131,7 +130,7 @@ static _result_t multiply_by_one_is_identity(CLOCK_T* delta_t, struct _operation
 	return result;
 }
 
-static _result_t multiply_is_commutative(CLOCK_T* delta_t, struct _operation_implementations* impl, void* userData)
+static _result_t multiply_is_commutative(CLOCK_T* delta_t, _operationdescriptor* impl, void* userData)
 {
 	UNUSED(userData);
 	_result_t result = _OK;
@@ -142,8 +141,8 @@ static _result_t multiply_is_commutative(CLOCK_T* delta_t, struct _operation_imp
 	randNum(&_rand_seed_3, _HALF_MEG_mB, BSize);
 
 	CLOCK_T t1 = precise_clock();
-	numsize_t R1Size = impl->multiplication(_HALF_MEG_mA, ASize, _HALF_MEG_mB, BSize, _MEG_mRESULT1);
-	numsize_t R2Size = impl->multiplication(_HALF_MEG_mB, BSize, _HALF_MEG_mA, ASize, _MEG_mRESULT2);
+	numsize_t R1Size = impl->operation.operation(_HALF_MEG_mA, ASize, _HALF_MEG_mB, BSize, _MEG_mRESULT1);
+	numsize_t R2Size = impl->operation.operation(_HALF_MEG_mB, BSize, _HALF_MEG_mA, ASize, _MEG_mRESULT2);
 	t1 = precise_clock() - t1;
 
 	if (CompareWithPossibleLeadingZeroes(_MEG_mRESULT1, R1Size, _MEG_mRESULT2, R2Size) != 0)
@@ -161,7 +160,7 @@ static _result_t multiply_is_commutative(CLOCK_T* delta_t, struct _operation_imp
 	return result;
 }
 
-static _result_t multiply_is_associative(CLOCK_T* delta_t, struct _operation_implementations* impl, void* userData)
+static _result_t multiply_is_associative(CLOCK_T* delta_t, _operationdescriptor* impl, void* userData)
 {
 	UNUSED(userData);
 	_result_t result = _OK;
@@ -174,10 +173,10 @@ static _result_t multiply_is_associative(CLOCK_T* delta_t, struct _operation_imp
 	randNum(&_rand_seed_3, _HALF_MEG_mC, CSize);
 
 	CLOCK_T t1 = precise_clock();
-	numsize_t R1Size = impl->multiplication(_HALF_MEG_mA, ASize, _HALF_MEG_mB, BSize, _MEG_mRESULT1);
-	R1Size = impl->multiplication(_MEG_mRESULT1, R1Size, _HALF_MEG_mC, CSize, _MEG_mRESULT2);
-	numsize_t R2Size = impl->multiplication(_HALF_MEG_mB, BSize, _HALF_MEG_mC, CSize, _MEG_mRESULT3);
-	R2Size = impl->multiplication(_MEG_mRESULT3, R2Size, _HALF_MEG_mA, ASize, _MEG_mRESULT4);
+	numsize_t R1Size = impl->operation.operation(_HALF_MEG_mA, ASize, _HALF_MEG_mB, BSize, _MEG_mRESULT1);
+	R1Size = impl->operation.operation(_MEG_mRESULT1, R1Size, _HALF_MEG_mC, CSize, _MEG_mRESULT2);
+	numsize_t R2Size = impl->operation.operation(_HALF_MEG_mB, BSize, _HALF_MEG_mC, CSize, _MEG_mRESULT3);
+	R2Size = impl->operation.operation(_MEG_mRESULT3, R2Size, _HALF_MEG_mA, ASize, _MEG_mRESULT4);
 	t1 = precise_clock() - t1;
 
 	if (CompareWithPossibleLeadingZeroes(_MEG_mRESULT2, R1Size, _MEG_mRESULT4, R2Size) != 0)
@@ -196,12 +195,12 @@ static _result_t multiply_is_associative(CLOCK_T* delta_t, struct _operation_imp
 	return result;
 }
 
-static _result_t multiply_subtraction_sum_inrail(CLOCK_T* delta_t, struct _operation_implementations* impl, void* userData)
+static _result_t multiply_subtraction_sum_inrail(CLOCK_T* delta_t, _operationdescriptor* impl, void* userData)
 {
 	UNUSED(userData);
 
-	operation sum = impl->addition;
-	operation sub = impl->subtraction;
+	operation sum = arithmetic->sum[0].operation.operation;
+	operation sub = arithmetic->subtract[0].operation.operation;
 
 	_result_t result = _OK;
 	numsize_t BaseSize = rand() % 5 + 2; 
@@ -236,22 +235,13 @@ static _result_t multiply_subtraction_sum_inrail(CLOCK_T* delta_t, struct _opera
 
 	randNum(&_rand_seed_3, base, BaseSize);
 	*delta_t = 0;
-
-	/* pickup sum and subtraction operations */
-	if (sum == NULL)
-	{
-		sum = arithmetics[0].addition;
-	}
+	
 	if (sum == NULL)
 	{
 		LOG_ERROR(STR("Sum operation is not defined for reference arithmetic"));
 		return _FAIL;
 	}
-
-	if (sub == NULL)
-	{
-		sub = arithmetics[0].subtraction;
-	}
+	
 	if (sub == NULL)
 	{
 		LOG_ERROR(STR("Subtraction operation is not defined for reference arithmetic"));
@@ -315,7 +305,7 @@ static _result_t multiply_subtraction_sum_inrail(CLOCK_T* delta_t, struct _opera
 
 		/* only measure time taken by multiplication */
 		CLOCK_T t1 = precise_clock();
-		ResultSize = impl->multiplication(base, BaseSize, multiplier, MultiplierSize, test);
+		ResultSize = impl->operation.operation(base, BaseSize, multiplier, MultiplierSize, test);
 		*delta_t += precise_clock() - t1;
 
 		/* check result and sum */
@@ -332,7 +322,7 @@ static _result_t multiply_subtraction_sum_inrail(CLOCK_T* delta_t, struct _opera
 	return result;
 }
 
-static _result_t multiply_well_known1(CLOCK_T* delta, struct _operation_implementations* impl, void* userData)
+static _result_t multiply_well_known1(CLOCK_T* delta, _operationdescriptor* impl, void* userData)
 {
 	UNUSED(userData);
 	_result_t result = _OK;
@@ -349,7 +339,7 @@ static _result_t multiply_well_known1(CLOCK_T* delta, struct _operation_implemen
 	parseFromHex(STR("45CE2945CA377628112A5374AE1B79DDEA427434A5879DC6"), B, 12, &BSize);
 
 	*delta = 0;
-	RSize = impl->multiplication(A, ASize, B, BSize, R);
+	RSize = impl->operation.operation(A, ASize, B, BSize, R);
 
 	if (CompareWithPossibleLeadingZeroes(R, RSize, Expected, ExpectedSize) != 0)
 	{
@@ -364,7 +354,7 @@ static _result_t multiply_well_known1(CLOCK_T* delta, struct _operation_implemen
 	return _OK;
 }
 
-static _result_t multiply_speed_tests(CLOCK_T* delta, struct _operation_implementations* impl, void* userData)
+static _result_t multiply_speed_tests(CLOCK_T* delta, _operationdescriptor* impl, void* userData)
 {
 	unsigned int buffer = *((unsigned int*)userData);
 	reg_t* A = _HALF_MEG_mA;
@@ -377,7 +367,7 @@ static _result_t multiply_speed_tests(CLOCK_T* delta, struct _operation_implemen
 
 	CLOCK_T t1 = precise_clock();
 
-	impl->multiplication(A, buffer, B, buffer, R);
+	impl->operation.operation(A, buffer, B, buffer, R);
 
 	*delta = precise_clock() - t1;
 
@@ -397,21 +387,21 @@ void testMul()
 	please provide a variant of the algorithm with a very low threshold (on test_config.h) so that the tests will enter those least used 
 	part of the code.
 	*/
-	each_op(multiply_by_zero_returns_zero, 0, STR("MUL: Number by zero equals zero"), NULL, REPEAT_LONG, 0, 0);
-	each_op(multiply_by_one_is_identity, 0, STR("MUL: Multiply by one is identity"), NULL, REPEAT_LONG, 0, 0);
-	each_op(multiply_well_known1, 0, STR("MUL: Well known values test 1"), NULL, REPEAT_LONG, 0, 0);
-	each_op(multiply_subtraction_sum_inrail, 0, STR("MUL: Multiplication is adeherent to definition of repetition of sums"), NULL, REPEAT_LONG, 100, 100);
-	each_op(multiply_is_commutative, 1, STR("MUL: Multiply is commutative"), NULL, REPEAT_LONG, 100, 100);
-	each_op(multiply_is_associative, 1, STR("MUL: Multiply is associative"), NULL, REPEAT_LONG, 100, 100);
+	each_op(multiply_by_zero_returns_zero, 0, STR("Number by zero equals zero"), NULL, REPEAT_LONG, 0, 0);
+	each_op(multiply_by_one_is_identity, 0, STR("Multiply by one is identity"), NULL, REPEAT_LONG, 0, 0);
+	each_op(multiply_well_known1, 0, STR("Well known values test 1"), NULL, REPEAT_LONG, 0, 0);
+	each_op(multiply_subtraction_sum_inrail, 0, STR("Multiplication is adeherent to definition of repetition of sums"), NULL, REPEAT_LONG, 100, 100);
+	each_op(multiply_is_commutative, 1, STR("Multiply is commutative"), NULL, REPEAT_LONG, 100, 100);
+	each_op(multiply_is_associative, 1, STR("Multiply is associative"), NULL, REPEAT_LONG, 100, 100);
 
-	int wordsize = 4;
-	const unsigned int times = 3;
+	int wordsize = 8;
+	const unsigned int times = 1;
 
 	/*	unsigned ‭times = 32768‬;*/
 
-	for (int i = 0; i < 14; ++i)
+	for (int i = 0; i < 13; ++i)
 	{		
-		each_op(multiply_speed_tests, 1, STR("MUL: Speed testing"), &wordsize, times, (double)wordsize,(double)wordsize);
+		each_op(multiply_speed_tests, 1, STR("Speed testing"), &wordsize, times, (double)wordsize,(double)wordsize);
 		wordsize <<= 1;
 		/*times >>= 1;*/
 	}

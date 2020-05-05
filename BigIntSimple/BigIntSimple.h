@@ -8,7 +8,7 @@
 #include <stdint.h>
 #include <stdlib.h>
 
-#define _IMPLEMENTATION_DIVISION_IMPROVED_COLLECT_VERBOSE_DATA /* counting number of multiplication, divisions, this code have to be removed i just use it once to better undestand inner working of divisions*/
+/*#define _IMPLEMENTATION_DIVISION_IMPROVED_COLLECT_VERBOSE_DATA*/ /* counting number of multiplication, divisions, this code have to be removed i just use it once to better undestand inner working of divisions*/
 #ifdef _IMPLEMENTATION_DIVISION_IMPROVED_COLLECT_VERBOSE_DATA
 extern long long cpu_mul_count;
 extern long long cpu_div_count;
@@ -73,7 +73,6 @@ numsize_t LongSumWithCarryDetection(reg_t* A, numsize_t ASize, reg_t * B, numsiz
 numsize_t LongSumWithCarryDetectionV2(reg_t* A, numsize_t ASize, reg_t * B, numsize_t BSize, reg_t* R);
 numsize_t LongSumWithCarryDetectionV3(reg_t* A, numsize_t ASize, reg_t * B, numsize_t BSize, reg_t* R);
 
-
 /*
 Caller must check:
 * R should have MAX(ASize, BSize) space, will not check bounds
@@ -81,28 +80,26 @@ Caller must check:
 * Most significant digit of A is not zero
 
 Return value is number of significant digits in result
-
 */
 numsize_t LongSub(reg_t* A, numsize_t ASize, reg_t * B, numsize_t BSize, reg_t* R);
 
 /*R must be preallocated it should be able to contain up to m*n digits, return value may have 
 leading zeroes*/
-numsize_t LongMultiplication(reg_t* A, numsize_t m, reg_t * B, numsize_t n, reg_t* R);
-numsize_t LongMultiplicationNoAssembly(reg_t* A, numsize_t m, reg_t * B, numsize_t n, reg_t* R);
-numsize_t LongMultiplicationV2(reg_t* A, numsize_t m, reg_t * B, numsize_t n, reg_t* R);
-numsize_t LongMultiplicationNoAssemblyV2(reg_t* A, numsize_t m, reg_t * B, numsize_t n, reg_t* R);
-numsize_t KaratsubaMultiplicationUsingPortablePrimitive1(reg_t* A, numsize_t m, reg_t* B, numsize_t n, reg_t* R);
-numsize_t KaratsubaMultiplicationUsingPortablePrimitive8(reg_t* A, numsize_t m, reg_t* B, numsize_t n, reg_t* R);
+numsize_t LongMultiplication                             (reg_t* A, numsize_t m, reg_t* B, numsize_t n, reg_t* R);
+numsize_t LongMultiplicationNoAssembly                   (reg_t* A, numsize_t m, reg_t* B, numsize_t n, reg_t* R);
+numsize_t LongMultiplicationV2                           (reg_t* A, numsize_t m, reg_t* B, numsize_t n, reg_t* R);
+numsize_t LongMultiplicationNoAssemblyV2                 (reg_t* A, numsize_t m, reg_t* B, numsize_t n, reg_t* R);
+numsize_t KaratsubaMultiplicationUsingPortablePrimitive1 (reg_t* A, numsize_t m, reg_t* B, numsize_t n, reg_t* R);
+numsize_t KaratsubaMultiplicationUsingPortablePrimitive8 (reg_t* A, numsize_t m, reg_t* B, numsize_t n, reg_t* R);
 numsize_t KaratsubaMultiplicationUsingPortablePrimitive12(reg_t* A, numsize_t m, reg_t* B, numsize_t n, reg_t* R);
 numsize_t KaratsubaMultiplicationUsingPortablePrimitive16(reg_t* A, numsize_t m, reg_t* B, numsize_t n, reg_t* R);
 numsize_t KaratsubaMultiplicationUsingPortablePrimitive24(reg_t* A, numsize_t m, reg_t* B, numsize_t n, reg_t* R);
 numsize_t KaratsubaMultiplicationUsingPortablePrimitive32(reg_t* A, numsize_t m, reg_t* B, numsize_t n, reg_t* R);
+numsize_t KaratsubaMultiplicationUsingAssembly12(reg_t* A, numsize_t m, reg_t* B, numsize_t n, reg_t* R);
 
 /* A must have m+1 space to support normalization, Q and R must have enough space to hold the result*/
 _div_result_t LongDivision(reg_t *A, numsize_t m, reg_t *B, numsize_t n, reg_t * Q, numsize_t * q, reg_t * R, numsize_t * r);
 _div_result_t LongDivisionReadable(reg_t * A, numsize_t m, reg_t * B, numsize_t n, reg_t * Q, numsize_t * q, reg_t * R, numsize_t * r);
-
-
 
 /*
 	Compare number A and B returns -1 if A < B 0 if A == B and 1 if A > B
@@ -116,4 +113,3 @@ int parseFromByteArrayLittleEndian(unsigned char * input, numsize_t sizeOfInput,
 reg_t* AllocNumOrFail(numsize_t size);
 
 _result_t FillHexString(wchar_t*buffer, unsigned bufferSize, reg_t* number, numsize_t size);
-

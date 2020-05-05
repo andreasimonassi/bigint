@@ -1,4 +1,4 @@
-#include "test_config.h"
+#include "test.h"
 
 #include <memory.h>
 
@@ -55,23 +55,6 @@ void dumpNumber(reg_t * A, _char_t* name, numsize_t ASize)
 
 	_fprintf(stderr, STR("\";\n"));
 	free(buffer);
-}
-
-void initTest()
-{
-	srand((unsigned int)time(NULL));
-	for (int i = 0; i < number_of_arithmetics; ++i)
-	{		
-		arithmetics[i].division_test_results.capacity = arithmetics[i].division_test_results.count = 0;
-		arithmetics[i].addition_test_results.capacity = arithmetics[i].addition_test_results.count = 0;
-		arithmetics[i].subtraction_test_results.capacity = arithmetics[i].subtraction_test_results.count = 0;
-		arithmetics[i].multiplication_test_results.capacity = arithmetics[i].multiplication_test_results.count = 0;
-
-		arithmetics[i].division_test_results.items = NULL;
-		arithmetics[i].addition_test_results.items = NULL;
-		arithmetics[i].subtraction_test_results.items = NULL;
-		arithmetics[i].multiplication_test_results.items = NULL;
-	}
 }
 
 uint_fast32_t rand32(uint_fast64_t * const refState)
@@ -159,12 +142,12 @@ static void test_statistics_collection_CLEAR(test_statistics_collection * array)
 	array->capacity =  array->count = 0;
 }
 
-void run_test_repeat(_result_t(*unit_test)(CLOCK_T * out_algorithmExecutionTiming, struct _operation_implementations*, void* userData),
-	struct _operation_implementations* op,
-	test_statistics_collection * destination_array,
-	_char_t const * const test_description,
-	void *  userData, unsigned int repeatCount, double operandsize_1, double operandsize_2
-	)
+void run_test_repeat(_result_t(*unit_test)(CLOCK_T* out_algorithmExecutionTiming, _operationdescriptor*, void* userData),
+	_operationdescriptor* descriptor,
+	_char_t const* const test_description,
+	void* userData,
+	unsigned int repeatCount, double operand1_size, double operand2_size
+)
 {
 
 	test_statistics * result = (test_statistics*)malloc(sizeof(test_statistics));
@@ -178,7 +161,12 @@ void run_test_repeat(_result_t(*unit_test)(CLOCK_T * out_algorithmExecutionTimin
 
 	result->test_result = _OK;
 
-	LOG_INFO(STR("%s on %s, operand sizes are [%.0f] and [%.0f], repeat [%d] times ..."), result->test_description, op->implementation_description, operandsize_1, operandsize_2, repeatCount);
+	LOG_INFO(STR("%s on %s, operand sizes are [%.0f] and [%.0f], repeat [%d] times ..."), 
+		test_description, 
+		descriptor->implementation_description,
+		operand1_size,
+		operand2_size,
+		repeatCount);
 
 	CLOCK_T overall = precise_clock();
 	CLOCK_T cumulative = clock_zero();
@@ -188,7 +176,7 @@ void run_test_repeat(_result_t(*unit_test)(CLOCK_T * out_algorithmExecutionTimin
 
 	for (j = 0; j < repeatCount; ++j)
 	{
-		result->test_result = unit_test(&delta, op, userData);
+		result->test_result = unit_test(&delta, descriptor, userData);
 		if (FAILED(result->test_result))
 		{			
 			break;
@@ -223,8 +211,8 @@ void run_test_repeat(_result_t(*unit_test)(CLOCK_T * out_algorithmExecutionTimin
 	result->outer_time_sec = seconds_from_clock(overall);
 	result->inner_time_sec = seconds_from_clock(cumulative);
 	result->number_of_iterations = j;
-	result->operand1_size = operandsize_1;
-	result->operand2_size = operandsize_2;
+	result->operand1_size = operand1_size;
+	result->operand2_size = operand2_size;
 
 	if (result->inner_time_sec > 0)
 		result->avg_operations_per_second = j / result->inner_time_sec;
@@ -232,15 +220,14 @@ void run_test_repeat(_result_t(*unit_test)(CLOCK_T * out_algorithmExecutionTimin
 		result->avg_operations_per_second = 0;
 
 
-	test_statistics_collection_ADD(destination_array, result);
+	test_statistics_collection_ADD(&(descriptor->results), result);
 
 	LOG_INFO(STR("cumulative inner time: %f sec"),  result->inner_time_sec);
 
 }
 
-void run_test_single(_result_t(*unit_test)(CLOCK_T * out_algorithmExecutionTiming, struct _operation_implementations*, void * userData),
-	struct _operation_implementations* op,
-	test_statistics_collection * destination_array,
+void run_test_single(_result_t(*unit_test)(CLOCK_T * out_algorithmExecutionTiming, _operationdescriptor*, void * userData),
+	_operationdescriptor* op,
 	_char_t const * const test_description, void*userData, double operand1_size, double operand2_size)
 {
 	test_statistics * result = (test_statistics*)malloc(sizeof(test_statistics));
@@ -250,7 +237,7 @@ void run_test_single(_result_t(*unit_test)(CLOCK_T * out_algorithmExecutionTimin
 
 	result->test_result = _OK;
 
-	LOG_INFO(STR("%s on %s version"), result->test_description, op->implementation_description);
+	LOG_INFO(STR("%s on %s version"), test_description, op->implementation_description);
 
 	CLOCK_T cumulative = clock_zero();
 	CLOCK_T overall = precise_clock();
@@ -279,7 +266,7 @@ void run_test_single(_result_t(*unit_test)(CLOCK_T * out_algorithmExecutionTimin
 	else
 		result->avg_operations_per_second = 0;
 
-	test_statistics_collection_ADD(destination_array, result);
+	test_statistics_collection_ADD(&(op->results), result);
 }
 
 static void _summary(
@@ -312,32 +299,45 @@ static void _summary(
 	}
 }
 
-void write_summary()
+void write_opsummary(_char_t * operatordescr, _operationdescriptor* descriptor, size_t count)
 {
-	int i;
-	_fprintf(stdout, STR("\"Implementation\"\t\"Operation\"\t\"Test Description\"\t\"Inner Elapsed Seconds\"\t\"Outer Elapsed Seconds\"\t\"Number Of Iterations\"\t\"Average Op Per Second\"\t\"Result\"\t\"Relative inner time\"\t\"Relative outer time\"\t\"Operand1 Size\"\t\"Operand2 Size\"\n"));
-
-	for (i = 0; i < number_of_arithmetics; ++i)
+	_operationdescriptor* iterator = descriptor;
+	int i ;
+	for(i=0; i< count;++i)
 	{
-		_char_t * impl = arithmetics[i].implementation_description;
-		_summary(impl, STR("Addition"), &(arithmetics[i].addition_test_results), &(arithmetics[0].addition_test_results));
-		_summary(impl,STR("Subtraction"), &(arithmetics[i].subtraction_test_results), &(arithmetics[0].subtraction_test_results));
-		_summary(impl, STR("Multiplication"), &(arithmetics[i].multiplication_test_results), &(arithmetics[0].multiplication_test_results));
-		_summary(impl, STR("Division"), &(arithmetics[i].division_test_results), &(arithmetics[0].division_test_results));
+		_summary(iterator->implementation_description, operatordescr, &(iterator->results), &(descriptor->results));
+		iterator++;
 	}
 }
 
+void write_summary()
+{
+	_fprintf(stdout, STR("\"Implementation\"\t\"Operation\"\t\"Test Description\"\t\"Inner Elapsed Seconds\"\t\"Outer Elapsed Seconds\"\t\"Number Of Iterations\"\t\"Average Op Per Second\"\t\"Result\"\t\"Relative inner time\"\t\"Relative outer time\"\t\"Operand1 Size\"\t\"Operand2 Size\"\n"));
+
+	write_opsummary(STR("Addition"),arithmetic->sum, arithmetic->sumcount);
+	write_opsummary(STR("Subtraction"), arithmetic->subtract, arithmetic->subtractcount);
+	write_opsummary(STR("Multiplication"), arithmetic->multiply, arithmetic->multiplycount);
+	write_opsummary(STR("Division"), arithmetic->divide, arithmetic->dividecount);
+	
+}
+
+
+void cleanup_op(_operationdescriptor* descriptor, size_t count) {
+	_operationdescriptor* iterator = descriptor;
+	int i;
+	for(i=0;i<count;++i)
+	{
+		test_statistics_collection_CLEAR(&(descriptor->results));
+		iterator++;
+	}
+}
 
 void cleanup()
 {
-	int i;
-	for (i = 0; i < number_of_arithmetics; ++i)
-	{
-		 test_statistics_collection_CLEAR(&(arithmetics[i].addition_test_results));
-		 test_statistics_collection_CLEAR(&(arithmetics[i].subtraction_test_results));
-		 test_statistics_collection_CLEAR(&(arithmetics[i].multiplication_test_results));
-		 test_statistics_collection_CLEAR(&(arithmetics[i].division_test_results));
-	}
+	cleanup_op(arithmetic->sum, arithmetic->sumcount);
+	cleanup_op(arithmetic->subtract, arithmetic->subtractcount);
+	cleanup_op(arithmetic->multiply, arithmetic->multiplycount);
+	cleanup_op(arithmetic->divide, arithmetic->dividecount);
 }
 
 #if defined(_WIN32) || defined(WIN32)

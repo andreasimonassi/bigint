@@ -524,6 +524,16 @@ numsize_t KaratsubaMultiplicationUsingPortablePrimitive12(reg_t* A, numsize_t m,
 		LongSub, 12
 	);
 }
+
+
+numsize_t KaratsubaMultiplicationUsingAssembly12(reg_t* A, numsize_t m, reg_t* B, numsize_t n, reg_t* R)
+{
+	return KaratsubaRecursive(A, m, B, n, R,
+		LongMulAsmVariant_1,
+		LongSumWithCarryDetection,
+		LongSub, 12
+	);
+}
 numsize_t KaratsubaMultiplicationUsingPortablePrimitive24(reg_t* A, numsize_t m, reg_t* B, numsize_t n, reg_t* R)
 {
 	return KaratsubaRecursive(A, m, B, n, R,

@@ -2,7 +2,6 @@
 #include <assert.h>
 #include <stdlib.h>
 
-#define ENABLE_NORMALIZE
 
 #ifdef _IMPLEMENTATION_DIVISION_IMPROVED_COLLECT_VERBOSE_DATA
 long long cpu_mul_count;
@@ -100,7 +99,6 @@ static void copy(reg_t* dest, reg_t* source, numsize_t n)
 	}
 }
 
-#ifdef  ENABLE_NORMALIZE
 #define SHIFTBITS (sizeof(reg_t) * 8)
 static numsize_t findmsw(reg_t* A, numsize_t n)
 {
@@ -153,7 +151,7 @@ static  numsize_t shiftr(reg_t* dest, reg_t* source, numsize_t source_l, unsigne
 	}
 	return findmsw(dest, source_l) + 1;
 }
-#endif
+
 
 /*
 Function _div_result_t LongDivision:
@@ -179,9 +177,9 @@ _div_result_t LongDivision(reg_t* A, numsize_t m, reg_t* B, numsize_t n, reg_t* 
 		return DIV_BY_ZERO; /*failure*/
 
 	int compare;
-#ifdef  ENABLE_NORMALIZE
+
 	int shift = 0; /* keep track of how many shifts we do to have the leftmost bit of divisor (B) be 1*/
-#endif
+
 	reg_t Aguess[2]; /* the one or 2 leftmost digits of next divisor that we use to guess Qn */
 	reg_t Qn;        /* the Qn, at first it will be a guess and we will reduce it by 1 until we find the right one */
 	reg_t* test;	 /* this is used to do test = B * Qn to check whether or not Qn is the correct divisor */
@@ -236,7 +234,7 @@ _div_result_t LongDivision(reg_t* A, numsize_t m, reg_t* B, numsize_t n, reg_t* 
 
 	bleftmost = B[n - 1]; /*leftmost digit of B*/
 
-#ifdef  ENABLE_NORMALIZE
+
 	/* now normalize the division, leftmost digit of B must have its leftmost bit to 1 */
 	while (bleftmost < LEFTBIT)
 	{
@@ -284,7 +282,6 @@ _div_result_t LongDivision(reg_t* A, numsize_t m, reg_t* B, numsize_t n, reg_t* 
 		return	GENERIC_FAILURE;
 	}
 
-#endif
 
 	/* initialize result Q=0 (is zero when its size q is 0 or only contains zeroes) */
 	* q = 0;
@@ -430,7 +427,7 @@ _div_result_t LongDivision(reg_t* A, numsize_t m, reg_t* B, numsize_t n, reg_t* 
 	assert(test == testpin);
 #endif
 	free(test);
-#ifdef  ENABLE_NORMALIZE
+
 	if (shift != 0)
 	{
 		/*
@@ -442,7 +439,6 @@ _div_result_t LongDivision(reg_t* A, numsize_t m, reg_t* B, numsize_t n, reg_t* 
 		shiftr(A, A, m, shift);
 		shiftr(B, B, n, shift);
 	}
-#endif
 
 	/*
 	at this point Q array is reversed.. we need to reverse it before to return
@@ -462,7 +458,6 @@ static reg_t RunHwDivision(reg_t ALeftMost, reg_t ASecond, reg_t BLeftmost)
 		return cpu_divide(ASecond, ALeftMost, BLeftmost, &BLeftmost);
 	
 }
-
 
 static numsize_t simpleMultiplication(reg_t* A, numsize_t ASize, reg_t B, reg_t* R)
 {
@@ -489,7 +484,6 @@ static numsize_t simpleMultiplication(reg_t* A, numsize_t ASize, reg_t B, reg_t*
 		return ASize + 1;
 	return ASize;
 }
-
 
 static void LongDivisionReadableCore(reg_t* temp, reg_t* A, numsize_t m, reg_t* B, numsize_t n, reg_t* Q, numsize_t q, reg_t* R, numsize_t* r)
 {
@@ -631,8 +625,6 @@ static int RemoveLeadingZeroes(reg_t* A, numsize_t* _m, reg_t* B, numsize_t* _n)
 		return DIV_BY_ZERO;
 	return OK;
 }
-
-
 
 _div_result_t LongDivisionReadable(reg_t* A, numsize_t m, reg_t* B, numsize_t n, reg_t* Q, numsize_t* q, reg_t* R, numsize_t* r)
 {

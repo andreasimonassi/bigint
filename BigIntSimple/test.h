@@ -93,46 +93,55 @@ typedef struct _test_statistics_collection
 typedef numsize_t(*operation) (reg_t* A, numsize_t ASize, reg_t * B, numsize_t BSize, reg_t* R) ;
 
 typedef _div_result_t(*div_operation) (reg_t *A, numsize_t m, reg_t *B, numsize_t n, reg_t * Q, numsize_t * q, reg_t * R, numsize_t * r);
-/* this structure holds all of our different implementation so it can 
-   compare all the possible implementations for speed
-*/
-struct _operation_implementations
+
+
+typedef enum __operationtag
 {
-	/* to print something useful during tests */
-	_char_t * implementation_description;
+	OP = 1, DIVOP=2
+}_operationtag;
 
-	/* the arithmetic functions being tested, make it null if not (yet) supported by your impl*/
-	operation addition;
-	operation subtraction;
-	operation multiplication;
-	div_operation division;
+typedef union __operationtype
+{
+	operation operation;
+	div_operation divoperation;
+}_operationtype;
 
-	/* count how many tests results are available for each operation */	
+typedef struct __operationdescriptor {
+	_char_t* implementation_description;
+	_operationtag tag;
+	_operationtype operation;	
+	test_statistics_collection  results;
+} _operationdescriptor;
 
-	test_statistics_collection  addition_test_results;
-	test_statistics_collection  subtraction_test_results;
-	test_statistics_collection  multiplication_test_results;
-	test_statistics_collection  division_test_results;
-};
+
+typedef struct __arithmetic {
+	/* null terminated list of operation descriptors, see test_config.c */
+	_operationdescriptor * sum;
+	_operationdescriptor * subtract;
+	_operationdescriptor * multiply;
+	_operationdescriptor * divide;
+	size_t sumcount;
+	size_t subtractcount;
+	size_t multiplycount;
+	size_t dividecount;
+} _arithmetic;
 
 
-extern struct _operation_implementations arithmetics[];
-extern int number_of_arithmetics;
+
+extern _arithmetic* arithmetic;
 
 void dumpNumber(reg_t * A, _char_t* name, numsize_t ASize);
 
-void run_test_repeat(_result_t(*unit_test)(CLOCK_T * out_algorithmExecutionTiming, struct _operation_implementations*,  void  *  userData),
-	struct _operation_implementations* op,
-	test_statistics_collection * destination_array,
+void run_test_repeat(_result_t(*unit_test)(CLOCK_T * out_algorithmExecutionTiming, _operationdescriptor*,  void  *  userData),
+	_operationdescriptor* descriptor,
 	 _char_t const * const test_description,
 	void *  userData,
 	unsigned int repeatCount, double operand1_size, double operand2_size
 	);
 
 
-void run_test_single(_result_t(*unit_test)(CLOCK_T * out_algorithmExecutionTiming, struct _operation_implementations*, void * userData),
-	struct _operation_implementations* op,
-	test_statistics_collection * destination_array,
+void run_test_single(_result_t(*unit_test)(CLOCK_T * out_algorithmExecutionTiming, _operationdescriptor*, void * userData),
+	_operationdescriptor* descriptor,
 	_char_t const * const test_description,
 	void * userData, double operand_size1, double operand_size2);
 

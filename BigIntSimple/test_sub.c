@@ -42,30 +42,27 @@ static reg_t * initB();
 static reg_t * expected();
 static numsize_t expected_digits = 1;
 
-static void each_op(_result_t(*unit_test)(CLOCK_T* outAlgorithmElapsedTime, struct _operation_implementations*, void * userData), int boolRepeat,
+static void each_op(_result_t(*unit_test)(CLOCK_T* outAlgorithmElapsedTime, _operationdescriptor*, void * userData), int boolRepeat,
 	 _char_t const * const test_description, void * userData, unsigned repeat, double operand1_size, double operand2_size
 )
 {
-
-	for (int i = 0; i < number_of_arithmetics; ++i)
+	_operationdescriptor* descriptor = arithmetic->subtract;
+	int i;
+	for(i=0;i<arithmetic->subtractcount;++i)
 	{
-		if (arithmetics[i].subtraction == NULL)
-		{			
-			continue;
-		}
-
 		_rand_seed_2 = _R(0x4d595df4d0f33173); //deterministic , i want all tests to be reproducible
 		srand((unsigned int)_rand_seed_2);
 
 
 		if (boolRepeat)
 		{
-			run_test_repeat(unit_test, &(arithmetics[i]), &(arithmetics[i].subtraction_test_results), test_description, userData, repeat, operand1_size, operand2_size);
+			run_test_repeat(unit_test, descriptor, test_description, userData, repeat, operand1_size, operand2_size);
 		}
 		else
 		{
-			run_test_single(unit_test, &(arithmetics[i]), &(arithmetics[i].subtraction_test_results), test_description, userData, operand1_size, operand2_size);
+			run_test_single(unit_test, descriptor, test_description, userData, operand1_size, operand2_size);
 		}
+		descriptor++;
 	}
 }
 
@@ -174,7 +171,7 @@ static void init_A_B_Big(reg_t ** outA, numsize_t * outASize, reg_t ** outB, num
 	*outR = _R1;
 }
 
-static _result_t speedTestSubtraction512KB(CLOCK_T* delta_t, struct _operation_implementations* impl, void* userData)
+static _result_t speedTestSubtraction512KB(CLOCK_T* delta_t, _operationdescriptor* impl, void* userData)
 {
 	UNUSED(userData);
 	reg_t * A;
@@ -186,14 +183,14 @@ static _result_t speedTestSubtraction512KB(CLOCK_T* delta_t, struct _operation_i
 	init_A_B_Big(&A, &ASize, &B, &BSize, &R);
 
 	*delta_t = precise_clock();
-	RSize = impl->subtraction(A, ASize, B, BSize, R);
+	RSize = impl->operation.operation(A, ASize, B, BSize, R);
 	*delta_t = precise_clock() - *delta_t;
 
 	return _OK;
 }
 
 
-static _result_t testWellKnownSubtraction(CLOCK_T* delta_t, struct _operation_implementations* impl, void* userData)
+static _result_t testWellKnownSubtraction(CLOCK_T* delta_t, _operationdescriptor* impl, void* userData)
 {	
 	UNUSED(userData);
 	_result_t result = _OK;
@@ -213,7 +210,7 @@ static _result_t testWellKnownSubtraction(CLOCK_T* delta_t, struct _operation_im
 	
 	/* Testing C version */
 	*delta_t = precise_clock();
-	numsize_t n = impl->subtraction(A, A_REG_WORDS, B, B_REG_WORDS, R);
+	numsize_t n = impl->operation.operation(A, A_REG_WORDS, B, B_REG_WORDS, R);
 	*delta_t = precise_clock() - *delta_t;
 
 	if (n != expected_digits)
@@ -248,7 +245,7 @@ static _result_t testWellKnownSubtraction(CLOCK_T* delta_t, struct _operation_im
 
 
 
-static _result_t testMustBorrow(CLOCK_T* delta_t, struct _operation_implementations* impl)
+static _result_t testMustBorrow(CLOCK_T* delta_t, _operationdescriptor* impl)
 {
 	_result_t result = _OK;
 	/*the array is in reverse order, less significative on the left...*/
@@ -261,7 +258,7 @@ static _result_t testMustBorrow(CLOCK_T* delta_t, struct _operation_implementati
 	
 	/* Testing C version */
 	*delta_t = precise_clock();
-	numsize_t n = impl->subtraction(A, 2, B, 1, Actual);
+	numsize_t n = impl->operation.operation(A, 2, B, 1, Actual);
 	*delta_t = precise_clock() - *delta_t;
 
 	if (n != 3)
@@ -291,7 +288,7 @@ static _result_t testMustBorrow(CLOCK_T* delta_t, struct _operation_implementati
 
 
 
-static _result_t testEqualNumbersYieldToZero(CLOCK_T* delta_t, struct _operation_implementations* impl, void* userData)
+static _result_t testEqualNumbersYieldToZero(CLOCK_T* delta_t, _operationdescriptor* impl, void* userData)
 {
 	UNUSED(userData);
 	_result_t result = _OK;
@@ -304,7 +301,7 @@ static _result_t testEqualNumbersYieldToZero(CLOCK_T* delta_t, struct _operation
 
 	/* Testing C version */
 	*delta_t = precise_clock();
-	numsize_t n = impl->subtraction(_A, ASize, _A, ASize, _R1);
+	numsize_t n = impl->operation.operation(_A, ASize, _A, ASize, _R1);
 	*delta_t = precise_clock() - *delta_t;
 
 	if (n != 0)
@@ -325,11 +322,11 @@ static _result_t testEqualNumbersYieldToZero(CLOCK_T* delta_t, struct _operation
 }
 
 
-static _result_t testSubtractionIsInverseOfSum(CLOCK_T* delta_t, struct _operation_implementations* impl, void* userData)
+static _result_t testSubtractionIsInverseOfSum(CLOCK_T* delta_t, _operationdescriptor* impl, void* userData)
 {
 	UNUSED(userData);
 	_result_t result = _OK;	
-	operation inverse = impl->addition;
+	operation inverse = arithmetic->sum[0].operation.operation;
 	numsize_t ASize;
 	numsize_t BSize;
 	numsize_t RSize;
@@ -338,11 +335,6 @@ static _result_t testSubtractionIsInverseOfSum(CLOCK_T* delta_t, struct _operati
 	numsize_t R2Size;
 	numsize_t R3Size;
 	
-
-	if (inverse == NULL)
-	{
-		inverse = arithmetics[0].addition;
-	}
 	if (inverse == NULL)
 	{
 		LOG_ERROR(STR("Sum operation is not defined for reference arithmetic"));
@@ -359,8 +351,8 @@ static _result_t testSubtractionIsInverseOfSum(CLOCK_T* delta_t, struct _operati
 	R1Size = inverse(_A, ASize, _B, BSize, _R1);
 
 	*delta_t = precise_clock();
-	R2Size = impl->subtraction(_R1, R1Size, _B, BSize, _R2);
-	R3Size = impl->subtraction(_R1, R1Size, _A, ASize, _R3);
+	R2Size = impl->operation.operation(_R1, R1Size, _B, BSize, _R2);
+	R3Size = impl->operation.operation(_R1, R1Size, _A, ASize, _R3);
 	*delta_t = precise_clock() - *delta_t;
 
 	if (R2Size != ASize || R3Size != BSize)
@@ -393,7 +385,7 @@ static _result_t testSubtractionIsInverseOfSum(CLOCK_T* delta_t, struct _operati
 	return result;
 }
 
-static _result_t testNullBehavesAsZero(CLOCK_T* delta_t, struct _operation_implementations* impl, void* userData)
+static _result_t testNullBehavesAsZero(CLOCK_T* delta_t, _operationdescriptor* impl, void* userData)
 {
 	UNUSED(userData);
 	_result_t result = _OK;
@@ -402,7 +394,7 @@ static _result_t testNullBehavesAsZero(CLOCK_T* delta_t, struct _operation_imple
 	randNum(&_rand_seed_2, _A, ASize);
 
 	*delta_t = precise_clock();
-	numsize_t R2Size = impl->subtraction(_A, ASize, NULL, 0, _R2);
+	numsize_t R2Size = impl->operation.operation(_A, ASize, NULL, 0, _R2);
 	*delta_t = precise_clock() - *delta_t;
 
 	if (R2Size != ASize)
@@ -427,17 +419,13 @@ static _result_t testNullBehavesAsZero(CLOCK_T* delta_t, struct _operation_imple
 	return result;
 }
 
-static _result_t testSubtractionIsInverseOfSumOfZero(CLOCK_T* delta_t, struct _operation_implementations* impl, void* userData)
+static _result_t testSubtractionIsInverseOfSumOfZero(CLOCK_T* delta_t, _operationdescriptor* impl, void* userData)
 {
 	UNUSED(userData);
 	_result_t result = _OK;
-	operation inverse = impl->addition;
+	operation inverse = arithmetic->subtract->operation.operation;
 	
 
-	if (inverse == NULL)
-	{
-		inverse = arithmetics[0].addition;
-	}
 	if (inverse == NULL)
 	{
 		LOG_ERROR(STR("Sum operation is not defined for reference arithmetic"));
@@ -447,8 +435,8 @@ static _result_t testSubtractionIsInverseOfSumOfZero(CLOCK_T* delta_t, struct _o
 	numsize_t R1Size = inverse(NULL, 0, NULL, 0, _R1);
 
 	*delta_t = precise_clock();
-	numsize_t R2Size = impl->subtraction(_R1, R1Size, NULL, 0, _R2);
-	numsize_t R3Size = impl->subtraction(_R1, R1Size, NULL, 0, _R3);
+	numsize_t R2Size = impl->operation.operation(_R1, R1Size, NULL, 0, _R2);
+	numsize_t R3Size = impl->operation.operation(_R1, R1Size, NULL, 0, _R3);
 	*delta_t = precise_clock() - *delta_t;
 
 	if (R2Size != 0 || R3Size != 0)
@@ -467,10 +455,10 @@ static _result_t testSubtractionIsInverseOfSumOfZero(CLOCK_T* delta_t, struct _o
 void testSub()
 {
 	
-	each_op(testNullBehavesAsZero, 0, STR("SUB: A - NULL = A"), NULL, REPEAT_LONG,0,0);
-	each_op(testSubtractionIsInverseOfSumOfZero, 0, STR("SUB: 0 + 0 - 0 = 0"), NULL, REPEAT_LONG,0,0);
-	each_op(testWellKnownSubtraction, 1,STR("SUB: Testing subtraction with wellknown values"), NULL, REPEAT_LONG,0,0);
-	each_op(testSubtractionIsInverseOfSum, 1, STR("SUB: Testing subtraction is inverse of sum"), NULL, REPEAT_LONG,0,0);
-	each_op(speedTestSubtraction512KB, 1, STR("SUB: Test speed on 512KB numbers A-B 10K times"), NULL, REPEAT_LONG,HALF_MEG_NUMBER, HALF_MEG_NUMBER);
-	each_op(testEqualNumbersYieldToZero, 1, STR("SUB: A - A = 0"), NULL, REPEAT_LONG,0,0);
+	each_op(testNullBehavesAsZero, 0, STR("A - NULL = A"), NULL, REPEAT_LONG,0,0);
+	each_op(testSubtractionIsInverseOfSumOfZero, 0, STR("0 + 0 - 0 = 0"), NULL, REPEAT_LONG,0,0);
+	each_op(testWellKnownSubtraction, 1,STR("Testing subtraction with wellknown values"), NULL, REPEAT_LONG,0,0);
+	each_op(testSubtractionIsInverseOfSum, 1, STR("Testing subtraction is inverse of sum"), NULL, REPEAT_LONG,0,0);
+	each_op(speedTestSubtraction512KB, 1, STR("Test speed on 512KB numbers A-B 10K times"), NULL, REPEAT_LONG,HALF_MEG_NUMBER, HALF_MEG_NUMBER);
+	each_op(testEqualNumbersYieldToZero, 1, STR("A - A = 0"), NULL, REPEAT_LONG,0,0);
 }

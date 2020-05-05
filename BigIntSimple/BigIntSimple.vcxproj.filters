@@ -71,11 +71,11 @@
     <ClInclude Include="test.h">
       <Filter>Source Files\test</Filter>
     </ClInclude>
-    <ClInclude Include="test_config.h">
-      <Filter>Source Files\test</Filter>
-    </ClInclude>
     <ClInclude Include="_x64BigIntSimple.h">
       <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="test_config.c">
+      <Filter>Source Files\test</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

@@ -174,7 +174,9 @@
   <ItemGroup>
     <ClInclude Include="BigIntSimple.h" />
     <ClInclude Include="test.h" />
-    <ClInclude Include="test_config.h" />
+    <ClCompile Include="test_config.c">
+      <FileType>CppCode</FileType>
+    </ClCompile>
     <ClInclude Include="_x64BigIntSimple.h" />
   </ItemGroup>
   <ItemGroup>

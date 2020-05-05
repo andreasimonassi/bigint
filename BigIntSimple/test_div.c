@@ -24,38 +24,34 @@ void startReadableDivisionDebug();
 void printReadableDivisionDebug();
 #endif //  
 
-static void each_op(_result_t(*unit_test)(CLOCK_T* outAlgorithmElapsedTime, struct _operation_implementations*, void*userData), int boolRepeat,
+static void each_op(_result_t(*unit_test)(CLOCK_T* outAlgorithmElapsedTime, _operationdescriptor* operation, void*userData), int boolRepeat,
 	_char_t const * const test_description,  void  *  userData, unsigned int numberOfRepeat, double operand1_size, double operand2_size
 )
 {
-
-	for (int i = 0; i < number_of_arithmetics; ++i)
-	{
-		if (arithmetics[i].division == NULL)
-		{
-			continue;
-		}
-
+	_operationdescriptor* descriptor = arithmetic->divide;
+	int i = 0;
+	while (i < arithmetic->dividecount)
+	{		
 #ifdef _IMPLEMENTATION_DIVISION_IMPROVED_COLLECT_VERBOSE_DATA
 		startReadableDivisionDebug();
 #endif	
 
-
 		_rand_seed_4 = _R(0x4d595df4d0f33173); /*deterministic , i want all tests to be reproducible*/
 		srand((unsigned int)_rand_seed_4);
 
-
 		if (boolRepeat)
 		{
-			run_test_repeat(unit_test, &(arithmetics[i]), &(arithmetics[i].division_test_results), test_description, userData, numberOfRepeat, operand1_size, operand2_size);
+			run_test_repeat(unit_test, descriptor,  test_description, userData, numberOfRepeat, operand1_size, operand2_size);
 		}
 		else
 		{
-			run_test_single(unit_test, &(arithmetics[i]), &(arithmetics[i].division_test_results), test_description, userData, operand1_size, operand2_size);
+			run_test_single(unit_test, descriptor, test_description, userData, operand1_size, operand2_size);
 		}
 #ifdef _IMPLEMENTATION_DIVISION_IMPROVED_COLLECT_VERBOSE_DATA
 		printReadableDivisionDebug();
 #endif
+		descriptor++;
+		i++;
 	}
 
 
@@ -63,7 +59,7 @@ static void each_op(_result_t(*unit_test)(CLOCK_T* outAlgorithmElapsedTime, stru
 }
 
 
-static _result_t divide_by_zero_returns_error(CLOCK_T* delta_t, struct _operation_implementations* impl, void* userData)
+static _result_t divide_by_zero_returns_error(CLOCK_T* delta_t, _operationdescriptor* impl, void* userData)
 {
 	UNUSED(userData);
 	_result_t result = _OK;
@@ -73,7 +69,7 @@ static _result_t divide_by_zero_returns_error(CLOCK_T* delta_t, struct _operatio
 	CLOCK_T t1 = precise_clock();
 	numsize_t q_size;
 	numsize_t r_size;
-	_div_result_t divresult = impl->division(_HALF_MEG_dA, ASize, NULL, 0, NULL, &q_size, NULL, &r_size);
+	_div_result_t divresult = impl->operation.divoperation(_HALF_MEG_dA, ASize, NULL, 0, NULL, &q_size, NULL, &r_size);
 
 	*delta_t = precise_clock() - t1;
 	
@@ -93,7 +89,7 @@ static _result_t divide_by_zero_returns_error(CLOCK_T* delta_t, struct _operatio
 
 
 
-static _result_t divide_by_one_is_identity(CLOCK_T* delta_t, struct _operation_implementations* impl, void* userData)
+static _result_t divide_by_one_is_identity(CLOCK_T* delta_t, _operationdescriptor* impl, void* userData)
 {
 	UNUSED(userData);
 
@@ -110,7 +106,7 @@ static _result_t divide_by_one_is_identity(CLOCK_T* delta_t, struct _operation_i
 	CLOCK_T t1 = precise_clock();
 	numsize_t q_size;
 	numsize_t r_size;
-	_div_result_t divresult = impl->division(A, m, B, n, Q, &q_size, R, &r_size);
+	_div_result_t divresult = impl->operation.divoperation(A, m, B, n, Q, &q_size, R, &r_size);
 	*delta_t = precise_clock() - t1;
 
 	if (divresult != OK)
@@ -145,7 +141,7 @@ static _result_t divide_by_one_is_identity(CLOCK_T* delta_t, struct _operation_i
 
 
 
-static _result_t divide_A_small_than_B_result_0_q_A(CLOCK_T* delta_t, struct _operation_implementations* impl, void* userData)
+static _result_t divide_A_small_than_B_result_0_q_A(CLOCK_T* delta_t, _operationdescriptor* impl, void* userData)
 {
 	UNUSED(userData);
 
@@ -183,7 +179,7 @@ static _result_t divide_A_small_than_B_result_0_q_A(CLOCK_T* delta_t, struct _op
 	CLOCK_T t1 = precise_clock();
 	numsize_t qsize;
 	numsize_t rsize;
-	_div_result_t divresult = impl->division(A, m, B, n, Q, &qsize, R, &rsize);
+	_div_result_t divresult = impl->operation.divoperation(A, m, B, n, Q, &qsize, R, &rsize);
 	*delta_t = precise_clock() - t1;
 
 	if (divresult != OK)
@@ -237,7 +233,7 @@ static _result_t divide_A_small_than_B_result_0_q_A(CLOCK_T* delta_t, struct _op
 	return result;
 }
 
-static _result_t wc(CLOCK_T* delta_t, struct _operation_implementations* impl, void* userData)
+static _result_t wc(CLOCK_T* delta_t, _operationdescriptor* impl, void* userData)
 {
 	UNUSED(userData);
 
@@ -272,7 +268,7 @@ static _result_t wc(CLOCK_T* delta_t, struct _operation_implementations* impl, v
 
 
 	CLOCK_T t1 = precise_clock();
-	_div_result_t divresult = impl->division(A, asize, B, bsize, ComputedQ, &computedQsize, ComputedR, &computedRsize);
+	_div_result_t divresult = impl->operation.divoperation(A, asize, B, bsize, ComputedQ, &computedQsize, ComputedR, &computedRsize);
 	*delta_t = precise_clock() - t1;
 
 	if (divresult != OK)
@@ -303,7 +299,7 @@ static _result_t wc(CLOCK_T* delta_t, struct _operation_implementations* impl, v
 	return result;
 }
 
-static _result_t _510_div_5_eq_102(CLOCK_T* delta_t, struct _operation_implementations* impl, void* userData)
+static _result_t _510_div_5_eq_102(CLOCK_T* delta_t, _operationdescriptor* impl, void* userData)
 {
 	UNUSED(userData);
 	_result_t result = _OK;
@@ -336,7 +332,7 @@ static _result_t _510_div_5_eq_102(CLOCK_T* delta_t, struct _operation_implement
 
 
 	CLOCK_T t1 = precise_clock();
-	_div_result_t divresult = impl->division(A, asize, B, bsize, Q, &qsize, R, &rsize);
+	_div_result_t divresult = impl->operation.divoperation(A, asize, B, bsize, Q, &qsize, R, &rsize);
 	*delta_t = precise_clock() - t1;
 
 	if (divresult != OK)
@@ -374,7 +370,7 @@ static _result_t _510_div_5_eq_102(CLOCK_T* delta_t, struct _operation_implement
 }
 
 
-static _result_t _510_div_52_eq_9_r_42(CLOCK_T* delta_t, struct _operation_implementations* impl, void* userData)
+static _result_t _510_div_52_eq_9_r_42(CLOCK_T* delta_t, _operationdescriptor* impl, void* userData)
 {
 	UNUSED(userData);
 	_result_t result = _OK;
@@ -423,7 +419,7 @@ static _result_t _510_div_52_eq_9_r_42(CLOCK_T* delta_t, struct _operation_imple
 
 
 	CLOCK_T t1 = precise_clock();
-	_div_result_t divresult = impl->division(A, asize, B, bsize, Q, &qsize, R, &rsize);
+	_div_result_t divresult = impl->operation.divoperation(A, asize, B, bsize, Q, &qsize, R, &rsize);
 	*delta_t = precise_clock() - t1;
 
 	if (divresult != OK)
@@ -461,7 +457,7 @@ static _result_t _510_div_52_eq_9_r_42(CLOCK_T* delta_t, struct _operation_imple
 
 }
 
-static _result_t wc3(CLOCK_T* delta_t, struct _operation_implementations* impl, void* userData)
+static _result_t wc3(CLOCK_T* delta_t, _operationdescriptor* impl, void* userData)
 {
 	UNUSED(userData);
 	_result_t result = _OK;
@@ -488,7 +484,7 @@ static _result_t wc3(CLOCK_T* delta_t, struct _operation_implementations* impl, 
 
 
 	CLOCK_T t1 = precise_clock();
-	_div_result_t divresult = impl->division(A, asize, B, bsize, Q, &qsize, R, &rsize);
+	_div_result_t divresult = impl->operation.divoperation(A, asize, B, bsize, Q, &qsize, R, &rsize);
 	*delta_t = precise_clock() - t1;
 
 	if (divresult != OK)
@@ -527,7 +523,7 @@ static _result_t wc3(CLOCK_T* delta_t, struct _operation_implementations* impl, 
 
 
 
-static _result_t AplusSingleDigit_div_A_eq_1_R_SingleDigit(CLOCK_T* delta_t, struct _operation_implementations* impl, void* userData)
+static _result_t AplusSingleDigit_div_A_eq_1_R_SingleDigit(CLOCK_T* delta_t, _operationdescriptor* impl, void* userData)
 {
 	UNUSED(userData);
 	_result_t result = _OK;
@@ -561,7 +557,7 @@ static _result_t AplusSingleDigit_div_A_eq_1_R_SingleDigit(CLOCK_T* delta_t, str
 
 
 	CLOCK_T t1 = precise_clock();
-	_div_result_t divresult = impl->division(A, asize, B, bsize, Q, &qsize, R, &rsize);
+	_div_result_t divresult = impl->operation.divoperation(A, asize, B, bsize, Q, &qsize, R, &rsize);
 	*delta_t = precise_clock() - t1;
 
 	if (divresult != OK)
@@ -600,7 +596,7 @@ static _result_t AplusSingleDigit_div_A_eq_1_R_SingleDigit(CLOCK_T* delta_t, str
 }
 
 
-static _result_t A_div_A_eq_1_R_0(CLOCK_T* delta_t, struct _operation_implementations* impl, void* userData)
+static _result_t A_div_A_eq_1_R_0(CLOCK_T* delta_t, _operationdescriptor* impl, void* userData)
 {
 	UNUSED(userData);
 	_result_t result = _OK;
@@ -634,7 +630,7 @@ static _result_t A_div_A_eq_1_R_0(CLOCK_T* delta_t, struct _operation_implementa
 
 
 	CLOCK_T t1 = precise_clock();
-	_div_result_t divresult = impl->division(A, asize, B, bsize, Q, &qsize, R, &rsize);
+	_div_result_t divresult = impl->operation.divoperation(A, asize, B, bsize, Q, &qsize, R, &rsize);
 	*delta_t = precise_clock() - t1;
 
 	if (divresult != OK)
@@ -673,7 +669,7 @@ static _result_t A_div_A_eq_1_R_0(CLOCK_T* delta_t, struct _operation_implementa
 }
 
 
-static _result_t wc5(CLOCK_T* delta_t, struct _operation_implementations* impl, void* userData)
+static _result_t wc5(CLOCK_T* delta_t, _operationdescriptor* impl, void* userData)
 {
 	UNREFERENCED_PARAMETER(userData);
 
@@ -705,7 +701,7 @@ static _result_t wc5(CLOCK_T* delta_t, struct _operation_implementations* impl, 
 
 
 	CLOCK_T t1 = precise_clock();
-	_div_result_t divresult = impl->division(A, asize, B, bsize, Q, &qsize, R, &rsize);
+	_div_result_t divresult = impl->operation.divoperation(A, asize, B, bsize, Q, &qsize, R, &rsize);
 	*delta_t = precise_clock() - t1;
 
 	if (divresult != OK)
@@ -743,7 +739,7 @@ static _result_t wc5(CLOCK_T* delta_t, struct _operation_implementations* impl, 
 	return result;
 }
 
-static _result_t wc4(CLOCK_T* delta_t, struct _operation_implementations* impl, void*userData)
+static _result_t wc4(CLOCK_T* delta_t, _operationdescriptor* impl, void*userData)
 {
 	UNUSED(userData);
 	/*
@@ -784,7 +780,7 @@ static _result_t wc4(CLOCK_T* delta_t, struct _operation_implementations* impl, 
 
 
 	CLOCK_T t1 = precise_clock();
-	_div_result_t divresult = impl->division(A, asize, B, bsize, Q, &qsize, R, &rsize);
+	_div_result_t divresult = impl->operation.divoperation(A, asize, B, bsize, Q, &qsize, R, &rsize);
 	*delta_t = precise_clock() - t1;
 
 	if (divresult != OK)
@@ -823,7 +819,7 @@ static _result_t wc4(CLOCK_T* delta_t, struct _operation_implementations* impl, 
 	return result;
 }
 
-static _result_t wc2(CLOCK_T* delta_t, struct _operation_implementations* impl, void* userData)
+static _result_t wc2(CLOCK_T* delta_t, _operationdescriptor* impl, void* userData)
 {
 	UNUSED(userData);
 
@@ -850,7 +846,7 @@ static _result_t wc2(CLOCK_T* delta_t, struct _operation_implementations* impl, 
 	numsize_t rsize;
 
 	CLOCK_T t1 = precise_clock();
-	_div_result_t divresult = impl->division(A, asize, B, bsize, Q, &qsize, R, &rsize);
+	_div_result_t divresult = impl->operation.divoperation(A, asize, B, bsize, Q, &qsize, R, &rsize);
 	*delta_t = precise_clock() - t1;
 
 	if (divresult != OK)
@@ -872,7 +868,7 @@ static _result_t wc2(CLOCK_T* delta_t, struct _operation_implementations* impl, 
 	return result;
 }
 
-static _result_t divide_ok_to_definition(CLOCK_T* delta_t, struct _operation_implementations* impl, void* userData)
+static _result_t divide_ok_to_definition(CLOCK_T* delta_t, _operationdescriptor* impl, void* userData)
 {
 	UNUSED(userData);
 	_result_t result = _OK;
@@ -899,25 +895,18 @@ static _result_t divide_ok_to_definition(CLOCK_T* delta_t, struct _operation_imp
 	/* to compute A as B*Q+R we need to pick operation SUM and MUL, we try to pick from current arithmetic otherwise we get it from reference impl */
 	
 	/* pickup sum and subtraction operations */
-	operation sum = impl->addition;
-	operation mul = impl->multiplication;
+	operation sum = arithmetic->sum[0].operation.operation;
+	operation mul = arithmetic->multiply[0].operation.operation;
+	
 	if (sum == NULL)
 	{
-		sum = arithmetics[0].addition;
-	}
-	if (sum == NULL)
-	{
-		LOG_ERROR(STR("Sum operation is not defined for reference arithmetic"));
+		LOG_ERROR(STR("No sum operation is defined on current arithmetic"));
 		return _FAIL;
 	}
-
+	
 	if (mul == NULL)
 	{
-		mul = arithmetics[0].multiplication;
-	}
-	if (mul == NULL)
-	{
-		LOG_ERROR(STR("Multiplication operation is not defined for reference arithmetic"));
+		LOG_ERROR(STR("Multiplication operation is not defined on current arithmetic"));
 		return _FAIL;
 	}
 
@@ -941,7 +930,7 @@ static _result_t divide_ok_to_definition(CLOCK_T* delta_t, struct _operation_imp
 	/* we're ready to test: we expect that ComputedQ = Q and if ComputedR = R */
 	
 	CLOCK_T t1 = precise_clock();	
-	_div_result_t divresult = impl->division(A, asize, B, bsize, ComputedQ, &computedQsize, ComputedR, &computedRsize);
+	_div_result_t divresult = impl->operation.divoperation(A, asize, B, bsize, ComputedQ, &computedQsize, ComputedR, &computedRsize);
 	*delta_t = precise_clock() - t1;
 
 	if (divresult != OK)
@@ -972,7 +961,7 @@ static _result_t divide_ok_to_definition(CLOCK_T* delta_t, struct _operation_imp
 	return result;
 }
 
-static _result_t divide_ok_to_definition_ext(CLOCK_T* delta_t, struct _operation_implementations* impl, void* userData)
+static _result_t divide_ok_to_definition_ext(CLOCK_T* delta_t, _operationdescriptor* impl, void* userData)
 {
 	UNUSED(userData);
 	_result_t result = _OK;
@@ -999,25 +988,14 @@ static _result_t divide_ok_to_definition_ext(CLOCK_T* delta_t, struct _operation
 	/* to compute A as B*Q+R we need to pick operation SUM and MUL, we try to pick from current arithmetic otherwise we get it from reference impl */
 
 	/* pickup sum and subtraction operations */
-	operation sum = impl->addition;
-	operation mul = impl->multiplication;
-
-	if (sum == NULL)
-	{
-		sum = arithmetics[0].addition;
-	}
+	operation sum = arithmetic->sum[0].operation.operation;
+	operation mul = arithmetic->multiply[0].operation.operation;
 
 	if (sum == NULL)
 	{
 		LOG_ERROR(STR("Sum operation is not defined for reference arithmetic"));
 		return _FAIL;
 	}
-
-	if (mul == NULL)
-	{
-		mul = arithmetics[0].multiplication;
-	}
-
 	if (mul == NULL)
 	{
 		LOG_ERROR(STR("Multiplication operation is not defined for reference arithmetic"));
@@ -1043,7 +1021,7 @@ static _result_t divide_ok_to_definition_ext(CLOCK_T* delta_t, struct _operation
 	/* we're ready to test: we expect that ComputedQ = Q and if ComputedR = R */
 
 	CLOCK_T t1 = precise_clock();
-	_div_result_t divresult = impl->division(A, asize, B, bsize, ComputedQ, &computedQsize, ComputedR, &computedRsize);
+	_div_result_t divresult = impl->operation.divoperation(A, asize, B, bsize, ComputedQ, &computedQsize, ComputedR, &computedRsize);
 	*delta_t = precise_clock() - t1;
 
 	if (divresult != OK)
@@ -1073,7 +1051,7 @@ static _result_t divide_ok_to_definition_ext(CLOCK_T* delta_t, struct _operation
 	return result;
 }
 
-static _result_t divide_small_vs_big(CLOCK_T* delta_t, struct _operation_implementations* impl, void* userData)
+static _result_t divide_small_vs_big(CLOCK_T* delta_t, _operationdescriptor* impl, void* userData)
 {
 	UNUSED(userData);
 	_result_t result = _OK;
@@ -1104,7 +1082,7 @@ static _result_t divide_small_vs_big(CLOCK_T* delta_t, struct _operation_impleme
 	}
 
 	CLOCK_T t1 = precise_clock();
-	_div_result_t divresult = impl->division(A, asize, B, bsize, Q, &qsize, R, &rsize);
+	_div_result_t divresult = impl->operation.divoperation(A, asize, B, bsize, Q, &qsize, R, &rsize);
 	*delta_t = precise_clock() - t1;
 
 	if (divresult != OK)
@@ -1136,7 +1114,7 @@ static _result_t divide_small_vs_big(CLOCK_T* delta_t, struct _operation_impleme
 }
 
 
-static _result_t divide_testing_zeroes(CLOCK_T* delta_t, struct _operation_implementations* impl, void* userData)
+static _result_t divide_testing_zeroes(CLOCK_T* delta_t, _operationdescriptor* impl, void* userData)
 {
 	/*This test is going to discover if guessing algorithm is correct when An is less than B
 	in cases like "xy00xy00" / "xy" you get this:
@@ -1245,7 +1223,7 @@ static _result_t divide_testing_zeroes(CLOCK_T* delta_t, struct _operation_imple
 	/* we're ready to test */
 
 	CLOCK_T t1 = precise_clock();
-	_div_result_t divresult = impl->division(A, asize, B, bsize, Q, &qsize, R, &rsize);
+	_div_result_t divresult = impl->operation.divoperation(A, asize, B, bsize, Q, &qsize, R, &rsize);
 	*delta_t = precise_clock() - t1;
 
 	if (divresult != OK)
@@ -1273,7 +1251,7 @@ static _result_t divide_testing_zeroes(CLOCK_T* delta_t, struct _operation_imple
 	return result;
 }
 
-static _result_t divide_random_test(CLOCK_T* delta_t, struct _operation_implementations* impl, void* userData)
+static _result_t divide_random_test(CLOCK_T* delta_t, _operationdescriptor* impl, void* userData)
 {
 	UNUSED(userData);
 	_result_t result = _OK;
@@ -1308,7 +1286,7 @@ static _result_t divide_random_test(CLOCK_T* delta_t, struct _operation_implemen
 	/* we're ready to test */
 
 	CLOCK_T t1 = precise_clock();
-	_div_result_t divresult = impl->division(A, asize, B, bsize, Q, &qsize, R, &rsize);
+	_div_result_t divresult = impl->operation.divoperation(A, asize, B, bsize, Q, &qsize, R, &rsize);
 	*delta_t = precise_clock() - t1;
 
 	if (divresult != OK)
@@ -1352,7 +1330,7 @@ static _result_t divide_random_test(CLOCK_T* delta_t, struct _operation_implemen
 	return result;
 }
 
-static _result_t divide_speed_test(CLOCK_T* delta_t, struct _operation_implementations* impl, void * userData)
+static _result_t divide_speed_test(CLOCK_T* delta_t, _operationdescriptor* impl, void * userData)
 {
 	_result_t result = _OK;
 	struct _speedtest_param* p1 = (struct _speedtest_param*) userData;
@@ -1387,7 +1365,7 @@ static _result_t divide_speed_test(CLOCK_T* delta_t, struct _operation_implement
 	/* we're ready to test */
 
 	CLOCK_T t1 = precise_clock();
-	_div_result_t divresult = impl->division(A, asize, B, bsize, Q, &qsize, R, &rsize);
+	_div_result_t divresult = impl->operation.divoperation(A, asize, B, bsize, Q, &qsize, R, &rsize);
 	*delta_t = precise_clock() - t1;
 
 	if (divresult != OK)
@@ -1465,60 +1443,25 @@ void testDiv()
 	each_op(A_div_A_eq_1_R_0, 0, STR("A/A, Q = 1, R = 0"), NULL, REPETITION_BIG, 0,0);
 	each_op(AplusSingleDigit_div_A_eq_1_R_SingleDigit, 0, STR("A/(A + single digit), Q = 1, R = single_digit"), NULL, REPETITION_BIG, 0,0);
 
-	each_op(divide_random_test, 1, STR("DIV: random tests on small numbers"), NULL, REPETITION_BIG, 0,0);
+	each_op(divide_random_test, 1, STR("random tests on small numbers"), NULL, REPETITION_BIG, 0,0);
 
-	each_op(divide_by_zero_returns_error, 0, STR("DIV: Check divide by zero"), NULL, REPETITION_BIG, 0,0);
-	each_op(divide_by_one_is_identity, 1, STR("DIV: Divide by one must returns same as A"), NULL, REPETITION_BIG, 0,0);
-	each_op(divide_ok_to_definition, 1, STR("DIV: Q = A/B, R is A mod B and A = Q*B + R (R is a single reg_t digit)"), NULL, REPETITION_BIG, 0,0);
-	each_op(divide_ok_to_definition_ext, 1, STR("DIV: big values Q = A/B, R is A mod B and A = Q*B + R (R is a single reg_t digit)"), NULL, REPETITION_BIG, 0,0);
-	each_op(divide_small_vs_big, 1, STR("DIV: when A < B then A / B = 0 and remainder is B"), NULL, REPETITION_BIG, 0,0);
-	each_op(divide_testing_zeroes, 1, STR("DIV: Testing guess algorithm on corner cases xy00xy00/xy: Q=1000100 R=0"), NULL, REPETITION_BIG, 0,0);
-	each_op(divide_A_small_than_B_result_0_q_A, 1, STR("DIV: Testing SmallNumber/BigNumber, should be like Q=0 R=A"), NULL, REPETITION_BIG, 0, 0);
+	each_op(divide_by_zero_returns_error, 0, STR("Check divide by zero"), NULL, REPETITION_BIG, 0,0);
+	each_op(divide_by_one_is_identity, 1, STR("Divide by one must returns same as A"), NULL, REPETITION_BIG, 0,0);
+	each_op(divide_ok_to_definition, 1, STR("Q = A/B, R is A mod B and A = Q*B + R (R is a single reg_t digit)"), NULL, REPETITION_BIG, 0,0);
+	each_op(divide_ok_to_definition_ext, 1, STR("big values Q = A/B, R is A mod B and A = Q*B + R (R is a single reg_t digit)"), NULL, REPETITION_BIG, 0,0);
+	each_op(divide_small_vs_big, 1, STR("when A < B then A / B = 0 and remainder is B"), NULL, REPETITION_BIG, 0,0);
+	each_op(divide_testing_zeroes, 1, STR("Testing guess algorithm on corner cases xy00xy00/xy: Q=1000100 R=0"), NULL, REPETITION_BIG, 0,0);
+	each_op(divide_A_small_than_B_result_0_q_A, 1, STR("Testing SmallNumber/BigNumber, should be like Q=0 R=A"), NULL, REPETITION_BIG, 0, 0);
 
 	struct _speedtest_param p1;
 	p1.asize = 2048;
 
-
-	p1.bsize = 1;
-	each_op(divide_speed_test, 1, STR("DIV: speed test (2048 Words / 1 Words)"), &p1, REPETITION_SHORT, p1.asize, p1.bsize);
-	p1.bsize = 2;
-	each_op(divide_speed_test, 1, STR("DIV: speed test (2048 Words / 2 Words)"), &p1, REPETITION_SHORT, p1.asize, p1.bsize);
-	p1.bsize = 4;
-	each_op(divide_speed_test, 1, STR("DIV: speed test (2048 Words / 4 Words)"), &p1, REPETITION_SHORT, p1.asize, p1.bsize);
-	p1.bsize = 8;
-	each_op(divide_speed_test, 1, STR("DIV: speed test (2048 Words / 8 Words)"), &p1, REPETITION_SHORT, p1.asize, p1.bsize);
-	p1.bsize = 16;
-	each_op(divide_speed_test, 1, STR("DIV: speed test (2048 Words / 16 Words)"), &p1, REPETITION_SHORT, p1.asize, p1.bsize);
-	p1.bsize = 32;
-	each_op(divide_speed_test, 1, STR("DIV: speed test (2048 Words / 32 Words)"), &p1, REPETITION_SHORT, p1.asize, p1.bsize);
-	p1.bsize = 64;
-	each_op(divide_speed_test, 1, STR("DIV: speed test (2048 Words / 64 Words)"), &p1, REPETITION_SHORT, p1.asize, p1.bsize);
-	p1.bsize = 128;
-	each_op(divide_speed_test, 1, STR("DIV: speed test (2048 Words / 128 Words)"), &p1, REPETITION_SHORT, p1.asize, p1.bsize);
-	p1.bsize = 257;
-	each_op(divide_speed_test, 1, STR("DIV: speed test (2048 Words / 256 Words)"), &p1, REPETITION_SHORT, p1.asize, p1.bsize);
-	p1.bsize = 512;
-	each_op(divide_speed_test, 1, STR("DIV: speed test (2048 Words / 512 Words)"), &p1, REPETITION_SHORT, p1.asize, p1.bsize);
-	p1.bsize = 1024;
-	each_op(divide_speed_test, 1, STR("DIV: speed test (2048 Words / 1024 Words)"), &p1, REPETITION_SHORT, p1.asize, p1.bsize);
-	p1.bsize = 1536;
-	each_op(divide_speed_test, 1, STR("DIV: speed test (2048 Words / 1536 Words)"), &p1, REPETITION_SHORT, p1.asize, p1.bsize);
-	p1.bsize = 1792;
-	each_op(divide_speed_test, 1, STR("DIV: speed test (2048 Words / 1792 Words)"), &p1, REPETITION_SHORT, p1.asize, p1.bsize);
-	p1.bsize = 1920;
-	each_op(divide_speed_test, 1, STR("DIV: speed test (2048 Words / 1920 Words)"), &p1, REPETITION_SHORT, p1.asize, p1.bsize);
-	p1.bsize = 1984;
-	each_op(divide_speed_test, 1, STR("DIV: speed test (2048 Words / 1984 Words)"), &p1, REPETITION_SHORT, p1.asize, p1.bsize);
-	p1.bsize = 2016;
-	each_op(divide_speed_test, 1, STR("DIV: speed test (2048 Words / 2016 Words)"), &p1, REPETITION_SHORT, p1.asize, p1.bsize);
-	p1.bsize = 2032;
-	each_op(divide_speed_test, 1, STR("DIV: speed test (2048 Words / 2032 Words)"), &p1, REPETITION_SHORT, p1.asize, p1.bsize);
-	p1.bsize = 2040;
-	each_op(divide_speed_test, 1, STR("DIV: speed test (2048 Words / 2040 Words)"), &p1, REPETITION_SHORT, p1.asize, p1.bsize);
-	p1.bsize = 2044;
-	each_op(divide_speed_test, 1, STR("DIV: speed test (2048 Words / 2044 Words)"), &p1, REPETITION_SHORT, p1.asize, p1.bsize);
-	p1.bsize = 2046;
-	each_op(divide_speed_test, 1, STR("DIV: speed test (2048 Words / 2046 Words)"), &p1, REPETITION_SHORT, p1.asize, p1.bsize);
-	p1.bsize = 2047;
-	each_op(divide_speed_test, 1, STR("DIV: speed test (2048 Words / 2047 Words)"), &p1, REPETITION_SHORT, p1.asize, p1.bsize);
+	numsize_t range[] = { 1,2,4,8,16,32,64,128,257,512,1024,1536,1792,1920,1984,2016,2032,2040,2046,2047 };
+	size_t count = sizeof(range) / sizeof(numsize_t);
+	int i;
+	for (i = 0; i < count; ++i)
+	{
+		p1.bsize = range[i];
+		each_op(divide_speed_test, 1, STR("speed test"), &p1, REPETITION_SHORT, p1.asize, p1.bsize);
+	}
 }

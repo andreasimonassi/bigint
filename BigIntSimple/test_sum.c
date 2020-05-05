@@ -80,36 +80,32 @@ static void init_test()
 	}
 }
 
-
-static void each_op(_result_t(*unit_test)(CLOCK_T* outElapsedTime, 
-	struct _operation_implementations*, void * userData), int boolRepeat,
-	_char_t const * const test_description, void * userData, unsigned repeat, double operand1_size, double operand2_size
-	)
+static void each_op(_result_t(*unit_test)(CLOCK_T* outAlgorithmElapsedTime, _operationdescriptor*, void* userData), int boolRepeat,
+	_char_t const* const test_description, void* userData, unsigned repeat, double operand1_size, double operand2_size)
 {
 
-	
-
-	for (int i = 0; i < number_of_arithmetics; ++i)
+	_operationdescriptor* descriptor = arithmetic->sum;
+	int i;
+	for(i=0;i<arithmetic->sumcount;++i)
 	{
-		if (arithmetics[i].addition == NULL)
-			continue;
-
 		_rand_seed = 0x4d595df4d0f33173; /*/deterministic , i want all tests to be reproducible*/
 		srand((unsigned int)_rand_seed);
 
 		if (boolRepeat)
 		{
-			run_test_repeat(unit_test, &(arithmetics[i]), &(arithmetics[i].addition_test_results), test_description, userData, repeat, operand1_size, operand2_size);
+			run_test_repeat(unit_test, descriptor,  test_description, userData, repeat, operand1_size, operand2_size);
 		}
 		else
 		{
-			run_test_single(unit_test, &(arithmetics[i]), &(arithmetics[i].addition_test_results), test_description, userData, operand1_size, operand2_size);
+			run_test_single(unit_test, descriptor, test_description, userData, operand1_size, operand2_size);
 		}
+
+		descriptor++;
 	}
 }
 
 
-static _result_t test_on_1000_unit(CLOCK_T * delta_t,struct _operation_implementations* impl, void * userData)
+static _result_t test_on_1000_unit(CLOCK_T * delta_t, _operationdescriptor* impl, void * userData)
 {
 	UNUSED(userData);
 	/*the array is in reverse order, less significative on the left...*/
@@ -118,7 +114,7 @@ static _result_t test_on_1000_unit(CLOCK_T * delta_t,struct _operation_implement
 
 	numsize_t ndigits;
 	*delta_t = precise_clock();
-	ndigits = impl->addition(_A, A_REG_WORDS, _B, B_REG_WORDS, _R);
+	ndigits = impl->operation.operation(_A, A_REG_WORDS, _B, B_REG_WORDS, _R);
 	*delta_t = precise_clock() - *delta_t;
 
 	if (FAILED(shouldBeAllZeroesExceptMSD(_R)))
@@ -137,7 +133,7 @@ static _result_t test_on_1000_unit(CLOCK_T * delta_t,struct _operation_implement
 }
 
 /*SET STACK SIZE TO SOMETHING BIG TO HANDLE THIS USE CASE*/
-static _result_t test_speed_1_MB_unit(CLOCK_T * delta_t, struct _operation_implementations* impl, void* userData)
+static _result_t test_speed_1_MB_unit(CLOCK_T * delta_t, _operationdescriptor* impl, void* userData)
 {
 	UNUSED(userData);
 	reg_t * A = _HALF_MEG_A;
@@ -148,14 +144,14 @@ static _result_t test_speed_1_MB_unit(CLOCK_T * delta_t, struct _operation_imple
 	randNum(&_rand_seed, B, HALF_MEG_NUMBER);
 
 	*delta_t = precise_clock();
-	impl->addition(A, HALF_MEG_NUMBER, B, HALF_MEG_NUMBER, R);	
+	impl->operation.operation(A, HALF_MEG_NUMBER, B, HALF_MEG_NUMBER, R);
 	*delta_t = precise_clock() - *delta_t;
 
 	return _OK;
 }
 
 /*SET STACK SIZE TO SOMETHING BIG TO HANDLE THIS USE CASE*/
-static _result_t test_speed_512KB_Plus_2Words_unit(CLOCK_T * delta_t, struct _operation_implementations* impl, void* userData)
+static _result_t test_speed_512KB_Plus_2Words_unit(CLOCK_T * delta_t, _operationdescriptor* impl, void* userData)
 {
 	UNUSED(userData);
 	reg_t * A = _HALF_MEG_A;
@@ -166,13 +162,13 @@ static _result_t test_speed_512KB_Plus_2Words_unit(CLOCK_T * delta_t, struct _op
 	randNum(&_rand_seed, B, 2);
 
 	*delta_t = precise_clock();
-	impl->addition(A, HALF_MEG_NUMBER, B, 2, R);
+	impl->operation.operation(A, HALF_MEG_NUMBER, B, 2, R);
 	*delta_t = precise_clock() - *delta_t;
 
 	return _OK;
 }
 
-static _result_t test_last_carry(CLOCK_T * delta_t, struct _operation_implementations * impl, void* userData)
+static _result_t test_last_carry(CLOCK_T * delta_t, _operationdescriptor* impl, void* userData)
 {
 	UNUSED(userData);
 	_result_t result = _OK;
@@ -186,7 +182,7 @@ static _result_t test_last_carry(CLOCK_T * delta_t, struct _operation_implementa
 	numsize_t ActualLen;
 
 	*delta_t = precise_clock();
-	ActualLen = impl->addition(A, 1, B, 1, Actual);
+	ActualLen = impl->operation.operation(A, 1, B, 1, Actual);
 	*delta_t = precise_clock() - *delta_t;
 
 	if (ActualLen != 2 )
@@ -215,7 +211,7 @@ static _result_t test_last_carry(CLOCK_T * delta_t, struct _operation_implementa
 }
 
 
-static _result_t  test_commutative_prop_unit(CLOCK_T* delta_t, struct _operation_implementations* impl, void* userData)
+static _result_t  test_commutative_prop_unit(CLOCK_T* delta_t, _operationdescriptor* impl, void* userData)
 {
 	UNUSED(userData);
 	_result_t result = _OK;
@@ -236,8 +232,8 @@ static _result_t  test_commutative_prop_unit(CLOCK_T* delta_t, struct _operation
 	randNum(&_rand_seed, B, BSize);
 	
 	*delta_t = precise_clock();
-	R1Len = impl->addition(A, ASize, B, BSize, R1);
-	R2Len = impl->addition(B, BSize, A, ASize, R2);
+	R1Len = impl->operation.operation(A, ASize, B, BSize, R1);
+	R2Len = impl->operation.operation(B, BSize, A, ASize, R2);
 	*delta_t = precise_clock() - *delta_t;
 	if (R1Len != R2Len)
 	{
@@ -268,7 +264,7 @@ static _result_t  test_commutative_prop_unit(CLOCK_T* delta_t, struct _operation
 
 }
 
-static _result_t  test_associative_prop_unit(CLOCK_T* delta_t, struct _operation_implementations* impl, void* userData)
+static _result_t  test_associative_prop_unit(CLOCK_T* delta_t, _operationdescriptor* impl, void* userData)
 {
 	UNUSED(userData);
 	_result_t result = _OK;
@@ -294,11 +290,11 @@ static _result_t  test_associative_prop_unit(CLOCK_T* delta_t, struct _operation
 	randNum(&_rand_seed, C, CSize);
 
 	*delta_t = precise_clock();
-	R_tempLen = impl->addition(A, ASize, B, BSize, R_temp);
-	R1Len = impl->addition(R_temp, R_tempLen, C, CSize, R1);
+	R_tempLen = impl->operation.operation(A, ASize, B, BSize, R_temp);
+	R1Len = impl->operation.operation(R_temp, R_tempLen, C, CSize, R1);
 
-	R_tempLen = impl->addition(B, BSize, C, CSize, R_temp);
-	R2Len = impl->addition(R_temp, R_tempLen, A, ASize, R2);
+	R_tempLen = impl->operation.operation(B, BSize, C, CSize, R_temp);
+	R2Len = impl->operation.operation(R_temp, R_tempLen, A, ASize, R2);
 
 	*delta_t = precise_clock() - *delta_t;
 	if (R1Len != R2Len)
@@ -331,7 +327,7 @@ static _result_t  test_associative_prop_unit(CLOCK_T* delta_t, struct _operation
 }
 
 
-_result_t test_zero_is_neutral_element_of_sum(CLOCK_T * delta_t, struct _operation_implementations* impl, void*userData)
+_result_t test_zero_is_neutral_element_of_sum(CLOCK_T * delta_t, _operationdescriptor* impl, void*userData)
 {
 	UNUSED(userData);
 	_result_t result = _OK;
@@ -355,9 +351,9 @@ _result_t test_zero_is_neutral_element_of_sum(CLOCK_T * delta_t, struct _operati
 	randNum(&_rand_seed, B, BSize);	
 	
 	*delta_t = precise_clock();
-	R1Len = impl->addition(A, ASize, B, BSize, R1); /*0+B*/
+	R1Len = impl->operation.operation(A, ASize, B, BSize, R1); /*0+B*/
 	*delta_t = precise_clock() - *delta_t;
-	R2Len = impl->addition(B, BSize, A, ASize, R2); /*B+0*/
+	R2Len = impl->operation.operation(B, BSize, A, ASize, R2); /*B+0*/
 
 	if(R1Len != R2Len)
 	{		
@@ -391,13 +387,13 @@ void testSum()
 {	
 	init_test();	
 	
-	each_op(test_zero_is_neutral_element_of_sum, 1, STR("SUM: Testing zero should be neutral element of sum"), NULL, REPEAT_LONG, 0, 0);
-	each_op(test_on_1000_unit, 1, STR("SUM: Testing that numbers like ff,fe,ff + 1,1 = 1,0,0,0"), NULL, REPEAT_LONG,0,0);
-	each_op(test_speed_1_MB_unit, 1, STR("SUM: Testing 1MB (512KB+512KB) of data segment allocated numbers"), NULL, REPEAT_LONG, HALF_MEG_NUMBER, HALF_MEG_NUMBER );
-	each_op(test_speed_512KB_Plus_2Words_unit, 1, STR("SUM: Testing 512KB+2words of data segment allocated numbers"), NULL, REPEAT_LONG, HALF_MEG_NUMBER,2);
-	each_op(test_commutative_prop_unit, 1, STR("SUM: Test Commutative Property"), NULL, REPEAT_LONG,0,0);
-	each_op(test_associative_prop_unit, 1, STR("SUM: Test Associative Property"), NULL, REPEAT_LONG,0,0);
-	each_op(test_last_carry, 0, STR("SUM: Testing last carry (1 + allonebits equals to 1 followed by all zero bits)"), NULL, REPEAT_LONG,0,0);
+	each_op(test_zero_is_neutral_element_of_sum, 1, STR("Testing zero should be neutral element of sum"), NULL, REPEAT_LONG, 0, 0);
+	each_op(test_on_1000_unit, 1, STR("Testing that numbers like ff,fe,ff + 1,1 = 1,0,0,0"), NULL, REPEAT_LONG,0,0);
+	each_op(test_speed_1_MB_unit, 1, STR("Testing 1MB (512KB+512KB) of data segment allocated numbers"), NULL, REPEAT_LONG, HALF_MEG_NUMBER, HALF_MEG_NUMBER );
+	each_op(test_speed_512KB_Plus_2Words_unit, 1, STR("Testing 512KB+2words of data segment allocated numbers"), NULL, REPEAT_LONG, HALF_MEG_NUMBER,2);
+	each_op(test_commutative_prop_unit, 1, STR("Test Commutative Property"), NULL, REPEAT_LONG,0,0);
+	each_op(test_associative_prop_unit, 1, STR("Test Associative Property"), NULL, REPEAT_LONG,0,0);
+	each_op(test_last_carry, 0, STR("Testing last carry (1 + allonebits equals to 1 followed by all zero bits)"), NULL, REPEAT_LONG,0,0);
 }
 
 
