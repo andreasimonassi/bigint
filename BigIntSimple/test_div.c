@@ -406,7 +406,7 @@ static _result_t _510_div_52_eq_9_r_42(CLOCK_T* delta_t, _operationdescriptor* i
 	reg_t R[] = {
 		0x0,0x0,0x0,0x0,0X0
 	};
-	reg_t ExpectedQ[] = { (unsigned)-1};
+	reg_t ExpectedQ[] = { _R(-1)};
 	reg_t ExpectedR[] = { 2, FIVE -1 };
 	numsize_t expqsize = 1;
 	numsize_t exprsize = 2;
@@ -448,8 +448,8 @@ static _result_t _510_div_52_eq_9_r_42(CLOCK_T* delta_t, _operationdescriptor* i
 		dumpNumber(B, STR("B"), bsize);
 		dumpNumber(Q, STR("Q"), qsize);
 		dumpNumber(R, STR("R"), rsize);
-		dumpNumber(ExpectedQ, STR("ExpectedQ"), 4);
-		dumpNumber(ExpectedR, STR("ExpectedR"), 1);
+		dumpNumber(ExpectedQ, STR("ExpectedQ"), expqsize);
+		dumpNumber(ExpectedR, STR("ExpectedR"), exprsize);
 	}
 
 

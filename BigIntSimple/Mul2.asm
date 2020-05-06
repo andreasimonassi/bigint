@@ -34,6 +34,7 @@ LongMulAsmVariant_1 proc
 	;reset R array	
 	add rdx, r9	
     xor rax,rax
+	sub edx, 1
 _reset_loop:
     mov  [r11+rdx*8], rax           
     sub  edx, 1  
