@@ -152,6 +152,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="CastingOut.c" />
     <ClCompile Include="CCompare.c" />
     <ClCompile Include="CDiv.c" />
     <ClCompile Include="CMul.c" />
@@ -176,6 +177,7 @@
   </ItemGroup>
   <ItemGroup>
     <MASM Include="BSR.asm" />
+    <MASM Include="CastOutNine.asm" />
     <MASM Include="cpu_divide.asm" />
     <MASM Include="cpu_multiply.asm" />
     <MASM Include="Mul.asm" />

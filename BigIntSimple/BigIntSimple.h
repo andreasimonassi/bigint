@@ -61,6 +61,22 @@ EXTERN numsize_t LongMulAsm(reg_t * A, numsize_t ASize, reg_t * B, numsize_t BSi
 EXTERN numsize_t LongMulAsmVariant_1(reg_t * A, numsize_t ASize, reg_t * B, numsize_t BSize, reg_t* R);
 EXTERN int BitScanReverse(reg_t A);
 
+EXTERN reg_t CastingOutNines_asm(numsize_t a, reg_t* A);
+reg_t CastingOutNines(reg_t* A, numsize_t a);
+
+/* HERE I AM SETTING UP THINGS TO USE THE ASSEMBLER CastingOutNines_asm routine instead of the C version CastingOutNines
+   if you need to disable the assembler version used on various tests you have to change following macro..
+
+   to sligthly optimize asm version i rotated the parameters order...
+
+
+*/
+
+#define CastModuloRegSize(num, size) CastingOutNines_asm(size, num)
+
+reg_t CastingOutElevens(reg_t* A, numsize_t a, int* out_carry);
+
+
 
 /*
 Caller Must check
@@ -113,3 +129,6 @@ int parseFromByteArrayLittleEndian(unsigned char * input, numsize_t sizeOfInput,
 reg_t* AllocNumOrFail(numsize_t size);
 
 _result_t FillHexString(wchar_t*buffer, unsigned bufferSize, reg_t* number, numsize_t size);
+
+reg_t CastingOutNines(reg_t* A, numsize_t a);
+reg_t CastingOutElevens(reg_t* A, numsize_t a, int * out_carry);

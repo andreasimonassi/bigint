@@ -38,7 +38,106 @@ static reg_t _TWO_WORDS_B[2];
 
 static uint_fast64_t _rand_seed;
 
+
+
 static int shouldBeAllZeroesExceptMSD(reg_t *);
+
+
+
+
+static _result_t CastingOutNineTestForSum(reg_t* A, numsize_t asize, reg_t* B, numsize_t bsize, reg_t* Result, numsize_t resultsize)
+{
+	reg_t mod_a;
+	reg_t mod_b;
+	reg_t mod_c;
+	
+
+	mod_a = CastModuloRegSize(A, asize);
+	mod_b = CastModuloRegSize(B, bsize);
+	mod_a += mod_b;
+	if (mod_a < mod_b)
+		mod_a++;
+	if (mod_a == _R(-1))
+		mod_a = 0;
+
+	mod_c = CastModuloRegSize(Result, resultsize);
+
+	if (mod_a != mod_c)
+	{
+		LOG_ERROR(STR("(A + B) MOD base_less_1 should be equals to (A mod base_less_1) + (b mod base_less_1) view dump"));
+
+		_fprintf(stderr, STR("DUMP OF A"));
+		dumpNumber(A, STR("A"), asize);
+		_fprintf(stderr, STR("DUMP OF B"));
+		dumpNumber(B, STR("B"), bsize);
+		_fprintf(stderr, STR("DUMP OF Result"));
+		dumpNumber(Result, STR("Result"), resultsize);
+		return _FAIL;
+	}
+	return _OK;
+}
+
+static _result_t CastingOutElevensTestForSum(reg_t* A, numsize_t asize, reg_t* B, numsize_t bsize, reg_t* Result, numsize_t resultsize)
+{
+	
+	reg_t mod_a;
+	int carry_a;
+	reg_t mod_b;
+	int carry_b;
+	reg_t mod_c;
+	int carry_c;
+
+	mod_a = CastingOutElevens(A, asize, &carry_a);
+	mod_b = CastingOutElevens(B, bsize, &carry_b);
+	mod_c = CastingOutElevens(Result, resultsize, &carry_c);
+
+
+	if (carry_a + carry_b == 2)
+	{
+		carry_a = 0;
+		mod_a = _R(-1);
+	}
+	else {
+		mod_a += mod_b;
+		if (mod_a < mod_b)
+		{
+			if (mod_a == 0)
+			{
+				carry_a = 1;
+			}
+			else
+				mod_a--;
+		}
+	}
+	if (mod_a != mod_c || carry_a != carry_c)
+	{
+		LOG_ERROR(STR("(A + B) MOD base_plus_1 should be equals to (A mod base_plus_1) + (b mod base_plus_1) view dump"));		
+
+		_fprintf(stderr, STR("DUMP OF A"));
+		dumpNumber(A, STR("A"), asize);
+		_fprintf(stderr, STR("DUMP OF B"));
+		dumpNumber(B, STR("B"), bsize);
+		_fprintf(stderr, STR("DUMP OF Result"));
+		dumpNumber(Result, STR("Result"), resultsize);
+
+		return _FAIL;
+	}
+
+	return _OK;
+
+}
+static _result_t CheckSum
+(reg_t* A, numsize_t asize, reg_t* B, numsize_t bsize, reg_t* Result, numsize_t resultsize)
+{
+	_result_t r1;
+	r1 = CastingOutNineTestForSum(A, asize, B, bsize, Result, resultsize);
+	/*if (OK(r1))
+	{
+		r1 = CastingOutElevensTestForSum(A, asize, B, bsize, Result, resultsize);
+	}*/
+	return r1;
+}
+
 
 static _result_t shouldBeAllZeroesExceptMSD(reg_t * R)
 {
@@ -127,9 +226,9 @@ static _result_t test_on_1000_unit(CLOCK_T * delta_t, _operationdescriptor* impl
 		_fprintf(stderr,STR( "DUMP OF B"));
 		dumpNumber(_B, STR("B"), B_REG_WORDS);
 		_fprintf(stderr,STR( "Expected RESULT should have same size of A + 1 and must have all zeroes except the most significant which must be 1"));
-
+		return _FAIL;
 	}
-	return result;
+	return CheckSum(_A, A_REG_WORDS, _B, B_REG_WORDS, _R, ndigits);
 }
 
 /*SET STACK SIZE TO SOMETHING BIG TO HANDLE THIS USE CASE*/
@@ -139,15 +238,16 @@ static _result_t test_speed_1_MB_unit(CLOCK_T * delta_t, _operationdescriptor* i
 	reg_t * A = _HALF_MEG_A;
 	reg_t * B = _HALF_MEG_B;
 	reg_t * R = _HALF_MEG_RESULT;
+	numsize_t ndigits;
 
 	randNum(&_rand_seed, A, HALF_MEG_NUMBER);
 	randNum(&_rand_seed, B, HALF_MEG_NUMBER);
 
 	*delta_t = precise_clock();
-	impl->operation.operation(A, HALF_MEG_NUMBER, B, HALF_MEG_NUMBER, R);
+	ndigits = impl->operation.operation(A, HALF_MEG_NUMBER, B, HALF_MEG_NUMBER, R);
 	*delta_t = precise_clock() - *delta_t;
 
-	return _OK;
+	return CheckSum(A, HALF_MEG_NUMBER, B, HALF_MEG_NUMBER, R, ndigits);	
 }
 
 /*SET STACK SIZE TO SOMETHING BIG TO HANDLE THIS USE CASE*/
@@ -157,15 +257,18 @@ static _result_t test_speed_512KB_Plus_2Words_unit(CLOCK_T * delta_t, _operation
 	reg_t * A = _HALF_MEG_A;
 	reg_t * B = _TWO_WORDS_B;
 	reg_t * R = _HALF_MEG_RESULT;
+	numsize_t ndigits;
 
 	randNum(&_rand_seed, A, HALF_MEG_NUMBER);
 	randNum(&_rand_seed, B, 2);
 
 	*delta_t = precise_clock();
-	impl->operation.operation(A, HALF_MEG_NUMBER, B, 2, R);
+	ndigits = impl->operation.operation(A, HALF_MEG_NUMBER, B, 2, R);
 	*delta_t = precise_clock() - *delta_t;
 
-	return _OK;
+
+
+	return CheckSum(A, HALF_MEG_NUMBER, B, 2, R, ndigits);
 }
 
 static _result_t test_last_carry(CLOCK_T * delta_t, _operationdescriptor* impl, void* userData)
@@ -205,9 +308,11 @@ static _result_t test_last_carry(CLOCK_T * delta_t, _operationdescriptor* impl, 
 		dumpNumber(RExpected, STR("ExpectedResult"), 2);
 		dumpNumber(Actual, STR("ActualResult"), ActualLen);
 		LOG_INFO(STR("Last carry test failed, see dump"));
+		return result;
 	}
 
-	return result;
+
+	return CheckSum(A, 1, B, 1, Actual, ActualLen);
 }
 
 
@@ -257,8 +362,10 @@ static _result_t  test_commutative_prop_unit(CLOCK_T* delta_t, _operationdescrip
 		dumpNumber(A, STR("A"), ASize);
 		dumpNumber(B, STR("B"), BSize);
 		LOG_INFO(STR("Commutative prop test failed, see dump"));
+		return result;
 	}	
-	return result;
+
+	return CheckSum(A, ASize, B, BSize, R1, R1Len);
 }
 
 static _result_t  test_associative_prop_unit(CLOCK_T* delta_t, _operationdescriptor* impl, void* userData)

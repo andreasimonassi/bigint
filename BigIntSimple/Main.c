@@ -15,9 +15,9 @@ int main()
 	testBSR();
 	testCompare();
 	testSum();
-	testSub();	
+	/*testSub();	
 	testMul();		
-	testDiv();
+	testDiv();*/
 	
 
 	write_summary();

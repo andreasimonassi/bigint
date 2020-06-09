@@ -35,6 +35,9 @@ static wchar_t* printHex(reg_t x, wchar_t * buffer)
 	return buffercopy;
 }
 #endif
+
+
+
 void dumpNumber(reg_t * A, _char_t* name, numsize_t ASize)
 {
 	int charsize = ASize * sizeof(reg_t) * 2 + 1;
@@ -76,6 +79,8 @@ PCR random generator credit O'Neill, Melissa http://www.pcg-random.org/
 
 void randNum(uint_fast64_t * const refState, reg_t * const A, numsize_t size)
 {	
+	if (size == 0)
+		return;
 	/*
 	PCR random generator credit O'Neill, Melissa http://www.pcg-random.org/ 
 	*/
@@ -102,6 +107,9 @@ void randNum(uint_fast64_t * const refState, reg_t * const A, numsize_t size)
 
 		B[i] = y | z;
 	}
+
+	if (B[size - 1] == 0)
+		B[size - 1] = 1;
 }
 
 static void copystr(_char_t const * const src, _char_t* dest)
@@ -222,7 +230,7 @@ void run_test_repeat(_result_t(*unit_test)(CLOCK_T* out_algorithmExecutionTiming
 
 	test_statistics_collection_ADD(&(descriptor->results), result);
 
-	LOG_INFO(STR("cumulative inner time: %f sec\n"),  result->inner_time_sec);	
+	LOG_INFO(STR("cumulative inner time: %f sec, outer time: %f sec\n"),  result->inner_time_sec, result->outer_time_sec);	
 
 }
 
@@ -351,6 +359,10 @@ void cleanup()
 	cleanup_op(arithmetic->multiply, arithmetic->multiplycount);
 	cleanup_op(arithmetic->divide, arithmetic->dividecount);
 }
+
+
+
+
 
 #if defined(_WIN32) || defined(WIN32)
 CLOCK_T precise_clock() {

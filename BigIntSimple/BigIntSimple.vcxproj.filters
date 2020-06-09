@@ -66,6 +66,9 @@
     <ClCompile Include="test_config.c">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="CastingOut.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="BigIntSimple.h">
@@ -101,6 +104,9 @@
       <Filter>Source Files</Filter>
     </MASM>
     <MASM Include="Mul2.asm">
+      <Filter>Source Files</Filter>
+    </MASM>
+    <MASM Include="CastOutNine.asm">
       <Filter>Source Files</Filter>
     </MASM>
   </ItemGroup>

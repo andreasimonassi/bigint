@@ -887,7 +887,7 @@ void testMul()
 	because many tests works on not too heavy numbers.
 
 	please provide a variant of the algorithm with a very low threshold (on test_config.h) so that the tests will enter those least used 
-	part of the code.
+	part of the code... or increase the number size on each test
 	*/
 	
 	each_op(multiply_do_not_mess_with_memory, 0, STR("Check memory written within bounds"), NULL, 1, 0, 0);
