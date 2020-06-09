@@ -36,6 +36,34 @@ static void each_op(_result_t(*unit_test)(CLOCK_T* outAlgorithmElapsedTime, _ope
 	}
 }
 
+
+static _result_t CheckSum(reg_t* A, numsize_t asize, reg_t* B, numsize_t bsize, reg_t* Result, numsize_t resultsize)
+{
+	reg_t a[2];
+
+	a[0] = CastModuloRegSize(A, asize);
+	a[1] = CastModuloRegSize(B, bsize);	
+	a[0] = ShortMultiplication(a[0], a[1], &a[1]);
+	a[0] = CastModuloRegSize(a, 2);
+	a[1] = CastModuloRegSize(Result, resultsize);
+
+	if (a[0] != a[1])
+	{
+		LOG_ERROR(STR("(A * B) MOD base_less_1 should be equals to (A mod base_less_1) * (b mod base_less_1) view dump"));
+
+		_fprintf(stderr, STR("DUMP OF A"));
+		dumpNumber(A, STR("A"), asize);
+		_fprintf(stderr, STR("DUMP OF B"));
+		dumpNumber(B, STR("B"), bsize);
+		_fprintf(stderr, STR("DUMP OF Result"));
+		dumpNumber(Result, STR("Result"), resultsize);
+		return _FAIL;
+	}
+	return _OK;
+}
+
+
+
 static _result_t multiply_do_not_mess_with_memory(CLOCK_T* delta, _operationdescriptor* impl, void* userData)
 {
 	UNUSED(userData);
@@ -195,7 +223,6 @@ static _result_t multiply_by_one_is_identity(CLOCK_T* delta_t, _operationdescrip
 static _result_t multiply_is_commutative(CLOCK_T* delta_t, _operationdescriptor* impl, void* userData)
 {
 	UNUSED(userData);
-	_result_t result = _OK;
 
 	numsize_t ASize = rand() % 100 + 2;
 	numsize_t BSize = rand() % 100 + 2;
@@ -205,27 +232,27 @@ static _result_t multiply_is_commutative(CLOCK_T* delta_t, _operationdescriptor*
 	CLOCK_T t1 = precise_clock();
 	numsize_t R1Size = impl->operation.operation(_HALF_MEG_mA, ASize, _HALF_MEG_mB, BSize, _MEG_mRESULT1);
 	numsize_t R2Size = impl->operation.operation(_HALF_MEG_mB, BSize, _HALF_MEG_mA, ASize, _MEG_mRESULT2);
-	t1 = precise_clock() - t1;
+	
+	*delta_t = precise_clock() - t1;
 
 	if (CompareWithPossibleLeadingZeroes(_MEG_mRESULT1, R1Size, _MEG_mRESULT2, R2Size) != 0)
 	{
-		result = _FAIL;
 		LOG_ERROR(STR("A * B should be equals to B * A"));
 
 		dumpNumber(_HALF_MEG_mA, STR("A"), ASize);
 		dumpNumber(_HALF_MEG_mB, STR("B"), BSize);
 		dumpNumber(_MEG_mRESULT1, STR("R1"), R1Size);
 		dumpNumber(_MEG_mRESULT2, STR("R2"), R2Size);
+
+		return _FAIL;
 	}
 
-	*delta_t = t1;
-	return result;
+	return _OK;
 }
 
 static _result_t multiply_is_associative(CLOCK_T* delta_t, _operationdescriptor* impl, void* userData)
 {
 	UNUSED(userData);
-	_result_t result = _OK;
 
 	numsize_t ASize = rand() % 100 + 2;
 	numsize_t BSize = rand() % 100 + 2;
@@ -239,11 +266,11 @@ static _result_t multiply_is_associative(CLOCK_T* delta_t, _operationdescriptor*
 	R1Size = impl->operation.operation(_MEG_mRESULT1, R1Size, _HALF_MEG_mC, CSize, _MEG_mRESULT2);
 	numsize_t R2Size = impl->operation.operation(_HALF_MEG_mB, BSize, _HALF_MEG_mC, CSize, _MEG_mRESULT3);
 	R2Size = impl->operation.operation(_MEG_mRESULT3, R2Size, _HALF_MEG_mA, ASize, _MEG_mRESULT4);
-	t1 = precise_clock() - t1;
 
+	*delta_t = precise_clock() - t1; 
 	if (CompareWithPossibleLeadingZeroes(_MEG_mRESULT2, R1Size, _MEG_mRESULT4, R2Size) != 0)
 	{
-		result = _FAIL;
+		
 		LOG_ERROR(STR("(A * B) * C should be equals to A * (B * C)"));
 
 		dumpNumber(_HALF_MEG_mA, STR("A"), ASize);
@@ -251,10 +278,10 @@ static _result_t multiply_is_associative(CLOCK_T* delta_t, _operationdescriptor*
 		dumpNumber(_HALF_MEG_mC, STR("C"), CSize);
 		dumpNumber(_MEG_mRESULT2, STR("R1"), R1Size);
 		dumpNumber(_MEG_mRESULT4, STR("R2"), R2Size);
+		return _FAIL;
 	}
 
-	*delta_t = t1;
-	return result;
+	return _OK;
 }
 
 static _result_t multiply_subtraction_sum_inrail(CLOCK_T* delta_t, _operationdescriptor* impl, void* userData)
@@ -869,11 +896,11 @@ static _result_t multiply_speed_tests(CLOCK_T* delta, _operationdescriptor* impl
 
 	CLOCK_T t1 = precise_clock();
 
-	impl->operation.operation(A, buffer, B, buffer, R);
+	numsize_t rsize = impl->operation.operation(A, buffer, B, buffer, R);
 
-	*delta = precise_clock() - t1;
+	*delta = precise_clock() - t1;	
 
-	return _OK;
+	return CheckSum(A, buffer, B, buffer, R, rsize);
 }
 
 #define REPEAT_LONG 10000

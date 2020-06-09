@@ -59,6 +59,7 @@ EXTERN numsize_t LongSubAsm(reg_t * A, numsize_t ASize, reg_t * B, numsize_t BSi
 EXTERN numsize_t LongSubAsmVariant_1(reg_t * A, numsize_t ASize, reg_t * B, numsize_t BSize, reg_t* R);
 EXTERN numsize_t LongMulAsm(reg_t * A, numsize_t ASize, reg_t * B, numsize_t BSize, reg_t* R);
 EXTERN numsize_t LongMulAsmVariant_1(reg_t * A, numsize_t ASize, reg_t * B, numsize_t BSize, reg_t* R);
+EXTERN reg_t ShortMultiplication(reg_t A, reg_t B, reg_t* out_hiword);
 EXTERN int BitScanReverse(reg_t A);
 
 EXTERN reg_t CastingOutNines_asm(numsize_t a, reg_t* A);

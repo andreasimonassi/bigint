@@ -106,6 +106,16 @@ static reg_t c_multiply(reg_t A, reg_t B, reg_t * high)
 }
 #endif
 
+reg_t ShortMultiplication(reg_t A, reg_t B, reg_t* out_hiword)
+{
+	/* if you remove the assembler code you need to redefine this routing by using any other portable option such as 
+	
+	return c_multiply(A, B, out_hiword);
+
+	*/
+	return cpu_multiply(A, B, out_hiword); 
+}
+
 static numsize_t LongMultiplicationPortable(reg_t *A, numsize_t m, reg_t *B, numsize_t n, reg_t * R, _mul_func mfunc)
 {
 	numsize_t outBuffSize = m + n;

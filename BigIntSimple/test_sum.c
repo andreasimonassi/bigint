@@ -45,7 +45,7 @@ static int shouldBeAllZeroesExceptMSD(reg_t *);
 
 
 
-static _result_t CastingOutNineTestForSum(reg_t* A, numsize_t asize, reg_t* B, numsize_t bsize, reg_t* Result, numsize_t resultsize)
+static _result_t CheckSum(reg_t* A, numsize_t asize, reg_t* B, numsize_t bsize, reg_t* Result, numsize_t resultsize)
 {
 	reg_t mod_a;
 	reg_t mod_b;
@@ -77,66 +77,6 @@ static _result_t CastingOutNineTestForSum(reg_t* A, numsize_t asize, reg_t* B, n
 	return _OK;
 }
 
-static _result_t CastingOutElevensTestForSum(reg_t* A, numsize_t asize, reg_t* B, numsize_t bsize, reg_t* Result, numsize_t resultsize)
-{
-	
-	reg_t mod_a;
-	int carry_a;
-	reg_t mod_b;
-	int carry_b;
-	reg_t mod_c;
-	int carry_c;
-
-	mod_a = CastingOutElevens(A, asize, &carry_a);
-	mod_b = CastingOutElevens(B, bsize, &carry_b);
-	mod_c = CastingOutElevens(Result, resultsize, &carry_c);
-
-
-	if (carry_a + carry_b == 2)
-	{
-		carry_a = 0;
-		mod_a = _R(-1);
-	}
-	else {
-		mod_a += mod_b;
-		if (mod_a < mod_b)
-		{
-			if (mod_a == 0)
-			{
-				carry_a = 1;
-			}
-			else
-				mod_a--;
-		}
-	}
-	if (mod_a != mod_c || carry_a != carry_c)
-	{
-		LOG_ERROR(STR("(A + B) MOD base_plus_1 should be equals to (A mod base_plus_1) + (b mod base_plus_1) view dump"));		
-
-		_fprintf(stderr, STR("DUMP OF A"));
-		dumpNumber(A, STR("A"), asize);
-		_fprintf(stderr, STR("DUMP OF B"));
-		dumpNumber(B, STR("B"), bsize);
-		_fprintf(stderr, STR("DUMP OF Result"));
-		dumpNumber(Result, STR("Result"), resultsize);
-
-		return _FAIL;
-	}
-
-	return _OK;
-
-}
-static _result_t CheckSum
-(reg_t* A, numsize_t asize, reg_t* B, numsize_t bsize, reg_t* Result, numsize_t resultsize)
-{
-	_result_t r1;
-	r1 = CastingOutNineTestForSum(A, asize, B, bsize, Result, resultsize);
-	/*if (OK(r1))
-	{
-		r1 = CastingOutElevensTestForSum(A, asize, B, bsize, Result, resultsize);
-	}*/
-	return r1;
-}
 
 
 static _result_t shouldBeAllZeroesExceptMSD(reg_t * R)
