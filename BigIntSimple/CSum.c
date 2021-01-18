@@ -19,7 +19,7 @@ numsize_t LongSumWithCarryDetection(reg_t* A, numsize_t ASize, reg_t * B, numsiz
 	while (min_a_b > i)
 	{		
 		temp = A[i] + B[i] + carry;
-		carry = temp < A[i] + carry ? _R(1) : _R(0);
+		carry = (temp < A[i] | temp < B[i]); /*careful, check what your compiler produce, btw tests may fail if carry != 1*/
 		R[i] = temp;
 		++i;
 	}

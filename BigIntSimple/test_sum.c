@@ -28,6 +28,7 @@ static reg_t _R[R_REG_WORDS]; /* PLEASE DO NOT USE THIS IS RESERVED FOR A SPECIA
 static reg_t _HALF_MEG_A[HALF_MEG_NUMBER];
 static reg_t _HALF_MEG_B[HALF_MEG_NUMBER];
 static reg_t _HALF_MEG_RESULT[HALF_MEG_NUMBER + 1];
+static reg_t _HALF_MEG_EXPECTED[HALF_MEG_NUMBER + 1];
 
 static reg_t _TWO_WORDS_A[2];
 static reg_t _TWO_WORDS_B[2];
@@ -371,6 +372,54 @@ static _result_t  test_associative_prop_unit(CLOCK_T* delta_t, _operationdescrip
 }
 
 
+_result_t carry_propagations(CLOCK_T* delta_t, _operationdescriptor* impl, void* userData)
+{
+	UNUSED(userData);
+	_result_t result = _OK;
+	/*the array is in reverse order, less significative on the left...*/
+
+	reg_t* A = _HALF_MEG_A;
+	reg_t* B = _HALF_MEG_B;
+	reg_t* R = _HALF_MEG_RESULT;
+	reg_t* expected = _HALF_MEG_EXPECTED;
+	numsize_t ASize = HALF_MEG_NUMBER - 2;
+	numsize_t BSize = HALF_MEG_NUMBER - 1;
+	numsize_t ExpectedSize = BSize;
+	numsize_t RSize ;
+	for (numsize_t i = 0; i < ASize; ++i)
+	{
+		A[i] = _R(-1);
+		B[i] = _R(0);
+		expected[i] = _R(0);
+	}
+	*B = 1;
+	B[BSize - 1] = _R(1);
+	expected[ExpectedSize - 1] = _R(2);
+
+	*delta_t = precise_clock();
+	RSize = impl->operation.operation(A, ASize, B, BSize, R); /*0+B*/
+	*delta_t = precise_clock() - *delta_t;
+
+	if (RSize != ExpectedSize)
+	{
+		result = _FAIL;
+	}
+	else
+	{
+		int c = CompareWithPossibleLeadingZeroes(R, RSize, expected, ExpectedSize);
+		if (c != 0)
+		{
+			result = _FAIL;
+		}
+	}
+	if (FAILED(result))
+	{		
+		LOG_INFO(STR("999...9  + 1000...1 should be equals to 2000...0 (1 followed by n zeroes), see dump"));
+	}
+
+	return result;
+	
+}
 _result_t test_zero_is_neutral_element_of_sum(CLOCK_T * delta_t, _operationdescriptor* impl, void*userData)
 {
 	UNUSED(userData);
@@ -431,7 +480,9 @@ void testSum()
 {	
 	init_test();	
 	
+	each_op(carry_propagations, 0, STR("Testing that 999...9 + 1000...1 equals 2000...0"), NULL, 1, HALF_MEG_NUMBER - 1, 1);
 	each_op(test_zero_is_neutral_element_of_sum, 1, STR("Testing zero should be neutral element of sum"), NULL, REPEAT_LONG, 0, 0);
+	
 	each_op(test_on_1000_unit, 1, STR("Testing that numbers like ff,fe,ff + 1,1 = 1,0,0,0"), NULL, REPEAT_LONG,0,0);
 	each_op(test_speed_1_MB_unit, 1, STR("Testing 1MB (512KB+512KB) of data segment allocated numbers"), NULL, REPEAT_LONG, HALF_MEG_NUMBER, HALF_MEG_NUMBER );
 	each_op(test_speed_512KB_Plus_2Words_unit, 1, STR("Testing 512KB+2words of data segment allocated numbers"), NULL, REPEAT_LONG, HALF_MEG_NUMBER,2);

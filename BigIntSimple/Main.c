@@ -15,11 +15,11 @@ int main()
 	testBSR();
 	testCompare();
 	testSum();
-	testSub();	
+	testSub();
 	testMul();		
 	testDiv();
 	
-
+	
 	write_summary();
 
 	return 0;
