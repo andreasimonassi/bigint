@@ -33,7 +33,7 @@ numsize_t LongSub(reg_t* A, numsize_t ASize, reg_t * B, numsize_t BSize, reg_t* 
 		register reg_t a = A[i]; /* that allow me to work in place instead of requiring R to be a different array than A*/
 		register reg_t b = B[i];
 		R[i] = a - b - borrow;	
-		borrow = (R[i] > a) | (borrow & (b==a)); /* that's an hack, only tests will say if it is going to work, we expect bool values to be 1 or 0*/
+		borrow = (a < b) | (borrow & (b==a)); /* that's an hack, only tests will say if it is going to work, we expect bool values to be 1 or 0*/
 		++i;
 	}
 
