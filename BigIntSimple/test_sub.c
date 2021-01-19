@@ -190,6 +190,66 @@ static _result_t speedTestSubtraction512KB(CLOCK_T* delta_t, _operationdescripto
 }
 
 
+static _result_t BorrowPropagationCornerCase(CLOCK_T* delta_t, _operationdescriptor* impl, void* userData)
+{
+	UNUSED(userData);
+	_result_t result = _OK;
+	/*the array is in reverse order, less significative on the left...*/
+	reg_t* A = _A;	
+	reg_t* B = _B;
+	reg_t* R = _R1;
+	reg_t* _exp = _R2;
+	numsize_t ASize = 5;
+	numsize_t BSize = 4;
+	numsize_t expected_digits = 4;
+	/* Initialization */
+
+	_A[0] = 1;
+	_A[1] = 1;
+	_A[2] = 1;
+	_A[3] = 1;
+	_A[4] = 1;
+
+	_B[0] = 2;
+	_B[1] = 1;
+	_B[2] = 1;
+	_B[3] = 1;
+	
+	_exp[0] = _R(-1);//corresponds to 9 on base 10 transposed to base register_size
+	_exp[1] = _R(-1);
+	_exp[2] = _R(-1);
+	_exp[3] = _R(-1);
+
+	
+	*delta_t = precise_clock();
+	numsize_t n = impl->operation.operation(A, ASize, B, BSize, R);
+	*delta_t = precise_clock() - *delta_t;
+
+	if (n != expected_digits)
+	{
+		LOG_ERROR(STR("Unexpected number of digits, see dump"));
+		result = _FAIL;
+	}
+	else if (CompareWithPossibleLeadingZeroes(R, n, _exp, expected_digits) != 0)
+	{
+		LOG_ERROR(STR("11111 - 1112 should be 9999, see dump"));
+		result = _FAIL;
+	}
+	if (FAILED(result))
+	{
+		_fprintf(stderr, STR("DUMP : A - B  = R"));
+		dumpNumber(A, STR("A"), A_REG_WORDS);
+		dumpNumber(B, STR("B"), B_REG_WORDS);
+		dumpNumber(_exp, STR("ExpectedResult"), expected_digits);
+		dumpNumber(R, STR("ActualResult"), n);
+	}
+
+	return result;
+
+}
+
+
+
 static _result_t testWellKnownSubtraction(CLOCK_T* delta_t, _operationdescriptor* impl, void* userData)
 {	
 	UNUSED(userData);
@@ -454,8 +514,8 @@ static _result_t testSubtractionIsInverseOfSumOfZero(CLOCK_T* delta_t, _operatio
 #define REPEAT_LONG 10000
 void testSub()
 {
-	
-	each_op(testNullBehavesAsZero, 0, STR("A - NULL = A"), NULL, REPEAT_LONG,0,0);
+	each_op(BorrowPropagationCornerCase, 0, STR("Corner case for borrow propagation"), NULL, 1, 5, 4);
+    each_op(testNullBehavesAsZero, 0, STR("A - NULL = A"), NULL, REPEAT_LONG,0,0);
 	each_op(testSubtractionIsInverseOfSumOfZero, 0, STR("0 + 0 - 0 = 0"), NULL, REPEAT_LONG,0,0);
 	each_op(testWellKnownSubtraction, 1,STR("Testing subtraction with wellknown values"), NULL, REPEAT_LONG,0,0);
 	each_op(testSubtractionIsInverseOfSum, 1, STR("Testing subtraction is inverse of sum"), NULL, REPEAT_LONG,0,0);

@@ -17,8 +17,7 @@ int main()
 	testSum();
 	testSub();
 	testMul();		
-	testDiv();
-	
+	testDiv();	
 	
 	write_summary();
 
