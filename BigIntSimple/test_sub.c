@@ -201,7 +201,7 @@ static _result_t BorrowPropagationCornerCase(CLOCK_T* delta_t, _operationdescrip
 	reg_t* _exp = _R2;
 	numsize_t ASize = 5;
 	numsize_t BSize = 4;
-	numsize_t expected_digits = 4;
+	numsize_t expectedSize = 4;
 	/* Initialization */
 
 	_A[0] = 1;
@@ -225,12 +225,12 @@ static _result_t BorrowPropagationCornerCase(CLOCK_T* delta_t, _operationdescrip
 	numsize_t n = impl->operation.operation(A, ASize, B, BSize, R);
 	*delta_t = precise_clock() - *delta_t;
 
-	if (n != expected_digits)
+	if (n != expectedSize)
 	{
 		LOG_ERROR(STR("Unexpected number of digits, see dump"));
 		result = _FAIL;
 	}
-	else if (CompareWithPossibleLeadingZeroes(R, n, _exp, expected_digits) != 0)
+	else if (CompareWithPossibleLeadingZeroes(R, n, _exp, expectedSize) != 0)
 	{
 		LOG_ERROR(STR("11111 - 1112 should be 9999, see dump"));
 		result = _FAIL;
@@ -240,7 +240,7 @@ static _result_t BorrowPropagationCornerCase(CLOCK_T* delta_t, _operationdescrip
 		_fprintf(stderr, STR("DUMP : A - B  = R"));
 		dumpNumber(A, STR("A"), A_REG_WORDS);
 		dumpNumber(B, STR("B"), B_REG_WORDS);
-		dumpNumber(_exp, STR("ExpectedResult"), expected_digits);
+		dumpNumber(_exp, STR("ExpectedResult"), expectedSize);
 		dumpNumber(R, STR("ActualResult"), n);
 	}
 

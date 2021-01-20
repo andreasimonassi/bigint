@@ -125,7 +125,6 @@ static numsize_t LongMultiplicationPortable(reg_t *A, numsize_t m, reg_t *B, num
 	for (numsize_t k = 0; k < outBuffSize; ++k)
 		R[k] = 0; /*reset output array*/
 
-	outBuffSize = 0;
 
 	for (numsize_t j = 0; j < m; j++)/* read  left number*/
 	{
@@ -148,26 +147,24 @@ static numsize_t LongMultiplicationPortable(reg_t *A, numsize_t m, reg_t *B, num
 			loword = mfunc(A[j], B[i], &hiword);
 
 			R[k] += loword;
-			carry = R[k] < loword ? 1 : 0;
-
-			if (k + 1 > outBuffSize && R[k] > 0)
-				outBuffSize = k + 1;
+			carry = R[k] < loword ;
 
 			++k;
 
 			R[k] += hiword + carry;
-			carry = R[k] < hiword + carry ? _R(1) : _R(0);
+			carry = (R[k] < hiword) | (carry & (R[k] == hiword));
 
 			while (carry)
 			{
 				R[++k] += 1;     /*sum the previous carry to Result[i+j+k]	*/
-				carry = R[k] == _R(0) ? _R(1) : _R(0);
-			}
-
-			if (k + 1 > outBuffSize && R[k] > 0)
-				outBuffSize = k + 1;
+				carry = R[k] == _R(0);
+			}			
 		}
 	}
+
+	/* in the unlikely case most significant digit is zero decrease size count */
+	while (outBuffSize > 0 && R[outBuffSize-1] == 0)
+		outBuffSize--;
 
 	return outBuffSize;
 }
@@ -175,59 +172,33 @@ static numsize_t LongMultiplicationPortable(reg_t *A, numsize_t m, reg_t *B, num
 
 static numsize_t LongMultiplicationPortableV2(reg_t *A, numsize_t m, reg_t *B, numsize_t n, reg_t * R, _mul_func mfunc)
 {
-	numsize_t outBuffSize = m + n;
-	reg_t hiword;
-	reg_t loword;
+	numsize_t outBuffSize = m + n, k;
+	reg_t hiword, loword;
 	int carry;
-	for (numsize_t k = 0; k < outBuffSize; ++k)
+	
+	for (k = 0; k < outBuffSize; ++k)
 		R[k] = 0; /*reset output array*/
-
-	outBuffSize = 0;
-
-	for (numsize_t j = 0; j < m; j++)/* read  left number*/
-	{
-		/*if (A[j] == 0)
-			continue;  not good!!*/
-
+	
+	for (numsize_t j = 0; j < m; j++)/* read  left number*/			
 		for (numsize_t i = 0; i < n; i++) /* read right number*/
 		{
-			unsigned k = i + j;
-
-			/*if (B[i] == 0)
-				continue; not good!*/
+			k = i + j;
 
 			loword = mfunc(A[j], B[i], &hiword);
 
 			R[k] += loword;
-			carry = R[k] < loword ? 1 : 0;
-
-			if (k + 1 > outBuffSize && R[k] > 0)
-				outBuffSize = k + 1;
-
-			++k;
-
+			carry = R[k] < loword;	/* detect the carry */
+			++k; /* next digit */
 			R[k] += hiword + carry;
-			carry = R[k] < hiword + carry ? _R(1) : _R(0);
+			carry = (R[k] < hiword) | (carry & (R[k] == hiword)); /* ugly carry detection */
 
-			while (carry)
+			while (carry) /* that is unlikely to loop too much */
 			{
 				R[++k] += 1;     /*sum the previous carry to Result[i+j+k]	*/
-				carry = R[k] == _R(0) ? _R(1) : _R(0);
+				carry = R[k] == _R(0);
 			}
-
-			/*if (k + 1 > outBuffSize && R[k] > 0)
-				outBuffSize = k + 1;  
-				
-				remove that branch from here
-				I think most of the times the higher digits of A and B are not zero
-				thus the last non zero digit is going to be at position n+m or at position n+m-1
-				*/
-		}
-	}
-
-	/*the difference in comparison with older version is that now we run that branch once 
-	instead of do that at each iteration on the inner loop*/
-	outBuffSize = m + n ;
+		}	
+		
 	while (outBuffSize > 0 && R[outBuffSize - 1] == 0)
 		outBuffSize--;
 
